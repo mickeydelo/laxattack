@@ -49,6 +49,39 @@ struct ShotInput: Equatable, Sendable {
     let horizontal: Float
     let power: Float
     let releaseSpeed: Float
+    let type: ShotType
+}
+
+enum ShotType: String, CaseIterable, Equatable, Sendable, Identifiable {
+    case overhand
+    case bounce
+    case sidearm
+
+    var id: Self { self }
+
+    var title: LocalizedStringResource {
+        switch self {
+        case .overhand: "OVERHAND"
+        case .bounce: "BOUNCE"
+        case .sidearm: "SIDEARM"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .overhand: "arrow.up.forward"
+        case .bounce: "arrow.down.forward.and.arrow.up"
+        case .sidearm: "arrow.turn.up.right"
+        }
+    }
+
+    var releasePrompt: LocalizedStringResource {
+        switch self {
+        case .overhand: "RELEASE OVERHAND"
+        case .bounce: "RELEASE BOUNCE SHOT"
+        case .sidearm: "RELEASE SIDEARM"
+        }
+    }
 }
 
 enum ShotOutcome: Equatable, Sendable {
@@ -60,6 +93,8 @@ enum ShotOutcome: Equatable, Sendable {
 enum GoalStyle: Equatable, Sendable {
     case standard
     case topCorner
+    case lowCorner
+    case fiveHole
 }
 
 struct ShotResult: Equatable, Sendable {
@@ -77,7 +112,10 @@ enum ShotFeedback: Equatable {
     case shooting
     case goal
     case topCorner
+    case lowCorner
+    case fiveHole
     case bounceGoal
+    case sidearmGoal
     case save
     case pipe
     case miss
@@ -92,8 +130,14 @@ enum ShotFeedback: Equatable {
             "GOAL!"
         case .topCorner:
             "TOP CORNER!"
+        case .lowCorner:
+            "LOW CORNER!"
+        case .fiveHole:
+            "FIVE HOLE!"
         case .bounceGoal:
             "BOUNCE GOAL!"
+        case .sidearmGoal:
+            "SIDEARM RIP!"
         case .save:
             "SAVE!"
         case .pipe:
@@ -105,7 +149,7 @@ enum ShotFeedback: Equatable {
 
     var color: Color {
         switch self {
-        case .goal, .topCorner, .bounceGoal:
+        case .goal, .topCorner, .lowCorner, .fiveHole, .bounceGoal, .sidearmGoal:
             .yellow
         case .save:
             .cyan
@@ -129,6 +173,7 @@ final class GameSession {
     private(set) var feedback: ShotFeedback = .ready
     private(set) var isAwaitingResult = false
     private(set) var shotHistory: [ShotResult] = []
+    private(set) var selectedShotType: ShotType = .overhand
 
     private var pendingInput: ShotInput?
     private var pendingHitPipe = false
@@ -162,20 +207,38 @@ final class GameSession {
         return true
     }
 
+    func selectShotType(_ type: ShotType) {
+        guard !isAwaitingResult, !isRoundComplete else { return }
+        selectedShotType = type
+    }
+
     func registerGoal(style: GoalStyle) -> Bool {
         guard isAwaitingResult else { return false }
         combo += 1
 
         let pipeBonus = pendingHitPipe ? 75 : 0
         let bounceBonus = pendingBounced ? 75 : 0
-        let placementBonus = style == .topCorner ? 100 : 0
-        let points = 100 * combo + pipeBonus + bounceBonus + placementBonus
+        let placementBonus: Int
+        switch style {
+        case .topCorner: placementBonus = 100
+        case .lowCorner: placementBonus = 75
+        case .fiveHole: placementBonus = 125
+        case .standard: placementBonus = 0
+        }
+        let releaseBonus = pendingInput?.type == .sidearm ? 50 : 0
+        let points = 100 * combo + pipeBonus + bounceBonus + placementBonus + releaseBonus
 
         score += points
         if pendingBounced {
             feedback = .bounceGoal
         } else if style == .topCorner {
             feedback = .topCorner
+        } else if style == .lowCorner {
+            feedback = .lowCorner
+        } else if style == .fiveHole {
+            feedback = .fiveHole
+        } else if pendingInput?.type == .sidearm {
+            feedback = .sidearmGoal
         } else {
             feedback = .goal
         }
@@ -219,6 +282,7 @@ final class GameSession {
         feedback = .ready
         isAwaitingResult = false
         shotHistory = []
+        selectedShotType = .overhand
         pendingInput = nil
         pendingHitPipe = false
         pendingBounced = false
@@ -262,9 +326,16 @@ final class GameSession {
 
 @MainActor
 final class GameFeedbackPlayer {
-    func playRelease() {
+    func playRelease(type: ShotType) {
         #if os(iOS)
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred(intensity: 0.75)
+        switch type {
+        case .overhand:
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred(intensity: 0.78)
+        case .bounce:
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.62)
+        case .sidearm:
+            UIImpactFeedbackGenerator(style: .rigid).impactOccurred(intensity: 0.82)
+        }
         #endif
     }
 

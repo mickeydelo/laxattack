@@ -52,6 +52,10 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - Physics contact with the named field marks a shot as a bounce shot; bounce-and-in earns 75 bonus points and is persisted in `ShotResult`.
 - Goal entry above 1.35 meters and wider than 0.48 meters from center is classified as a top-corner finish and earns 100 bonus points.
 - Shot bonuses stack with the base combo score, so a skilled shot can combine combo, pipe, bounce, and placement bonuses.
+- Players can select Overhand, Bounce, or Sidearm before each shot. Each release has a distinct trajectory, procedural wind-up/follow-through, and haptic signature; the selected type is stored in `ShotInput` for replay/competition work.
+- Overhand is the fast high-release precision shot. Bounce launches shallow to contact turf before the cage. Sidearm launches flatter, spins, and develops late lateral curve in flight.
+- Five pulsing goal markers communicate top-corner, low-corner, and five-hole scoring windows. Top corner adds 100 points, low corner adds 75, five-hole adds 125, and a sidearm goal adds 50.
+- The virtual camera adds a restrained forward kick on release and short shake on goal/save/pipe impact.
 - Goal feedback distinguishes standard goals, top-corner finishes, and bounce goals.
 - iOS haptics distinguish release, goal, save, pipe, and miss.
 - The moving goalie is now a readable primitive character silhouette assembled from a helmet, face, torso, legs, and stick, with one kinematic collision body.
@@ -77,6 +81,7 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - Perform hands-on tuning of shot velocity, trajectory prediction, camera framing, character scale, goalie speed, collision bounds, and reset timing.
 - Add authored audio assets for pocket movement, release snap, bounce, pipe, save, net impact, crowd, and UI.
 - Add a first quick-stick challenge that uses timing rather than free aiming.
+- Tune the three release profiles through hands-on device play, especially bounce restitution and sidearm late curve.
 - Establish an external modeled/rigged character asset pipeline to replace procedural primitives while preserving the current animation state machine.
 
 ## Guardrails
@@ -95,6 +100,7 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - 2026-09-22: Changed the generated bundle display name to **Lax Attack** while preserving internal target names. The project builds successfully afterward.
 - 2026-09-22: Added bounce-shot tracking, top-corner classification, stackable skill bonuses, richer goal callouts, a primitive goal net, and a goal-line marking. The updated build compiled and launched successfully on the iPhone 17 Pro simulator.
 - 2026-09-22: Completed the first large vertical-slice upgrade. Split the project into focused HUD/model/scene files; added a live 3D trajectory guide, procedural shooter performance, reactive difficulty-scaling goalie, pulsing net, richer miniature outdoor arena, improved camera framing, best score, shot indicators, live power, accuracy, and animated round presentation. The project compiled and launched successfully on the iPhone 17 Pro simulator.
+- 2026-09-22: Added the first lacrosse decision layer: selectable Overhand/Bounce/Sidearm releases with distinct physics, previews, poses, spin/curve, haptics, and recorded shot type. Added pulsing placement targets, low-corner/five-hole scoring, placement callouts, and restrained camera kick/impact shake. The project built and launched successfully on the iPhone 17 Pro simulator with no crash/fatal/assertion output.
 # 2026-09-22: Competitive feel and art direction
 
 - Product name is **Lax Attack**. The runtime remains SwiftUI + RealityKit in portrait orientation.

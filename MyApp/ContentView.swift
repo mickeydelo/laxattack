@@ -14,7 +14,6 @@ struct ContentView: View {
             }
             .ignoresSafeArea()
             .contentShape(Rectangle())
-            .gesture(shotGesture)
 
             GameHUD(
                 score: session.score,
@@ -26,13 +25,21 @@ struct ContentView: View {
                 feedback: session.feedback,
                 goalieLevel: session.difficultyLevel,
                 aimPower: aimSample?.normalizedPower ?? 0,
+                selectedShotType: session.selectedShotType,
+                canSelectShot: !session.isAwaitingResult,
                 isRoundComplete: session.isRoundComplete,
+                onSelectShotType: { type in
+                    session.selectShotType(type)
+                    gameScene.setShotType(type)
+                },
                 onPlayAgain: {
                     session.startNewRound()
                     gameScene.prepareForNewRound()
                 }
             )
         }
+        .contentShape(Rectangle())
+        .gesture(shotGesture)
         .onDisappear {
             gameScene.stop()
         }
@@ -47,7 +54,7 @@ struct ContentView: View {
                     velocity: value.velocity
                 )
                 aimSample = sample
-                gameScene.updateAim(using: sample)
+                gameScene.updateAim(using: sample, shotType: session.selectedShotType)
             }
             .onEnded { value in
                 let sample = ShotControlModel.sample(
@@ -57,7 +64,11 @@ struct ContentView: View {
                 gameScene.hideAimGuide()
                 aimSample = nil
                 guard value.translation.height < -24 else { return }
-                gameScene.shoot(using: sample, session: session)
+                gameScene.shoot(
+                    using: sample,
+                    shotType: session.selectedShotType,
+                    session: session
+                )
             }
     }
 }
@@ -72,7 +83,10 @@ struct GameHUD: View {
     let feedback: ShotFeedback
     let goalieLevel: Int
     let aimPower: Double
+    let selectedShotType: ShotType
+    let canSelectShot: Bool
     let isRoundComplete: Bool
+    let onSelectShotType: (ShotType) -> Void
     let onPlayAgain: () -> Void
 
     var body: some View {
@@ -104,13 +118,50 @@ struct GameHUD: View {
                     onPlayAgain: onPlayAgain
                 )
             } else {
-                AimPrompt(power: aimPower)
+                ShotTypePicker(
+                    selection: selectedShotType,
+                    isEnabled: canSelectShot,
+                    onSelect: onSelectShotType
+                )
+                AimPrompt(power: aimPower, shotType: selectedShotType)
             }
         }
         .padding(.horizontal, 18)
         .padding(.top, 10)
         .padding(.bottom, 28)
-        .allowsHitTesting(isRoundComplete)
+    }
+}
+
+struct ShotTypePicker: View {
+    let selection: ShotType
+    let isEnabled: Bool
+    let onSelect: (ShotType) -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(ShotType.allCases) { type in
+                Button {
+                    onSelect(type)
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: type.symbolName)
+                            .font(.headline.bold())
+                        Text(type.title)
+                            .font(.caption2.bold())
+                    }
+                    .foregroundStyle(selection == type ? .black : .white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 9)
+                    .background(
+                        selection == type ? .yellow : .black.opacity(0.62),
+                        in: RoundedRectangle(cornerRadius: 14)
+                    )
+                }
+                .buttonStyle(.plain)
+                .disabled(!isEnabled)
+            }
+        }
+        .opacity(isEnabled ? 1 : 0.55)
     }
 }
 
@@ -209,6 +260,7 @@ struct ShotCallout: View {
 
 struct AimPrompt: View {
     let power: Double
+    let shotType: ShotType
 
     var body: some View {
         VStack(spacing: 8) {
@@ -219,7 +271,7 @@ struct AimPrompt: View {
                     .scaleEffect(y: 1.8)
             }
 
-            Text(power > 0 ? "RELEASE TO SHOOT" : "SWIPE UP TO SHOOT")
+            Text(power > 0 ? shotType.releasePrompt : "SWIPE UP TO SHOOT")
                 .font(.subheadline.bold())
                 .foregroundStyle(.white)
                 .padding(.horizontal, 18)
