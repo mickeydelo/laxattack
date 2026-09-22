@@ -33,20 +33,31 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 
 ## Current Implementation
 
-- `MyApp/ContentView.swift` contains the prototype.
+- The user-facing app display name is **Lax Attack**. Internal Xcode target and Swift type names remain `MyApp` to avoid an unnecessary project-wide rename.
+- The implementation is split into three focused files: `ContentView.swift` for SwiftUI composition and HUD, `GameModels.swift` for round/shot state and feedback, and `PocketLaxScene.swift` for RealityKit entities, animation, physics, and collision events.
 - RealityView uses a virtual fixed camera.
-- Green field and goal use primitive RealityKit geometry.
+- The miniature arena uses primitive RealityKit geometry for turf, markings, side boards, sky, hills, clouds, trees, goal, red pipes, and netting.
 - White ball begins kinematic, becomes dynamic on an upward swipe, receives an impulse, and resets after each resolved shot.
 - Swipe vertical distance controls power; horizontal distance controls lateral direction.
+- Dragging before release displays a live dotted 3D ballistic trajectory and a HUD power meter.
 - A retained RealityKit collision subscription detects the invisible goal trigger, goalie saves, and pipe contacts.
-- A scene-update subscription moves a placeholder goalie laterally.
+- The scene-update subscription drives procedural character and environment performance every frame.
+- The primitive shooter has an expressive face, uniform, legs, and lacrosse stick/pocket. It procedurally idles, aims, winds up, releases, celebrates, and reacts to misses/saves.
+- The primitive goalie has an expressive face, helmet, uniform, legs, and stick/pocket. It patrols laterally, increases speed/amplitude as combo difficulty rises, reacts directionally to saves, and slumps after goals.
+- The goal net pulses after a score.
 - Five-shot rounds track score, consecutive-goal combo, remaining shots, feedback, round completion, and replay.
 - Current scoring awards `100 × combo` for each consecutive goal; saves and misses reset the combo.
 - Each completed shot records normalized horizontal input, power, outcome, points, combo, and whether it contacted a pipe; this is the seed for later replay and ghost systems.
 - Pipe-and-in goals currently award a 75-point bonus.
+- Physics contact with the named field marks a shot as a bounce shot; bounce-and-in earns 75 bonus points and is persisted in `ShotResult`.
+- Goal entry above 1.35 meters and wider than 0.48 meters from center is classified as a top-corner finish and earns 100 bonus points.
+- Shot bonuses stack with the base combo score, so a skilled shot can combine combo, pipe, bounce, and placement bonuses.
+- Goal feedback distinguishes standard goals, top-corner finishes, and bounce goals.
 - iOS haptics distinguish release, goal, save, pipe, and miss.
 - The moving goalie is now a readable primitive character silhouette assembled from a helmet, face, torso, legs, and stick, with one kinematic collision body.
-- The SwiftUI HUD is split into `GameHUD` and `StatCard`, while `GameSession` owns observable round state and `PocketLaxScene` owns RealityKit entities, physics, subscriptions, and reset tasks.
+- The placeholder goal now includes a visible primitive mesh grid and field-level goal line for clearer depth and cage readability.
+- The SwiftUI HUD is composed from small section views, while `GameSession` owns observable round state and `PocketLaxScene` owns RealityKit entities, physics, subscriptions, and reset tasks.
+- The upgraded HUD includes Lax Attack branding, current/best score, five visual shot indicators, goalie difficulty, animated shot callouts, combo, live power, goals, accuracy, and replay.
 - iPhone portrait orientation is configured in build settings.
 - iOS deployment target is 26.0 so the installed iOS 26.5 simulator can run the project.
 
@@ -63,10 +74,10 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 
 ## Immediate Build Target
 
-- Tune shot velocity, goalie size/speed, camera framing, trigger placement, and reset timing through hands-on play.
-- Add distinct placeholder audio and haptics for release, pipe, save, goal, and miss.
-- Add shot result data that can later support accuracy bonuses and deterministic replays.
-- Replace the block goalie with the first readable primitive character silhouette before starting authored character assets.
+- Perform hands-on tuning of shot velocity, trajectory prediction, camera framing, character scale, goalie speed, collision bounds, and reset timing.
+- Add authored audio assets for pocket movement, release snap, bounce, pipe, save, net impact, crowd, and UI.
+- Add a first quick-stick challenge that uses timing rather than free aiming.
+- Establish an external modeled/rigged character asset pipeline to replace procedural primitives while preserving the current animation state machine.
 
 ## Guardrails
 
@@ -81,3 +92,6 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - 2026-09-22: Created shared memory file and recorded the prototype, product plan, environment constraints, and immediate Phase 1 target.
 - 2026-09-22: Implemented the Phase 1 five-shot loop with goal/save/pipe/miss detection, score, combo, moving placeholder goalie, fast resets, round-complete replay, and a compact HUD. The project built successfully and launched on the iPhone 17 Pro simulator with the process remaining running.
 - 2026-09-22: Added deterministic shot-result records, pipe-and-in bonus scoring, distinct iOS haptics, and a primitive multi-part goalie silhouette. Corrected child geometry positions relative to the goalie's centered collision parent. The updated project builds successfully.
+- 2026-09-22: Changed the generated bundle display name to **Lax Attack** while preserving internal target names. The project builds successfully afterward.
+- 2026-09-22: Added bounce-shot tracking, top-corner classification, stackable skill bonuses, richer goal callouts, a primitive goal net, and a goal-line marking. The updated build compiled and launched successfully on the iPhone 17 Pro simulator.
+- 2026-09-22: Completed the first large vertical-slice upgrade. Split the project into focused HUD/model/scene files; added a live 3D trajectory guide, procedural shooter performance, reactive difficulty-scaling goalie, pulsing net, richer miniature outdoor arena, improved camera framing, best score, shot indicators, live power, accuracy, and animated round presentation. The project compiled and launched successfully on the iPhone 17 Pro simulator.
