@@ -1,6 +1,20 @@
 import SwiftUI
 import RealityKit
 
+private enum BurstKind {
+    case goal
+    case save
+    case pipe
+}
+
+private struct BurstParticle {
+    let entity: ModelEntity
+    let kind: BurstKind
+    var velocity: SIMD3<Float> = .zero
+    var life: Float = 0
+    var maximumLife: Float = 0.7
+}
+
 @MainActor
 final class PocketLaxScene {
     private let ballStart = SIMD3<Float>(0, 0.18, 1.45)
@@ -9,8 +23,17 @@ final class PocketLaxScene {
     private var goalie: Entity?
     private var shooter: Entity?
     private var shooterStick: Entity?
+    private var shooterTorso: ModelEntity?
+    private var shooterHead: ModelEntity?
+    private var shooterEyes: [ModelEntity] = []
+    private var goalieTorso: ModelEntity?
+    private var goalieHead: ModelEntity?
+    private var goalieEyes: [ModelEntity] = []
     private var goalNet: Entity?
     private var aimDots: [ModelEntity] = []
+    private var ballTrail: [ModelEntity] = []
+    private var trailHistory: [SIMD3<Float>] = []
+    private var burstParticles: [BurstParticle] = []
 
     private let feedbackPlayer = GameFeedbackPlayer()
     private var subscriptions: [EventSubscription] = []
@@ -44,6 +67,8 @@ final class PocketLaxScene {
         addGoalie(to: root)
         addShooter(to: root)
         addAimGuide(to: root)
+        addBallTrail(to: root)
+        addBurstEffects(to: root)
         addLighting(to: root)
         addCamera(to: root)
 
@@ -67,15 +92,12 @@ final class PocketLaxScene {
         )
     }
 
-    func updateAim(using translation: CGSize) {
-        let power = min(max(Float(-translation.height) / 140, 0.8), 2.2)
-        let direction = min(max(Float(translation.width) / 140, -1), 1)
-
+    func updateAim(using sample: ShotControlSample) {
         isAiming = true
-        aimPower = power
-        aimDirection = direction
+        aimPower += (sample.power - aimPower) * 0.35
+        aimDirection += (sample.direction - aimDirection) * 0.35
 
-        let velocity = shotVelocity(power: power, direction: direction)
+        let velocity = shotVelocity(sample: sample)
         for (index, dot) in aimDots.enumerated() {
             let time = Float(index + 1) * 0.115
             let gravity = SIMD3<Float>(0, -4.9 * time * time, 0)
@@ -91,26 +113,28 @@ final class PocketLaxScene {
         }
     }
 
-    func shoot(using translation: CGSize, session: GameSession) {
+    func shoot(using sample: ShotControlSample, session: GameSession) {
         guard let ball else { return }
 
-        let power = min(max(Float(-translation.height) / 140, 0.8), 2.2)
-        let direction = min(max(Float(translation.width) / 140, -1), 1)
-        let input = ShotInput(horizontal: direction, power: power)
+        let input = ShotInput(
+            horizontal: sample.direction,
+            power: sample.power,
+            releaseSpeed: sample.releaseSpeed
+        )
         guard session.beginShot(input: input) else { return }
 
         shotTask?.cancel()
         feedbackPlayer.playRelease()
 
-        aimPower = power
-        aimDirection = direction
-        releaseTime = 0.55
+        aimPower = sample.power
+        aimDirection = sample.direction
+        releaseTime = 0.62
 
         var body = ball.components[PhysicsBodyComponent.self] ?? PhysicsBodyComponent()
         body.mode = .dynamic
         ball.components.set(body)
 
-        let velocity = shotVelocity(power: power, direction: direction)
+        let velocity = shotVelocity(sample: sample)
         ball.applyLinearImpulse(velocity * body.massProperties.mass, relativeTo: nil)
 
         shotTask = Task { @MainActor [weak self, weak session] in
@@ -139,11 +163,11 @@ final class PocketLaxScene {
         subscriptions.removeAll()
     }
 
-    private func shotVelocity(power: Float, direction: Float) -> SIMD3<Float> {
+    private func shotVelocity(sample: ShotControlSample) -> SIMD3<Float> {
         SIMD3<Float>(
-            direction * 1.55,
-            1.9 + power * 1.18,
-            -(7.4 + power * 2.3)
+            sample.direction * 2.35,
+            2.25 + sample.power * 1.12,
+            -(8.5 + sample.power * 1.82)
         )
     }
 
@@ -157,6 +181,7 @@ final class PocketLaxScene {
                 celebrationTime = 1
                 goalieSlumpTime = 0.8
                 netPulseTime = 0.45
+                emitBurst(.goal, at: ball?.position ?? [0, 1, -4.7])
                 feedbackPlayer.playGoal()
                 scheduleReset(session: session)
             }
@@ -166,10 +191,12 @@ final class PocketLaxScene {
             goalieReactionDirection = ballX >= goalieX ? 1 : -1
             goalieReactionTime = 0.75
             disappointmentTime = 0.65
+            emitBurst(.save, at: ball?.position ?? [0, 0.8, -4.3])
             feedbackPlayer.playSave()
             scheduleReset(session: session)
         } else if names.contains("Goal Pipe") {
             session.registerPipe()
+            emitBurst(.pipe, at: ball?.position ?? [0, 1, -4.5])
             feedbackPlayer.playPipe()
         } else if names.contains("Field") {
             session.registerBounce()
@@ -209,12 +236,19 @@ final class PocketLaxScene {
         ball.components.set(PhysicsMotionComponent())
         ball.setPosition(ballStart, relativeTo: ball.parent)
         ball.orientation = .init()
+        trailHistory.removeAll(keepingCapacity: true)
+        for trail in ballTrail {
+            trail.isEnabled = false
+        }
     }
 
     private func update(deltaTime: TimeInterval, session: GameSession) {
         elapsedTime += deltaTime
         updateGoalie(deltaTime: Float(deltaTime), level: session.difficultyLevel)
         updateShooter(deltaTime: Float(deltaTime))
+        updateCharacterEyes()
+        updateBallTrail(isActive: session.isAwaitingResult)
+        updateBurstEffects(deltaTime: Float(deltaTime))
         updateGoalNet(deltaTime: Float(deltaTime))
     }
 
@@ -223,23 +257,38 @@ final class PocketLaxScene {
 
         let speed = 1.15 + Float(level) * 0.2
         let amplitude = 0.45 + Float(level) * 0.06
+        let readyBounce = sin(Float(elapsedTime) * 4.6) * 0.018
         var x = sin(Float(elapsedTime) * speed) * amplitude
+        var rootY = readyBounce
         var roll: Float = 0
+        var squash = SIMD3<Float>(1, 1, 1)
 
         if goalieReactionTime > 0 {
             goalieReactionTime = max(0, goalieReactionTime - deltaTime)
-            let progress = 1 - goalieReactionTime / 0.75
-            let arc = sin(progress * .pi)
-            x += goalieReactionDirection * arc * 0.28
-            roll = -goalieReactionDirection * arc * 0.42
+            let progress = min(1, 1 - goalieReactionTime / 0.75)
+            let attack = sin(progress * .pi)
+            let recoil = sin(progress * .pi * 2) * (1 - progress)
+            x += goalieReactionDirection * attack * 0.34
+            rootY += attack * 0.12
+            roll = -goalieReactionDirection * (attack * 0.46 + recoil * 0.08)
+            squash = [1 + attack * 0.12, 1 - attack * 0.08, 1]
         } else if goalieSlumpTime > 0 {
             goalieSlumpTime = max(0, goalieSlumpTime - deltaTime)
-            let progress = 1 - goalieSlumpTime / 0.8
+            let progress = min(1, 1 - goalieSlumpTime / 0.8)
+            let slump = sin(progress * .pi)
+            rootY -= slump * 0.1
             roll = sin(progress * .pi) * 0.14
+            squash = [1.06, 0.91, 1]
         }
 
         goalie.position.x = x
+        goalie.position.y = rootY
         goalie.orientation = simd_quatf(angle: roll, axis: [0, 0, 1])
+        goalieTorso?.scale = squash
+        goalieHead?.orientation = simd_quatf(
+            angle: -roll * 0.35,
+            axis: [0, 0, 1]
+        )
     }
 
     private func updateShooter(deltaTime: Float) {
@@ -247,35 +296,178 @@ final class PocketLaxScene {
 
         let idleBob = sin(Float(elapsedTime) * 2.4) * 0.012
         var rootY = idleBob
+        var rootZ: Float = 1.72
         var rootRoll: Float = 0
         var stickAngle: Float = -0.28
+        var torsoScale = SIMD3<Float>(1, 1, 1)
+        var headTilt: Float = 0
 
         if isAiming {
-            let normalizedPower = (aimPower - 0.8) / 1.4
-            rootRoll = -aimDirection * 0.08
-            stickAngle = -0.35 - normalizedPower * 0.5 + aimDirection * 0.12
+            let normalizedPower = max(0, min(1, (aimPower - 0.65) / 1.55))
+            rootY -= normalizedPower * 0.035
+            rootZ += normalizedPower * 0.055
+            rootRoll = -aimDirection * 0.1
+            stickAngle = -0.36 - normalizedPower * 0.58 + aimDirection * 0.14
+            torsoScale = [1 + normalizedPower * 0.06, 1 - normalizedPower * 0.055, 1]
+            headTilt = aimDirection * 0.05
         } else if releaseTime > 0 {
             releaseTime = max(0, releaseTime - deltaTime)
-            let progress = 1 - releaseTime / 0.55
-            let snap = sin(min(progress, 1) * .pi)
-            rootRoll = aimDirection * snap * 0.16
-            stickAngle = -0.9 + progress * 1.55
+            let progress = min(1, 1 - releaseTime / 0.62)
+            let attack = sin(min(progress / 0.62, 1) * .pi * 0.5)
+            let settle = progress > 0.62
+                ? sin((progress - 0.62) / 0.38 * .pi) * (1 - progress)
+                : 0
+            rootY += attack * 0.045
+            rootZ -= attack * 0.17
+            rootRoll = aimDirection * attack * 0.2 - aimDirection * settle * 0.08
+            stickAngle = -0.94 + attack * 1.72 - settle * 0.24
+            torsoScale = [1 - attack * 0.08, 1 + attack * 0.11, 1]
+            headTilt = -aimDirection * attack * 0.09
         } else if celebrationTime > 0 {
             celebrationTime = max(0, celebrationTime - deltaTime)
             let progress = 1 - celebrationTime
-            rootY += abs(sin(progress * .pi * 2)) * 0.18
+            let jump = abs(sin(progress * .pi * 2))
+            rootY += jump * 0.18
             rootRoll = sin(progress * .pi * 2) * 0.12
             stickAngle = 0.85
+            torsoScale = [1 - jump * 0.07, 1 + jump * 0.1, 1]
         } else if disappointmentTime > 0 {
             disappointmentTime = max(0, disappointmentTime - deltaTime)
             let progress = 1 - disappointmentTime / 0.7
-            rootRoll = sin(progress * .pi) * -0.1
+            let slump = sin(progress * .pi)
+            rootY -= slump * 0.05
+            rootRoll = slump * -0.1
             stickAngle = -0.05
+            torsoScale = [1.05, 0.93, 1]
+            headTilt = -0.12
         }
 
         shooter.position.y = rootY
+        shooter.position.z = rootZ
         shooter.orientation = simd_quatf(angle: rootRoll, axis: [0, 0, 1])
         shooterStick.orientation = simd_quatf(angle: stickAngle, axis: [0, 0, 1])
+        shooterTorso?.scale = torsoScale
+        shooterHead?.orientation = simd_quatf(angle: headTilt, axis: [0, 1, 0])
+    }
+
+    private func updateCharacterEyes() {
+        guard let ball else { return }
+
+        let blink = sin(Float(elapsedTime) * 1.85) > 0.985
+        let shooterLook = max(-0.018, min(0.018, ball.position.x * 0.012))
+        for eye in shooterEyes {
+            let restingX: Float = eye.position.x < 0 ? -0.09 : 0.09
+            eye.position.x += (restingX + shooterLook - eye.position.x) * 0.08
+            eye.scale.y = blink ? 0.15 : 1
+        }
+
+        let goalieX = goalie?.position.x ?? 0
+        let goalieLook = max(-0.022, min(0.022, (ball.position.x - goalieX) * 0.018))
+        for eye in goalieEyes {
+            let restingX: Float = eye.position.x < 0 ? -0.065 : 0.065
+            eye.position.x += (restingX + goalieLook - eye.position.x) * 0.1
+            eye.scale.y = blink ? 0.15 : 1
+        }
+    }
+
+    private func addBallTrail(to root: Entity) {
+        let material = SimpleMaterial(
+            color: .init(red: 0.82, green: 0.95, blue: 1, alpha: 1),
+            isMetallic: false
+        )
+        for index in 0..<9 {
+            let radius = 0.066 - Float(index) * 0.0048
+            let particle = ModelEntity(
+                mesh: .generateSphere(radius: radius),
+                materials: [material]
+            )
+            particle.isEnabled = false
+            ballTrail.append(particle)
+            root.addChild(particle)
+        }
+    }
+
+    private func updateBallTrail(isActive: Bool) {
+        guard isActive, let ball else {
+            for particle in ballTrail {
+                particle.isEnabled = false
+            }
+            return
+        }
+
+        if let last = trailHistory.last {
+            if simd_distance(last, ball.position) > 0.075 {
+                trailHistory.append(ball.position)
+            }
+        } else {
+            trailHistory.append(ball.position)
+        }
+        if trailHistory.count > ballTrail.count {
+            trailHistory.removeFirst(trailHistory.count - ballTrail.count)
+        }
+
+        for (index, particle) in ballTrail.enumerated() {
+            let historyIndex = trailHistory.count - 1 - index
+            guard historyIndex >= 0 else {
+                particle.isEnabled = false
+                continue
+            }
+            particle.position = trailHistory[historyIndex]
+            particle.scale = .one * (1 - Float(index) * 0.07)
+            particle.isEnabled = true
+        }
+    }
+
+    private func addBurstEffects(to root: Entity) {
+        let materials: [(BurstKind, SimpleMaterial)] = [
+            (.goal, SimpleMaterial(color: .systemYellow, isMetallic: false)),
+            (.save, SimpleMaterial(color: .systemCyan, isMetallic: false)),
+            (.pipe, SimpleMaterial(color: .systemOrange, isMetallic: false))
+        ]
+        for (kind, material) in materials {
+            for _ in 0..<10 {
+                let particle = ModelEntity(
+                    mesh: .generateSphere(radius: 0.055),
+                    materials: [material]
+                )
+                particle.isEnabled = false
+                root.addChild(particle)
+                burstParticles.append(BurstParticle(entity: particle, kind: kind))
+            }
+        }
+    }
+
+    private func emitBurst(_ kind: BurstKind, at position: SIMD3<Float>) {
+        let indices = burstParticles.indices.filter {
+            burstParticles[$0].kind == kind && burstParticles[$0].life <= 0
+        }
+        for (order, index) in indices.prefix(10).enumerated() {
+            let angle = Float(order) / 10 * .pi * 2
+            let vertical = 0.65 + Float(order % 3) * 0.18
+            burstParticles[index].entity.position = position
+            burstParticles[index].entity.scale = .one
+            burstParticles[index].entity.isEnabled = true
+            burstParticles[index].velocity = [
+                cos(angle) * 1.25,
+                vertical,
+                sin(angle) * 0.72
+            ]
+            burstParticles[index].life = 0.72
+            burstParticles[index].maximumLife = 0.72
+        }
+    }
+
+    private func updateBurstEffects(deltaTime: Float) {
+        for index in burstParticles.indices where burstParticles[index].life > 0 {
+            burstParticles[index].life = max(0, burstParticles[index].life - deltaTime)
+            burstParticles[index].velocity.y -= 2.2 * deltaTime
+            burstParticles[index].entity.position += burstParticles[index].velocity * deltaTime
+            let scale = max(0.05, burstParticles[index].life / burstParticles[index].maximumLife)
+            burstParticles[index].entity.scale = .one * scale
+            if burstParticles[index].life == 0 {
+                burstParticles[index].entity.isEnabled = false
+            }
+        }
     }
 
     private func updateGoalNet(deltaTime: Float) {
@@ -527,6 +719,7 @@ final class PocketLaxScene {
             materials: [navy]
         )
         torso.position = [0, -0.005, 0]
+        goalieTorso = torso
         goalie.addChild(torso)
 
         let helmet = ModelEntity(
@@ -534,6 +727,7 @@ final class PocketLaxScene {
             materials: [white]
         )
         helmet.position = [0, 0.4, 0]
+        goalieHead = helmet
         goalie.addChild(helmet)
 
         let face = ModelEntity(
@@ -549,6 +743,7 @@ final class PocketLaxScene {
                 materials: [dark]
             )
             eye.position = [x, 0.41, 0.29]
+            goalieEyes.append(eye)
             goalie.addChild(eye)
 
             let leg = ModelEntity(
@@ -608,6 +803,7 @@ final class PocketLaxScene {
             materials: [jersey]
         )
         torso.position = [0, 0.65, 0]
+        shooterTorso = torso
         shooter.addChild(torso)
 
         let shorts = ModelEntity(
@@ -630,6 +826,7 @@ final class PocketLaxScene {
                 materials: [dark]
             )
             eye.position = [x * 0.65, 1.08, 0.25]
+            shooterEyes.append(eye)
             shooter.addChild(eye)
         }
 
@@ -638,6 +835,7 @@ final class PocketLaxScene {
             materials: [skin]
         )
         head.position = [0, 1.05, 0.02]
+        shooterHead = head
         shooter.addChild(head)
 
         let hairCap = ModelEntity(

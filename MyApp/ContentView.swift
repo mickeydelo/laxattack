@@ -4,7 +4,7 @@ import RealityKit
 struct ContentView: View {
     @State private var session = GameSession()
     @State private var gameScene = PocketLaxScene()
-    @State private var aimTranslation = CGSize.zero
+    @State private var aimSample: ShotControlSample?
 
     var body: some View {
         ZStack {
@@ -25,7 +25,7 @@ struct ContentView: View {
                 accuracy: session.accuracy,
                 feedback: session.feedback,
                 goalieLevel: session.difficultyLevel,
-                aimPower: normalizedAimPower,
+                aimPower: aimSample?.normalizedPower ?? 0,
                 isRoundComplete: session.isRoundComplete,
                 onPlayAgain: {
                     session.startNewRound()
@@ -42,20 +42,23 @@ struct ContentView: View {
         DragGesture(minimumDistance: 12)
             .onChanged { value in
                 guard !session.isAwaitingResult, !session.isRoundComplete else { return }
-                aimTranslation = value.translation
-                gameScene.updateAim(using: value.translation)
+                let sample = ShotControlModel.sample(
+                    translation: value.translation,
+                    velocity: value.velocity
+                )
+                aimSample = sample
+                gameScene.updateAim(using: sample)
             }
             .onEnded { value in
+                let sample = ShotControlModel.sample(
+                    translation: value.translation,
+                    velocity: value.velocity
+                )
                 gameScene.hideAimGuide()
-                aimTranslation = .zero
-                guard value.translation.height < -20 else { return }
-                gameScene.shoot(using: value.translation, session: session)
+                aimSample = nil
+                guard value.translation.height < -24 else { return }
+                gameScene.shoot(using: sample, session: session)
             }
-    }
-
-    private var normalizedAimPower: Double {
-        guard aimTranslation.height < 0 else { return 0 }
-        return min(max(-aimTranslation.height / 240, 0), 1)
     }
 }
 

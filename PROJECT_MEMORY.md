@@ -38,7 +38,7 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - RealityView uses a virtual fixed camera.
 - The miniature arena uses primitive RealityKit geometry for turf, markings, side boards, sky, hills, clouds, trees, goal, red pipes, and netting.
 - White ball begins kinematic, becomes dynamic on an upward swipe, receives an impulse, and resets after each resolved shot.
-- Swipe vertical distance controls power; horizontal distance controls lateral direction.
+- Swipe travel and release velocity jointly control power; horizontal travel plus a small velocity contribution controls lateral direction. Values are clamped for consistency, and very short swipes are rejected.
 - Dragging before release displays a live dotted 3D ballistic trajectory and a HUD power meter.
 - A retained RealityKit collision subscription detects the invisible goal trigger, goalie saves, and pipe contacts.
 - The scene-update subscription drives procedural character and environment performance every frame.
@@ -95,3 +95,12 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - 2026-09-22: Changed the generated bundle display name to **Lax Attack** while preserving internal target names. The project builds successfully afterward.
 - 2026-09-22: Added bounce-shot tracking, top-corner classification, stackable skill bonuses, richer goal callouts, a primitive goal net, and a goal-line marking. The updated build compiled and launched successfully on the iPhone 17 Pro simulator.
 - 2026-09-22: Completed the first large vertical-slice upgrade. Split the project into focused HUD/model/scene files; added a live 3D trajectory guide, procedural shooter performance, reactive difficulty-scaling goalie, pulsing net, richer miniature outdoor arena, improved camera framing, best score, shot indicators, live power, accuracy, and animated round presentation. The project compiled and launched successfully on the iPhone 17 Pro simulator.
+# 2026-09-22: Competitive feel and art direction
+
+- Product name is **Lax Attack**. The runtime remains SwiftUI + RealityKit in portrait orientation.
+- The shot control model now combines swipe travel and release velocity, clamps both aim and power, previews the physical trajectory, and rejects short accidental swipes.
+- Procedural characters now use staged anticipation, release, follow-through, recovery, squash/stretch, eye tracking, blinking, goalie reactions, and result poses.
+- Gameplay feedback includes a pooled spatial ball trail and distinct goal/save/pipe burst colors. Keep effects pooled to avoid per-shot allocation.
+- The professional art decision is Blender for character/equipment modeling, rigging, skinning, and authored clips; RealityKit remains the game engine. Unity is unnecessary unless the whole runtime changes.
+- See `ART_PIPELINE.md` for scale, rig, naming, animation, mobile budget, and USDZ integration conventions.
+- Reference principles from Nintendo sports titles: readable aiming/trajectory information, expressive timing, approachable direct input, and character identity. Do not copy characters, art, UI, or animations.

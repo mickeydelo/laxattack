@@ -5,9 +5,50 @@ import Observation
 import UIKit
 #endif
 
+struct ShotControlSample: Equatable, Sendable {
+    let direction: Float
+    let power: Float
+    let releaseSpeed: Float
+
+    var normalizedPower: Double {
+        Double((power - 0.65) / 1.55)
+    }
+}
+
+enum ShotControlModel {
+    static func sample(
+        translation: CGSize,
+        velocity: CGSize
+    ) -> ShotControlSample {
+        let upwardTravel = max(0, Float(-translation.height))
+        let upwardSpeed = max(0, Float(-velocity.height))
+        let lateralTravel = Float(translation.width)
+        let lateralSpeed = Float(velocity.width)
+
+        let travelPower = min(upwardTravel / 220, 1)
+        let speedPower = min(upwardSpeed / 1_800, 1)
+        let power = clamp(0.65 + travelPower * 1.1 + speedPower * 0.45, 0.65, 2.2)
+
+        let travelAim = lateralTravel / 115
+        let speedAim = lateralSpeed / 3_000
+        let direction = clamp(travelAim + speedAim * 0.22, -1, 1)
+
+        return ShotControlSample(
+            direction: direction,
+            power: power,
+            releaseSpeed: upwardSpeed
+        )
+    }
+
+    private static func clamp(_ value: Float, _ minimum: Float, _ maximum: Float) -> Float {
+        min(max(value, minimum), maximum)
+    }
+}
+
 struct ShotInput: Equatable, Sendable {
     let horizontal: Float
     let power: Float
+    let releaseSpeed: Float
 }
 
 enum ShotOutcome: Equatable, Sendable {
