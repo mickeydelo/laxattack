@@ -7,15 +7,14 @@ def smoothstep(a, b, x):
     return t * t * (3 - 2 * t)
 
 # ------------------------------------------------------------------ specs
-GIRL_FIELD = dict(   # v2: reference key art (home team red/cream, #10)
+GIRL_FIELD = dict(   # women's field kit (reference photo): goggles, headband + ponytail, jersey, kilt, bare hands. Home red/cream #10
     name="girl_field", family="field", skin="skin_light", hair="hair_brown", iris="eye_dark", eye_style="toy",
     head_c=(0.0, 0.0, 1.195), head_r=(0.262, 0.248, 0.268), jaw_taper=0.16, cranium=0.05,
     eye_az=22.0, eye_el=-8.0, eye_size=(0.043, 0.055), lash=True, freckles=False, brow_w=0.008,
-    mouth_w=0.036, mouth_el=-31.0, hair_style="ponytail_helmet", pony_el=-22.0, pony_len=0.72,
-    headgear="helmet", helmet_mat="helmet_red", stripe_mat="helmet_cream", cage_mat="cage_light",
-    kit="kit_cream", kit_trim="kit_red", number_mat="kit_red", bottom="shorts", bottom_mat="kit_red", bottom_trim="kit_cream",
+    mouth_w=0.036, mouth_el=-31.0, hair_style="ponytail", pony_el=30.0, pony_len=1.0, headgear="goggles",
+    kit="kit_red", kit_trim="kit_cream", number_mat="kit_cream", bottom="kilt", bottom_mat="kit_red",
     sock="kit_white", sock_stripe="kit_white", shoe="kit_white", shoe_accent="kit_red",
-    glove="glove_brown", glove_cuff="glove_brown", glove_size=(0.165, 0.145, 0.175), shoe_k=1.28,
+    glove=None, glove_cuff=None, glove_size=(0.1, 0.1, 0.1), shoe_k=1.28,
     number="10", stance=0.0, body_scale=0.82, head_k=1.15,
 )
 BOY_GOALIE = dict(   # v2: away team navy/teal

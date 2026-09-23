@@ -94,3 +94,13 @@ changes how they move, not when, so all frame ranges match the family hero.
   - Faces +Z.
 
 **Validation:** 0 errors; reach errors ≤1.8 cm; loop seams ≤4e-5; baked Y 0.000…1.630 (boy) and −0.017…1.656 (girl goalie).
+
+
+## Women's field kit (girl shooter update)
+Women's field lacrosse uses a different kit from the men's game, per Mickey's reference photo.
+- `lax_shooter` now wears protective **goggles** (no helmet), a white headband and ponytail, a red jersey with a cream #10, a
+  red **kilt**, and bare hands on the stick.
+- **Unchanged:** clip names, frame ranges, release/contact frames and sockets. `helmet_socket` still marks the head centre.
+- 24,948 tris (lighter than the helmet version).
+- `lax_boy_field` keeps the men's kit (helmet, gloves, shorts); its spec is now pinned explicitly.
+- Goalies of both genders keep helmets, throat guards and chest protectors, which is correct for women's goalies too.

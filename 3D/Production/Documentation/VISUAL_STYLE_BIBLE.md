@@ -26,7 +26,8 @@ neck top. Sticks are never scaled, so they read oversized.
 Rejected: `R1_rejected_realistic_head_ratio.png` (v1) — small heads read as generic mobile athletes.
 
 ## 2. Characters
-- Every field player and goalie wears a **glossy molded helmet** with a broad centre stripe, thin side pinstripes, ear
+- **Kit by game:** women's field players wear goggles, a headband, a jersey and a kilt, with bare or thin-gloved hands (reference photo, 2026-09-23). Men's field players and all goalies wear the helmet described next.
+- Men's field players and goalies wear a **glossy molded helmet** with a broad centre stripe, thin side pinstripes, ear
   pads, visor lip and a compact light cage (bars at brow, below the mouth and chin; verticals outside the eyes).
 - Girls show hair below the helmet rim at the back, side puffs and a ponytail with a team-colour scrunchie.
 - **Toy eyes:** one glossy dark oval per eye (`eye_dark`, roughness 0.12, coat 0.3) with two painted highlights, no white

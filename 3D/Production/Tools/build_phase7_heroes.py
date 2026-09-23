@@ -2,7 +2,10 @@
 # with character-specific personality layers so each hero moves differently.
 BOY_FIELD = dict(GIRL_FIELD, name="boy_field", skin="skin_brown", hair="hair_dark", jaw_taper=0.10, cranium=0.04,
                  eye_az=21.0, eye_el=-7.0, eye_size=(0.042, 0.052), lash=False, brow_w=0.012, mouth_w=0.042, mouth_el=-30.0,
-                 hair_style="short", number="22", glove="glove_dark", glove_cuff="glove_dark", body_scale=0.84)
+                 hair_style="short", number="22", glove="glove_dark", glove_cuff="glove_dark", body_scale=0.84,
+                 headgear="helmet", helmet_mat="helmet_red", stripe_mat="helmet_cream", cage_mat="cage_light", kit="kit_cream",
+                 kit_trim="kit_red", number_mat="kit_red", bottom="shorts", bottom_mat="kit_red", bottom_trim="kit_cream",
+                 glove_size=(0.165, 0.145, 0.175), pony_el=-22.0, pony_len=0.72)   # men's kit pinned explicitly
 GIRL_GOALIE = dict(BOY_GOALIE, name="girl_goalie", skin="skin_deep", hair="hair_dark", jaw_taper=0.16, cranium=0.05,
                    eye_az=22.0, eye_el=-8.0, eye_size=(0.044, 0.056), lash=True, brow_w=0.008, mouth_w=0.036, mouth_el=-31.0,
                    hair_style="ponytail_helmet", pony_el=-22.0, pony_len=0.72, number="30", body_scale=0.82)
