@@ -5,12 +5,12 @@ OUT = os.path.join(PROD, "Previews", "StyleValidation")
 BLEND = os.path.join(PROD, "StyleValidation", "LaxAttackStyleValidation.blend")
 
 SPECTATORS = [
-    dict(name="fan_a", family="field", skin="skin_light", hair="hair_blond", iris="iris_blue", head_c=(0, 0, 1.195),
+    dict(name="fan_a", family="field", skin="skin_light", hair="hair_blond", iris="eye_dark", eye_style="toy", body_scale=0.82, head_k=1.15, head_c=(0, 0, 1.195),
          head_r=(0.262, 0.248, 0.268), jaw_taper=0.2, cranium=0.07, eye_az=19, eye_el=-5, eye_size=(0.05, 0.062), lash=True,
          freckles=False, brow_w=0.01, mouth_w=0.046, mouth_el=-28, hair_style="ponytail", headgear="cap", cap_mat="kit_blue",
          kit="accent_gold", kit_trim="kit_white", bottom="shorts", bottom_mat="kit_navy", sock="kit_white", sock_stripe="kit_white",
          shoe="kit_white", shoe_accent="accent_coral", glove=None, glove_cuff=None, glove_size=(0.1, 0.1, 0.1), number=""),
-    dict(name="fan_b", family="field", skin="skin_deep", hair="hair_dark", iris="iris_brown", head_c=(0, 0, 1.19),
+    dict(name="fan_b", family="field", skin="skin_deep", hair="hair_dark", iris="eye_dark", eye_style="toy", body_scale=0.82, head_k=1.15, head_c=(0, 0, 1.19),
          head_r=(0.27, 0.25, 0.26), jaw_taper=0.12, cranium=0.05, eye_az=20, eye_el=-3, eye_size=(0.048, 0.056), lash=False,
          freckles=False, brow_w=0.014, mouth_w=0.052, hair_style="short", headgear="none", kit="kit_white", kit_trim="kit_blue",
          bottom="shorts", bottom_mat="accent_teal", sock="kit_white", sock_stripe="kit_blue", shoe="plastic_dark",
@@ -52,7 +52,7 @@ def build_character_full(spec, coll_, fam, base, loc, rotz=0.0, face=None, stick
     return arm, parts, st, meta
 
 def add_ball_in_pocket(arm, meta, coll_):
-    b = obj_from_geo("ball", ball_geo(), "ball_yellow", coll_)
+    b = obj_from_geo("ball", ball_geo(), "ball", coll_)
     b.parent = arm; b.parent_type = "BONE"; b.parent_bone = "pocket_01"
     bpy.context.view_layer.update()
     arm.data.pose_position = "REST"; bpy.context.view_layer.update()
@@ -61,66 +61,69 @@ def add_ball_in_pocket(arm, meta, coll_):
     arm.data.pose_position = "POSE"; bpy.context.view_layer.update()
     return b
 
+def setup_textures():
+    tdir = os.path.join(PROD, "Arena", "Textures")
+    a = os.path.join(tdir, "turf_albedo.png"); b = os.path.join(tdir, "turf_albedo_mow.png")
+    if not os.path.exists(a):
+        make_turf_texture(a, (0.13, 0.40, 0.07), 1024, 5)
+    if not os.path.exists(b):
+        make_turf_texture(b, (0.10, 0.32, 0.055), 1024, 6)
+    TEX_MATS["turf_tex"] = (a, 0.9); TEX_MATS["turf_tex_mow"] = (b, 0.9)
+    UV_PLANAR["turf_tex"] = 0.35; UV_PLANAR["turf_tex_mow"] = 0.35
+
 def build_scene():
     reset_scene("LaxStyleValidation")
+    setup_textures()
     D = coll("Diorama"); Ch = coll("Characters", D); En = coll("Environment", D); Cr = coll("Crowd", D); Fg = coll("Foreground", D)
     Lk = coll("Lookdev")
     setup_world(); setup_lights(Lk); setup_eevee(64, (720, 1560))
-    # --- playable field (layer 2) + edge (layer 3)
-    field_platform(En); field_markings(En)
+    # --- playable field (layer 2) + arena edge (layer 3)
+    field_platform(En, turf=("turf_tex", "turf_tex_mow")); field_markings(En)
     build_goal(En)
-    board_wall(En, -6.6, -2.4, -12.2, name="boards_back_R"); board_wall(En, 2.4, 6.6, -12.2, name="boards_back_L")
-    board_wall(En, -12.0, 3.5, 6.75, name="boards_side_R", rot=math.radians(90))
-    bench(En, (-5.9, -1.5, 0), 2.2, math.radians(90))
+    rail_fence(En, [(6.8, 5.0), (6.8, -12.4), (-6.8, -12.4), (-6.8, 5.0)], name="field_fence")
+    bench(En, (-6.0, -1.5, 0), 2.2, math.radians(90))
     # --- characters
     girl, gparts, gst, gmeta = build_character_full(GIRL_FIELD, Ch, "field", BASE_FIELD, (0.72, 1.72, 0), face="focused")
     add_ball_in_pocket(girl, gmeta, Ch)
     goalie, _, _, _ = build_character_full(BOY_GOALIE, Ch, "goalie", BASE_GOALIE, (0.0, -4.95, 0), rotz=math.pi, face="determined")
-    # --- spectator layer (4)
-    bleacher(Cr, (-4.3, -13.6, 0), 3.4, 3); bleacher(Cr, (4.3, -13.6, 0), 3.4, 3)
-    fa, *_ = build_character_full(SPECTATORS[0], Cr, "field", BASE_FIELD, (-4.9, -13.6 + 0.45, 0.30), stick=False)
-    pose_spectator(fa, "seated_cheer")
-    fb, *_ = build_character_full(SPECTATORS[1], Cr, "field", BASE_FIELD, (4.0, -13.6 + 0.9, 0.66), stick=False)
+    # --- spectator layer (4): small bleacher off the right corner, behind the fence
+    bleacher(Cr, (-5.2, -14.4, -0.45), 3.4, 3)
+    fb, *_ = build_character_full(SPECTATORS[1], Cr, "field", BASE_FIELD, (-5.6, -14.4 + 0.9, 0.21), stick=False)
     pose_spectator(fb, "seated_cheer")
-    banner(Cr, (-3.6, -12.9, 0.4), "LAX LIFE", 1.5, 0.45, "kit_blue")
-    wooden_sign("SMALL SHOTS\nBIG PLAYS", Cr, (3.2, -12.9, 0.0), 1.5, 0.62, 0.55, 0.0, 0.15, "sign_slogan")
-    # --- scenic middle distance (5): meadow, woods, lake, dock
-    obj_from_geo("meadow", superellipsoid((140, 110, 1.0), 0.15, 0.1, 48, 6, (0, -62, -0.95)), "foliage_a", En)
-    for i, (x, y, h) in enumerate(((-7.8, -15.5, 4.2), (-9.5, -18.0, 5.0), (-6.5, -19.0, 3.6), (8.2, -16.0, 4.6), (9.8, -19.5, 5.2),
-                                   (6.6, -18.6, 3.8), (-12, -22, 5.5), (12.5, -23, 5.8), (-4.8, -24.5, 3.0), (5.2, -25, 3.2))):
+    fa, *_ = build_character_full(SPECTATORS[0], Cr, "field", BASE_FIELD, (-4.4, -14.4 + 0.45, -0.15), stick=False)
+    pose_spectator(fa, "seated_cheer")
+    wooden_sign("PINEBROOK\nFIELD", Cr, (4.2, -12.95, 0.0), 1.9, 0.9, 0.6, 0.0, 0.26, "sign_field")
+    wooden_sign("GOOD PLAYERS\nBRIGHTER DAYS", Cr, (-3.3, -12.95, 0.0), 1.6, 0.7, 0.45, 0.0, 0.15, "sign_slogan")
+    # --- scenic middle distance (5): hedges, broadleaf woods, lakeside
+    obj_from_geo("meadow", superellipsoid((160, 60, 1.0), 0.15, 0.1, 48, 6, (0, -8, -0.95)), "turf_tex", En)
+    for i, x in enumerate((-2.4, -1.3, -0.2, 0.9, 2.0, 3.1, -3.5, -5.2, 5.4)):
+        bush(60 + i, 1.0 + 0.25 * (i % 3), En, loc=(x, -13.3 - 0.3 * (i % 2), -0.45))
+    for i, (x, y, h) in enumerate(((4.2, -15.0, 4.6), (6.8, -16.5, 5.4), (9.5, -14.2, 4.8), (-7.6, -15.2, 5.0), (-9.8, -17.0, 5.6),
+                                   (11.8, -17.5, 5.0), (-12.5, -14.6, 4.6))):
+        deciduous(40 + i, h, En, loc=(x, y, -0.45), n=11)
+    for i, (x, y, h) in enumerate(((13.5, -15.5, 5.8), (-14.0, -18.5, 6.2))):
         pine(10 + i, h, En, loc=(x, y, -0.45))
-    for i, (x, y, h) in enumerate(((-5.2, -17.0, 3.0), (5.8, -17.2, 3.2), (-10.8, -14.0, 3.6), (10.6, -13.6, 3.4))):
-        deciduous(40 + i, h, En, loc=(x, y, -0.45))
-    for i, x in enumerate((-2.0, -0.6, 0.9, 2.3)):
-        bush(60 + i, 0.9, En, loc=(x, -14.8, -0.45))
-    lake(En, (0, -42, -0.45), (60, 26))
-    dock(En, (-6, -31.5, -0.45), 3.6, math.radians(8)); sailboat(En, (7, -44, -0.40), 1.3); sailboat(En, (-11, -50, -0.40), 1.0)
-    for i in range(14):
-        x = -34 + i * 5.2
-        pine(80 + i, 6.5 + (i * 37 % 5), En, tiers=3, loc=(x, -58 - (i % 3) * 2.5, -0.45))
+    lake(En, (0, -31, -0.45), (90, 22))
+    sailboat(En, (-5.5, -31.5, -0.40), 1.5); sailboat(En, (8.5, -37, -0.40), 1.1)
+    far_shore(En, -46, -70, 70, 21, 7.0)
     # --- distant background (6) + sky (7)
-    mountain_range(En, -95, -80, 80, 22, 7, "mountain", True, 16, "mountains_near")
-    mountain_range(En, -130, -110, 110, 30, 9, "mountain_far", True, 20, "mountains_far")
-    for i, (x, y, z, s) in enumerate(((-13, -70, 13.5, 4.0), (9, -78, 16.5, 4.6), (-1, -95, 22, 3.6), (21, -92, 12, 3.2), (-24, -88, 19, 4.2))):
+    mountain_range(En, -150, -130, 130, 30, 9, "mountain_far", True, 20, "mountains_far")
+    for i, (x, y, z, s) in enumerate(((-13, -70, 14.5, 4.0), (9, -78, 17.5, 4.6), (-1, -95, 23, 3.6), (21, -92, 13, 3.2), (-24, -88, 20, 4.2))):
         cloud(90 + i, En, (x, y, z), s)
-    # --- foreground framing (1)
-    rock(1, (0.55, 0.45, 0.42), Fg, (-1.55, 3.3, 0)); rock(2, (0.35, 0.3, 0.25), Fg, (-1.2, 3.9, 0))
-    rock(3, (0.5, 0.42, 0.36), Fg, (1.7, 3.5, 0), "rock_warm")
-    for i, (x, y) in enumerate(((-1.35, 3.0), (1.45, 3.1), (-1.8, 3.8), (1.95, 3.9), (1.1, 4.2))):
-        grass_tuft(20 + i, Fg, (x, y, 0), 0.32)
-    props_bag(Fg, (2.2, 2.5, 0), 0.5); props_bottle(Fg, (1.75, 2.35, 0)); props_bottle(Fg, (1.85, 2.2, 0), "accent_coral")
-    props_balls(Fg, [(-1.9, 2.4), (-1.75, 2.6), (2.5, 3.2)])
-    fence(Fg, -3.2, -2.1, 4.6)
-    # runtime-frustum framing (bottom-right corner of the portrait frame; clear of shooter, HUD, ball path)
-    rock(4, (0.34, 0.3, 0.26), Fg, (-0.66, 2.62, 0), "rock_warm"); grass_tuft(30, Fg, (-0.55, 2.45, 0), 0.26)
-    grass_tuft(31, Fg, (-0.86, 2.9, 0), 0.3); props_balls(Fg, [(-0.42, 2.8)])
+    # --- foreground framing (1): soft corner hedges + a post with a water bottle (bottom corners, clear of the swipe zone centre)
+    bush(80, 1.1, Fg, loc=(1.35, 2.95, 0)); bush(81, 0.9, Fg, loc=(-1.25, 3.05, 0))
+    fp = Builder("fg_post"); fp.add(superellipsoid((0.16, 0.16, 0.9), 0.35, 0.35, 8, 6, (0, 0, 0.45)), "wood"); fp.build(Fg).location = (-0.98, 2.75, 0)
+    props_bottle(Fg, (-0.98, 2.75, 0.9), "accent_teal")
+    rock(4, (0.34, 0.3, 0.26), Fg, (1.05, 2.55, 0), "rock_warm"); grass_tuft(30, Fg, (0.8, 2.4, 0), 0.26)
+    props_bag(Fg, (2.2, 2.5, 0), 0.5); props_balls(Fg, [(-1.9, 2.4), (2.5, 3.2)])
     # --- cameras
     cams = {}
     cams["game"] = make_camera("cam_runtime", game_to_blender((0, 2.9, 6.1)), game_to_blender((0, 0.95, -3.85)), Lk, vfov_deg=52)
+    cams["ref"] = make_camera("cam_reference", (0.3, 7.0, 4.3), (0.15, -3.5, 0.4), Lk, vfov_deg=50)
     cams["p34"] = make_camera("cam_three_quarter", (-0.35, 7.2, 3.6), (0.3, -3.6, 0.7), Lk, vfov_deg=44)
     cams["goal"] = make_camera("cam_goal", (1.9, -1.2, 1.55), (0.0, -6.0, 0.95), Lk, lens=45, portrait=False)
     cams["env"] = make_camera("cam_env", (0.0, 3.5, 5.5), (0.0, -40.0, 3.0), Lk, vfov_deg=58)
-    focus = bpy.data.objects.new("dof_focus", None); Lk.objects.link(focus); focus.location = (0.3, -0.6, 0.9)
+    focus = bpy.data.objects.new("dof_focus", None); Lk.objects.link(focus); focus.location = (0.3, -1.2, 0.9)
     return dict(girl=girl, goalie=goalie, cams=cams, focus=focus)
 
 def build_lineup(x0=60.0):
@@ -133,12 +136,12 @@ def build_lineup(x0=60.0):
     pose_spectator(f, "cheer")
     st, meta = build_stick("attack", L, None, name="attack_stick_lineup")
     st.location = (x0 + 0.3, -1.7, 0.12); st.rotation_euler = (math.radians(12), 0, math.radians(-58))
-    obj_from_geo("lineup_ball", ball_geo(meta["pocket_center"]), "ball_yellow", L).parent = st
+    obj_from_geo("lineup_ball", ball_geo(meta["pocket_center"]), "ball", L).parent = st
     # goal pipe + net section
     frame, cords, gm, net_pt = goal_geo(0.7)
     B = Builder("goal_section")
     for gg in frame[:1]:
-        B.add(gg, "metal_red")
+        B.add(gg, "goal_orange")
     for gg in cords:
         B.add(gg, "cord_white")
     sec = B.build(L); sec.location = (x0 + 1.2, 1.4, 0); sec.scale = (0.6, 0.6, 0.6); sec.rotation_euler.z = math.radians(200)

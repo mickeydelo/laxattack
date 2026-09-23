@@ -84,15 +84,16 @@ def apply_pose(arm, p, family="field", blink=None):
     pbs = arm.pose.bones
     for n in ("pelvis", "spine", "chest", "neck", "head"):
         pbs[n].rotation_euler = Euler([math.radians(a) for a in p[n + "_rot"]], "XYZ")
-    set_loc_world(pbs["pelvis"], p["pelvis_off"])
+    bs = arm.get("body_scale", 1.0)
+    set_loc_world(pbs["pelvis"], V(p["pelvis_off"]) * bs)
     base_z = BASE_GOALIE["pelvis_off"][2] if family == "goalie" else BASE_FIELD["pelvis_off"][2]
     lift = max(0.0, p["pelvis_off"][2] - base_z - 0.05) if family == "field" else max(0.0, p["pelvis_off"][2] - base_z - 0.10)
     st = STANCE[family]
-    set_loc_world(pbs["ik_foot_L"], st["L"] + V(p["footL"]) + V((0, 0, lift)))
-    set_loc_world(pbs["ik_foot_R"], st["R"] + V(p["footR"]) + V((0, 0, lift)))
+    set_loc_world(pbs["ik_foot_L"], (st["L"] + V(p["footL"]) + V((0, 0, lift))) * bs)
+    set_loc_world(pbs["ik_foot_R"], (st["R"] + V(p["footR"]) + V((0, 0, lift))) * bs)
     yaw = p["pelvis_rot"][1] + p["spine_rot"][1] + p["chest_rot"][1]   # bone-local Y of the up-pointing spine = world yaw
     Rz = Matrix.Rotation(math.radians(yaw), 3, "Z")
-    G = V(p["pelvis_off"]) + Rz @ V(p["G"])
+    G = (V(p["pelvis_off"]) + Rz @ V(p["G"])) * bs
     D = (Rz @ V(p["D"])).normalized(); F = orth(Rz @ V(p["F"]), D); X = D.cross(F)
     pbs["stick"].matrix = Matrix(((X.x, D.x, F.x, G.x), (X.y, D.y, F.y, G.y), (X.z, D.z, F.z, G.z), (0, 0, 0, 1)))
     pbs["stick"].scale = (1, 1, 1)

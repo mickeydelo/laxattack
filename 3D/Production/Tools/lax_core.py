@@ -67,12 +67,37 @@ MATS = {
     "cloud":       ((0.95, 0.94, 0.92), 0.95, 0.0, 0.0),
     "sign_paint":  ((0.92, 0.88, 0.76), 0.65, 0.0, 0.0),
     "clay":        ((0.62, 0.60, 0.57), 0.55, 0.0, 0.0),  # neutral lineup override
+    # --- v2 (reference key art): vinyl-toy teams, golden turf, toy eyes
+    "hair_brown":  ((0.13, 0.055, 0.025), 0.40, 0.0, 0.0),
+    "eye_dark":    ((0.018, 0.012, 0.010), 0.12, 0.0, 0.3),
+    "kit_red":     ((0.62, 0.05, 0.04), 0.62, 0.0, 0.0),
+    "kit_cream":   ((0.86, 0.80, 0.68), 0.66, 0.0, 0.0),
+    "helmet_red":  ((0.66, 0.05, 0.035), 0.22, 0.0, 0.6),
+    "helmet_navy": ((0.012, 0.035, 0.085), 0.22, 0.0, 0.6),
+    "helmet_cream":((0.86, 0.80, 0.68), 0.25, 0.0, 0.5),
+    "helmet_teal": ((0.0, 0.33, 0.42), 0.25, 0.0, 0.5),
+    "cage_light":  ((0.75, 0.73, 0.68), 0.35, 0.3, 0.0),
+    "glove_brown": ((0.16, 0.07, 0.03), 0.55, 0.0, 0.0),
+    "glove_dark":  ((0.03, 0.03, 0.035), 0.55, 0.0, 0.0),
+    "goal_orange": ((0.88, 0.16, 0.025), 0.30, 0.2, 0.4),
+    "leaf_a":      ((0.10, 0.34, 0.05), 0.70, 0.0, 0.0),
+    "leaf_b":      ((0.20, 0.48, 0.07), 0.70, 0.0, 0.0),
+    "leaf_c":      ((0.05, 0.22, 0.04), 0.72, 0.0, 0.0),
+    "lake_blue":   ((0.02, 0.22, 0.45), 0.10, 0.0, 0.0),
+    "ball":        ((0.88, 0.86, 0.80), 0.45, 0.0, 0.2),
 }
+
+# Textured materials (image textures are packed into USDZ). name -> (image file, roughness, planar UV scale m^-1)
+TEX_MATS = {}
+UV_PLANAR = {}
+BUILD_XF = None   # optional hook set by the figure builder: f(co, weights) -> co (proportion transform)
 
 def mat(name):
     m = bpy.data.materials.get("M_" + name)
     if m:
         return m
+    if name in TEX_MATS:
+        return mat_tex(name, *TEX_MATS[name][:2])
     rgb, rough, metal, coat = MATS[name]
     m = bpy.data.materials.new("M_" + name)
     if m.node_tree is None:
@@ -291,6 +316,9 @@ class Builder:
                     vw.append({})
             for fc in f:
                 faces.append(tuple(i + o for i in fc)); fmat.append(mats.index(m)); fsm.append(sm)
+        xf = globals().get("BUILD_XF")
+        if xf is not None:
+            verts = [tuple(xf(V(p), w)) for p, w in zip(verts, vw)]
         me = bpy.data.meshes.new(self.name)
         me.from_pydata(verts, [], faces)
         me.validate(clean_customdata=False)
@@ -298,6 +326,13 @@ class Builder:
             me.materials.append(mat(m))
         for i, p in enumerate(me.polygons):
             p.material_index = fmat[i]; p.use_smooth = fsm[i]
+        if any(m in UV_PLANAR for m in mats):
+            uv = me.uv_layers.new(name="UVMap")
+            for poly in me.polygons:
+                k = UV_PLANAR.get(mats[poly.material_index], 1.0)
+                for li in poly.loop_indices:
+                    co = me.vertices[me.loops[li].vertex_index].co
+                    uv.data[li].uv = (co.x * k, co.y * k)
         me.update()
         ob = bpy.data.objects.new(self.name, me)
         collection.objects.link(ob)
@@ -362,7 +397,7 @@ def text_mesh(name, body, size, collection, extrude=0.01, material="line_white",
     return v, f
 
 # ------------------------------------------------------------------ look-dev: lighting / world / camera
-def setup_world(top=(0.16, 0.38, 0.95), horizon=(0.95, 0.86, 0.70), strength=1.1):
+def setup_world(top=(0.22, 0.46, 0.95), horizon=(1.0, 0.86, 0.66), strength=0.8):
     w = bpy.data.worlds.new("LaxSky"); bpy.context.scene.world = w
     w.use_nodes = True
     nt = w.node_tree; nt.nodes.clear()
@@ -380,13 +415,13 @@ def setup_world(top=(0.16, 0.38, 0.95), horizon=(0.95, 0.86, 0.70), strength=1.1
     nt.links.new(bg.outputs[0], out.inputs[0])
     return w
 
-def setup_lights(collection, sun_energy=4.6, sun_angle_deg=11.0):
-    # Warm key (sun, soft), cool rim (area), no fill light: the sky gradient provides fill.
+def setup_lights(collection, sun_energy=6.6, sun_angle_deg=8.0, sun_dir=(-0.42, 0.62, -0.66)):
+    # Golden-hour key (v2): warm sun from behind-left of the goal (screen upper-left), shadows fall toward the camera/right.
+    # Cool rim (area) for separation, no fill light: the warm sky gradient provides fill.
     sd = bpy.data.lights.new("key_sun", "SUN"); sd.energy = sun_energy; sd.angle = math.radians(sun_angle_deg)
-    sd.color = (1.0, 0.93, 0.82)
+    sd.color = (1.0, 0.84, 0.62)
     sun = bpy.data.objects.new("key_sun", sd); collection.objects.link(sun)
-    # from front-left-above of the shooter (shooter faces -Y): light travels toward +x,-y? -> set rotation
-    sun.rotation_euler = Euler((math.radians(48), 0, math.radians(-35)), "XYZ")
+    sun.rotation_euler = V(sun_dir).normalized().to_track_quat("-Z", "Y").to_euler()
     rd = bpy.data.lights.new("rim_area", "AREA"); rd.energy = 900; rd.size = 6; rd.color = (0.80, 0.88, 1.0)
     rim = bpy.data.objects.new("rim_area", rd); collection.objects.link(rim)
     rim.location = (3.5, -9.0, 5.0)
@@ -421,7 +456,7 @@ def setup_eevee(samples=64, res=(720, 1560)):
             vs.look = "Punchy"
         except Exception:
             pass
-    vs.exposure = 0.25; vs.gamma = 1.0
+    vs.exposure = 0.35; vs.gamma = 1.0
     r.image_settings.file_format = "PNG"; r.image_settings.color_mode = "RGB"
 
 def make_camera(name, loc, target, collection, vfov_deg=None, lens=None, portrait=True):
@@ -504,6 +539,48 @@ def downscale(src, out, width):
     o = bpy.data.images.new("ds_tmp", width, nh, alpha=True); o.pixels = a.ravel()
     o.filepath_raw = out; o.file_format = "PNG"; o.save(); bpy.data.images.remove(o)
     return out
+
+# ------------------------------------------------------------------ textures
+def make_turf_texture(path, base=(0.13, 0.40, 0.07), size=1024, seed=5):
+    """Tiling lush-turf albedo: multi-octave value noise + short blade strokes + light speckle. Linear RGB -> sRGB PNG."""
+    import numpy as np
+    rng = np.random.default_rng(seed)
+    def tile_noise(cells):
+        g = rng.random((cells, cells)).astype(np.float32)
+        x = np.linspace(0, cells, size, endpoint=False); i0 = np.floor(x).astype(int); f = x - i0
+        f = f * f * (3 - 2 * f); i1 = (i0 + 1) % cells
+        a = g[i0][:, i0] * (1 - f)[None, :] + g[i0][:, i1] * f[None, :]
+        b = g[i1][:, i0] * (1 - f)[None, :] + g[i1][:, i1] * f[None, :]
+        return a * (1 - f)[:, None] + b * f[:, None]
+    n = 0.5 * tile_noise(4) + 0.3 * tile_noise(16) + 0.2 * tile_noise(64)
+    blades = np.zeros((size, size), np.float32)
+    for _ in range(26000):
+        x, y = rng.integers(0, size, 2); L = rng.integers(5, 14); dx = rng.integers(-2, 3)
+        v = rng.uniform(-1, 1)
+        for t in range(L):
+            blades[(y + t) % size, (x + (dx * t) // L) % size] += v * (1 - t / L)
+    blades = np.clip(blades, -1.5, 1.5) / 1.5
+    speck = (rng.random((size, size)) > 0.9975).astype(np.float32)
+    lum = 0.74 + 0.60 * (n - 0.5) + 0.42 * blades + 0.45 * speck
+    rgb = np.stack([base[0] * lum * (1 + 0.25 * (n - 0.5)), base[1] * lum, base[2] * lum * (1 - 0.2 * (n - 0.5))], -1)
+    rgb = np.clip(rgb, 0, 1)
+    srgb = np.where(rgb <= 0.0031308, rgb * 12.92, 1.055 * np.power(rgb, 1 / 2.4) - 0.055)
+    img = np.concatenate([srgb, np.ones((size, size, 1), np.float32)], -1)
+    im = bpy.data.images.new(os.path.basename(path), size, size, alpha=False)
+    im.pixels = img.ravel(); im.filepath_raw = path; im.file_format = "PNG"
+    os.makedirs(os.path.dirname(path), exist_ok=True); im.save(); bpy.data.images.remove(im)
+    return path
+
+def mat_tex(name, path, rough):
+    m = bpy.data.materials.new("M_" + name)
+    if m.node_tree is None:
+        m.use_nodes = True
+    nt = m.node_tree; b = nt.nodes.get("Principled BSDF")
+    t = nt.nodes.new("ShaderNodeTexImage"); t.image = bpy.data.images.load(path, check_existing=True)
+    nt.links.new(t.outputs["Color"], b.inputs["Base Color"])
+    b.inputs["Roughness"].default_value = rough
+    m.diffuse_color = (0.1, 0.35, 0.06, 1)
+    return m
 
 # ------------------------------------------------------------------ git helpers
 def git(*args, timeout=300):

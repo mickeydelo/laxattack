@@ -7,30 +7,61 @@ def smoothstep(a, b, x):
     return t * t * (3 - 2 * t)
 
 # ------------------------------------------------------------------ specs
-GIRL_FIELD = dict(
-    name="girl_field", family="field", skin="skin_tan", hair="hair_auburn", iris="iris_brown",
-    head_c=(0.0, 0.0, 1.195), head_r=(0.262, 0.248, 0.268), jaw_taper=0.16, cranium=0.07,
-    eye_az=19.0, eye_el=-3.0, eye_size=(0.050, 0.059), lash=True, freckles=False, brow_w=0.010,
-    mouth_w=0.046, mouth_el=-27.5, hair_style="ponytail", headgear="goggles", kit="kit_blue", kit_trim="kit_white",
-    bottom="kilt", bottom_mat="kit_navy", sock="kit_white", sock_stripe="kit_blue", shoe="kit_white",
-    shoe_accent="accent_coral", glove="kit_white", glove_cuff="accent_coral", glove_size=(0.135, 0.12, 0.15),
-    number="7", stance=0.0,
+GIRL_FIELD = dict(   # v2: reference key art (home team red/cream, #10)
+    name="girl_field", family="field", skin="skin_light", hair="hair_brown", iris="eye_dark", eye_style="toy",
+    head_c=(0.0, 0.0, 1.195), head_r=(0.262, 0.248, 0.268), jaw_taper=0.16, cranium=0.05,
+    eye_az=22.0, eye_el=-8.0, eye_size=(0.043, 0.055), lash=True, freckles=False, brow_w=0.008,
+    mouth_w=0.036, mouth_el=-31.0, hair_style="ponytail_helmet", pony_el=-22.0, pony_len=0.72,
+    headgear="helmet", helmet_mat="helmet_red", stripe_mat="helmet_cream", cage_mat="cage_light",
+    kit="kit_cream", kit_trim="kit_red", number_mat="kit_red", bottom="shorts", bottom_mat="kit_red", bottom_trim="kit_cream",
+    sock="kit_white", sock_stripe="kit_white", shoe="kit_white", shoe_accent="kit_red",
+    glove="glove_brown", glove_cuff="glove_brown", glove_size=(0.165, 0.145, 0.175), shoe_k=1.28,
+    number="10", stance=0.0, body_scale=0.82, head_k=1.15,
 )
-BOY_GOALIE = dict(
-    name="boy_goalie", family="goalie", skin="skin_brown", hair="hair_dark", iris="iris_green",
-    head_c=(0.0, 0.0, 1.19), head_r=(0.268, 0.25, 0.262), jaw_taper=0.12, cranium=0.05,
-    eye_az=20.0, eye_el=-3.0, eye_size=(0.049, 0.057), lash=False, freckles=False, brow_w=0.014,
-    mouth_w=0.052, hair_style="short", headgear="helmet", kit="kit_blue", kit_trim="kit_white",
-    bottom="shorts", bottom_mat="kit_navy", sock="kit_blue", sock_stripe="kit_white", shoe="plastic_dark",
-    shoe_accent="kit_white", glove="kit_white", glove_cuff="kit_blue", glove_size=(0.17, 0.15, 0.18),
-    number="1", stance=0.08, chest_protector=True,
+BOY_GOALIE = dict(   # v2: away team navy/teal
+    name="boy_goalie", family="goalie", skin="skin_tan", hair="hair_dark", iris="eye_dark", eye_style="toy",
+    head_c=(0.0, 0.0, 1.19), head_r=(0.268, 0.25, 0.262), jaw_taper=0.10, cranium=0.04,
+    eye_az=22.0, eye_el=-7.0, eye_size=(0.043, 0.053), lash=False, freckles=False, brow_w=0.011,
+    mouth_w=0.040, mouth_el=-30.0, hair_style="short", headgear="helmet", helmet_mat="helmet_navy",
+    stripe_mat="helmet_teal", cage_mat="cage_light", kit="kit_navy", kit_trim="accent_teal", number_mat="kit_white",
+    bottom="shorts", bottom_mat="kit_navy", bottom_trim="accent_teal", sock="kit_white", sock_stripe="accent_teal",
+    shoe="kit_white", shoe_accent="accent_teal", glove="glove_dark", glove_cuff="glove_dark", glove_size=(0.20, 0.18, 0.21),
+    shoe_k=1.28, number="3", stance=0.08, chest_protector=True, protector_mat="kit_navy", protector_accent="accent_teal",
+    body_scale=0.84, head_k=1.15,
 )
 
 SH_X, SH_Z = 0.19, 0.875
 UPPER, FORE = 0.23, 0.26
 ARM_A = math.radians(52)
 HIP_X = 0.085
-GRIP_SPREAD = 0.28
+GRIP_SPREAD = 0.26
+
+# ------------------------------------------------------------------ proportions (v2)
+# Figures are designed in a 1.5 m "design space" and transformed at build time: body segments scale uniformly about the
+# ground (body_scale), everything driven by head bones scales up about the neck top (head_k). Sticks are never scaled.
+HEAD_BONES = {"head", "jaw", "eye_L", "eye_R", "lid_L", "lid_R", "brow_L", "brow_R", "mouth_L", "mouth_R",
+              "hair_01", "hair_02", "hair_03", "throat_guard"}
+STICK_BONES = {"stick", "pocket_01", "pocket_02", "ik_hand_L", "ik_hand_R"}
+NECK_TOP = V((0.0, 0.0, 0.965))
+
+def prop_xf(s):
+    bs = s.get("body_scale", 1.0); hk = s.get("head_k", 1.0)
+    N2 = NECK_TOP * bs
+    return (lambda p: V(p) * bs), (lambda p: N2 + (V(p) - NECK_TOP) * hk)
+
+def set_proportions(s):
+    body, head = prop_xf(s)
+    def xf(p, w):
+        if not w:
+            return p
+        b = max(w, key=w.get)
+        if b in STICK_BONES:
+            return p
+        return head(p) if b in HEAD_BONES else body(p)
+    globals()["BUILD_XF"] = xf
+
+def clear_proportions():
+    globals()["BUILD_XF"] = None
 BALL_R = 0.08   # recommended runtime visual ball radius (runtime currently renders 0.12)
 
 # ------------------------------------------------------------------ head surface model
@@ -152,8 +183,16 @@ def build_skeleton(s, collection, name):
     arm.select_set(True)
     bpy.ops.object.mode_set(mode="EDIT")
     eb = ad.edit_bones
+    body, head = prop_xf(s)
+    g0d = L["R"]["gl"]; g0shift = body(g0d) - g0d
+    def T(n, p):
+        if n in HEAD_BONES:
+            return head(p)
+        if n in STICK_BONES:
+            return V(p) + g0shift
+        return body(p)
     def bone(n, h, t, parent=None, deform=True, connect=False, roll_z=None):
-        b = eb.new(n); b.head = h; b.tail = t
+        b = eb.new(n); b.head = T(n, h); b.tail = T(n, t)
         if parent:
             b.parent = eb[parent]; b.use_connect = connect
         b.use_deform = deform
@@ -199,10 +238,10 @@ def build_skeleton(s, collection, name):
         bone("pole_knee_" + side, (0.13 * sx, -0.7, 0.30), (0.13 * sx, -0.7, 0.36), "root", deform=False)
         bone("pole_elbow_" + side, (0.55 * sx, 0.40, 0.62), (0.55 * sx, 0.40, 0.68), "chest", deform=False)
     # secondary chains: hair (ponytail), hem front/back
-    p0 = H.point(180, 30) + V((0, 0.03, 0.02))
-    bone("hair_01", p0, p0 + V((0, 0.10, -0.02)), "head")
-    bone("hair_02", p0 + V((0, 0.10, -0.02)), p0 + V((0, 0.17, -0.16)), "hair_01", connect=True)
-    bone("hair_03", p0 + V((0, 0.17, -0.16)), p0 + V((0, 0.16, -0.34)), "hair_02", connect=True)
+    p0 = H.point(180, s.get("pony_el", 30)) + V((0, 0.03, 0.02)); k = s.get("pony_len", 1.0)
+    bone("hair_01", p0, p0 + V((0, 0.10, -0.02)) * k, "head")
+    bone("hair_02", p0 + V((0, 0.10, -0.02)) * k, p0 + V((0, 0.17, -0.16)) * k, "hair_01", connect=True)
+    bone("hair_03", p0 + V((0, 0.17, -0.16)) * k, p0 + V((0, 0.16, -0.34)) * k, "hair_02", connect=True)
     bone("hem_F", (0, -0.12, 0.58), (0, -0.14, 0.44), "pelvis")
     bone("hem_B", (0, 0.12, 0.58), (0, 0.14, 0.44), "pelvis")
     if s["family"] == "goalie":
@@ -217,6 +256,7 @@ def build_skeleton(s, collection, name):
     bone("ik_hand_R", g0, g0 + V((0, 0, 0.05)), "stick", deform=False)
     bone("ik_hand_L", g0 + V((0, 0, -GRIP_SPREAD)), g0 + V((0, 0, -GRIP_SPREAD + 0.05)), "stick", deform=False)
     bpy.ops.object.mode_set(mode="OBJECT")
+    arm["body_scale"] = s.get("body_scale", 1.0); arm["head_k"] = s.get("head_k", 1.0); arm["family"] = s["family"]
     pb = arm.pose.bones
     for side in ("L", "R"):
         c = pb["forearm_" + side].constraints.new("IK"); c.target = arm; c.subtarget = "ik_hand_" + side
@@ -240,6 +280,13 @@ def body_weights(p):
     return {"chest": 1.0}
 
 def build_character(s, collection, arm):
+    set_proportions(s)
+    try:
+        return _build_character(s, collection, arm)
+    finally:
+        clear_proportions()
+
+def _build_character(s, collection, arm):
     H = Head(s); L = rest_layout(s)
     parts = {}
     skin, hair, kit, trim = s["skin"], s["hair"], s["kit"], s["kit_trim"]
@@ -254,11 +301,16 @@ def build_character(s, collection, arm):
     ew, eh = s["eye_size"]
     for side, sx in (("L", 1), ("R", -1)):
         az, el = s["eye_az"] * sx, s["eye_el"]
-        F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.018, eh), 20, 12), az, el, -0.004), "eye_white", "head")
-        F.add(H.place(ellipsoid((0, 0, 0), (ew * 0.72, 0.012, eh * 0.78), 18, 10), az - 2.0 * sx, el - 1.5, 0.004), s["iris"], "eye_" + side)
-        F.add(H.place(ellipsoid((0, 0, 0), (ew * 0.40, 0.011, eh * 0.45), 14, 8), az - 2.0 * sx, el - 1.8, 0.0075), "pupil", "eye_" + side)
-        F.add(H.place(ellipsoid((0, 0, 0), (0.012, 0.009, 0.013), 10, 6), az + 3.0 * sx, el + 6.0, 0.013), "eye_white", "head")
-        F.add(H.place(ellipsoid((0, 0, 0), (0.006, 0.006, 0.006), 8, 5), az - 5.5 * sx, el - 7.0, 0.012), "eye_white", "head")
+        if s.get("eye_style") == "toy":   # vinyl-toy eye: one glossy dark oval + two painted highlights
+            F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.016, eh), 22, 12), az, el, -0.002), s["iris"], "eye_" + side)
+            F.add(H.place(ellipsoid((0, 0, 0), (0.015, 0.008, 0.017), 10, 6), az + 3.5 * sx, el + 5.0, 0.012), "eye_white", "eye_" + side)
+            F.add(H.place(ellipsoid((0, 0, 0), (0.007, 0.006, 0.007), 8, 5), az - 4.0 * sx, el - 6.0, 0.011), "eye_white", "eye_" + side)
+        else:
+            F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.018, eh), 20, 12), az, el, -0.004), "eye_white", "head")
+            F.add(H.place(ellipsoid((0, 0, 0), (ew * 0.72, 0.012, eh * 0.78), 18, 10), az - 2.0 * sx, el - 1.5, 0.004), s["iris"], "eye_" + side)
+            F.add(H.place(ellipsoid((0, 0, 0), (ew * 0.40, 0.011, eh * 0.45), 14, 8), az - 2.0 * sx, el - 1.8, 0.0075), "pupil", "eye_" + side)
+            F.add(H.place(ellipsoid((0, 0, 0), (0.012, 0.009, 0.013), 10, 6), az + 3.0 * sx, el + 6.0, 0.013), "eye_white", "head")
+            F.add(H.place(ellipsoid((0, 0, 0), (0.006, 0.006, 0.006), 8, 5), az - 5.5 * sx, el - 7.0, 0.012), "eye_white", "head")
         # lid: authored closed (covers the eye), collapsed to a thin upper lid by lid bone scale in every pose
         p, tx, n, tu = H.frame(az, el)
         top = p + tu * (eh + 0.004) + n * 0.004
@@ -320,6 +372,21 @@ def build_character(s, collection, arm):
         # headband
         hb = [H.point(a, 38 - 22 * smoothstep(60, 180, abs(a)), 1.055) for a in range(-180, 181, 20)]
         Hb.add(sweep(hb, [0.012] * len(hb), 8, 1.7, cap0=False, cap1=False), "kit_white", "head")
+    elif s["hair_style"] == "ponytail_helmet":   # hair shows below the helmet rim at the back + ponytail + side puffs
+        Hb.add(H.shell_line(1.04, lambda az: 20 - 70 * smoothstep(40, 165, abs(az)), 0.02), hair, "head")
+        for sx in (1, -1):
+            for az, el, r in ((122, -40, (0.075, 0.065, 0.07)), (148, -44, (0.07, 0.065, 0.065))):
+                Hb.add(ellipsoid(H.point(az * sx, el, 1.02), r, 14, 8), hair, "head")
+        p0 = H.point(180, s.get("pony_el", -22)) + V((0, 0.03, 0.02)); k = s.get("pony_len", 1.0)
+        pts = bezier_pts(p0, p0 + V((0, 0.14, 0.03)) * k, p0 + V((0, 0.22, -0.12)) * k, p0 + V((0, 0.13, -0.36)) * k, 11)
+        rad = [x * (0.8 + 0.2 * k) for x in (0.06, 0.085, 0.10, 0.10, 0.095, 0.085, 0.07, 0.055, 0.04, 0.025, 0.006)]
+        def pony_w2(p):
+            d = p.z - p0.z; y = p.y - p0.y
+            t = max(0.0, min(1.0, (y * 0.6 - d) / (0.42 * k)))
+            w1 = 1 - smoothstep(0.0, 0.35, t); w3 = smoothstep(0.45, 0.9, t); w2 = max(0.0, 1 - w1 - w3)
+            return {"hair_01": w1, "hair_02": w2, "hair_03": w3}
+        Hb.add(sweep(pts, rad, 14, 0.8), hair, weights=pony_w2)
+        Hb.add(torus(p0 + V((0, 0.035, 0.005)), 0.055, 0.019, 20, 8, "Y"), s.get("kit_trim", "accent_coral"), "hair_01")
     else:  # short hair tufts visible under a helmet
         Hb.add(H.shell_line(1.03, lambda az: 40 - 52 * smoothstep(60, 120, abs(az)) - 12 * smoothstep(120, 170, abs(az)), 0.02), hair, "head")
         for sx in (1, -1):
@@ -349,25 +416,31 @@ def build_character(s, collection, arm):
         G.add(H.shell_line(1.06, lambda az: 26 - 10 * smoothstep(60, 180, abs(az)), 0.02, 48, 10), s.get("cap_mat", "kit_blue"), "head")
         G.add(H.place(superellipsoid((0.30, 0.16, 0.025), 0.5, 0.8, 20, 6, (0, 0.07, 0)), 0, 26, 0.0, 1.06), s.get("cap_mat", "kit_blue"), "head")
         G.add(ellipsoid(H.point(0, 89, 1.08), (0.02, 0.02, 0.012), 8, 5), "kit_white", "head")
-    elif s["headgear"] == "helmet":  # helmet with face cage and throat guard
-        G.add(H.shell_line(1.13, lambda az: 36 - 86 * smoothstep(50, 74, abs(az)) + 20 * smoothstep(112, 142, abs(az)), 0.03, 72, 20), "plastic_blue", "head")
-        ridge = [H.point(0, e, 1.17) for e in range(30, 181, 15)]
-        G.add(sweep(ridge, [0.018] * len(ridge), 8, 2.2), "plastic_white", "head")
-        visor = [H.point(a, 35, 1.19) for a in range(-56, 57, 8)]
-        G.add(sweep(visor, [0.02] * len(visor), 8, 2.0), "plastic_blue", "head")
+    elif s["headgear"] == "helmet":  # helmet with face cage (+ throat guard for goalies)
+        hm, sm, cm = s.get("helmet_mat", "plastic_blue"), s.get("stripe_mat", "plastic_white"), s.get("cage_mat", "metal_silver")
+        G.add(H.shell_line(1.13, lambda az: 36 - 86 * smoothstep(50, 74, abs(az)) + 20 * smoothstep(112, 142, abs(az)), 0.03, 72, 20), hm, "head")
+        ridge = [H.point(0, e, 1.155) for e in range(32, 181, 12)]
+        G.add(sweep(ridge, [0.012] * len(ridge), 8, 4.5, up=(0, -1, 0)), sm, "head")
         for sx in (1, -1):
-            G.add(H.place(superellipsoid((0.09, 0.05, 0.10), 0.5, 0.6, 16, 10), 92 * sx, -12, 0.035, 1.12), "plastic_white", "head")
-        cage_r = 1.27
+            side = [H.point(22 * sx, e, 1.145) for e in range(40, 150, 12)]
+            G.add(sweep(side, [0.006] * len(side), 6, 2.5), sm, "head")
+        visor = [H.point(a, 35, 1.19) for a in range(-56, 57, 8)]
+        G.add(sweep(visor, [0.02] * len(visor), 8, 2.0), hm, "head")
+        for sx in (1, -1):
+            G.add(H.place(superellipsoid((0.09, 0.05, 0.10), 0.5, 0.6, 16, 10), 92 * sx, -12, 0.035, 1.12), sm, "head")
+            G.add(H.place(ellipsoid((0, 0, 0), (0.02, 0.012, 0.02), 10, 6), 92 * sx, -12, 0.064, 1.12), "rubber_dark", "head")
+        cage_r = 1.21
         for el in (30, -36):
-            pts = [H.point(a, el, cage_r) for a in range(-64, 65, 8)]
-            G.add(sweep(pts, [0.011] * len(pts), 8, 1.0), "metal_silver", "head")
-        chin = [H.point(a, -54 + 8 * (abs(a) / 64) ** 2, cage_r * 0.97) for a in range(-64, 65, 8)]
-        G.add(sweep(chin, [0.013] * len(chin), 8, 1.0), "metal_silver", "head")
-        for a in (-40, 40, -64, 64):
+            pts = [H.point(a, el, cage_r) for a in range(-58, 59, 8)]
+            G.add(sweep(pts, [0.011] * len(pts), 8, 1.0), cm, "head")
+        chin = [H.point(a, -54 + 8 * (abs(a) / 58) ** 2, cage_r * 0.97) for a in range(-58, 59, 8)]
+        G.add(sweep(chin, [0.013] * len(chin), 8, 1.0), cm, "head")
+        for a in (-38, 38, -58, 58):
             pts = [H.point(a, e, cage_r * (0.97 if e < -40 else 1.0)) for e in (30, 5, -36, -52)]
-            G.add(sweep(pts, [0.011] * 4, 8, 1.0), "metal_silver", "head")
-        G.add(H.place(superellipsoid((0.20, 0.05, 0.08), 0.45, 0.6, 18, 10), 0, -58, 0.07, 1.12), "plastic_white", "head")
-        G.add(xform(superellipsoid((0.17, 0.035, 0.11), 0.5, 0.7, 16, 10), Matrix.Translation(H.point(0, -52, 1.25) + V((0, -0.02, -0.07)))), "plastic_blue", "throat_guard")
+            G.add(sweep(pts, [0.011] * 4, 8, 1.0), cm, "head")
+        G.add(H.place(superellipsoid((0.20, 0.05, 0.08), 0.45, 0.6, 18, 10), 0, -58, 0.07, 1.12), sm, "head")
+        if s["family"] == "goalie":
+            G.add(xform(superellipsoid((0.17, 0.035, 0.11), 0.5, 0.7, 16, 10), Matrix.Translation(H.point(0, -52, 1.25) + V((0, -0.02, -0.07)))), hm, "throat_guard")
     if G.parts:
         parts["headgear"] = G.build(collection, arm)
     # ---- torso / kit
@@ -386,11 +459,11 @@ def build_character(s, collection, arm):
         return deform(geo, f)
     num_b = text_mesh("num_b", s["number"] or " ", 0.20, collection, 0.012) if s["number"] else ([], [])
     num_b = xform(num_b, Matrix.Translation((0, 0.128, 0.72)) @ Matrix.Rotation(math.radians(90), 4, "X") @ Matrix.Rotation(math.radians(180), 4, "Y"))
-    K.add(wrap(num_b, 1, 0.128), trim, "chest")
+    K.add(wrap(num_b, 1, 0.128), s.get("number_mat", trim), "chest")
     if s["number"] and not s.get("chest_protector"):
         num_f = text_mesh("num_f", s["number"], 0.09, collection, 0.01)
         num_f = xform(num_f, Matrix.Translation((-0.07, -0.133, 0.80)) @ Matrix.Rotation(math.radians(90), 4, "X"))
-        K.add(wrap(num_f, -1, -0.133), trim, "chest")
+        K.add(wrap(num_f, -1, -0.133), s.get("number_mat", trim), "chest")
     if s["bottom"] == "kilt":
         def pleat(q):
             t = math.atan2(q.y, q.x); d = max(0.0, 0.60 - q.z) / 0.18
@@ -410,7 +483,7 @@ def build_character(s, collection, arm):
         for sx in (1, -1):
             leg = loft([(0.36, 0.085, 0.085, HIP_X * sx * 1.12, -0.01), (0.43, 0.095, 0.095, HIP_X * sx * 1.1, -0.005), (0.50, 0.10, 0.10, HIP_X * sx, 0)], 18, "flat", None)
             K.add(leg, s["bottom_mat"], "thigh_L" if sx > 0 else "thigh_R")
-            K.add(loft([(0.355, 0.087, 0.087, HIP_X * sx * 1.12, -0.01), (0.375, 0.088, 0.088, HIP_X * sx * 1.12, -0.01)], 18, None, None), trim, "thigh_L" if sx > 0 else "thigh_R")
+            K.add(loft([(0.355, 0.087, 0.087, HIP_X * sx * 1.12, -0.01), (0.375, 0.088, 0.088, HIP_X * sx * 1.12, -0.01)], 18, None, None), s.get("bottom_trim", trim), "thigh_L" if sx > 0 else "thigh_R")
     K.add(loft([(0.90, 0.052, 0.05), (0.99, 0.048, 0.046)], 16, None, None), skin, "neck")
     parts["kit"] = K.build(collection, arm)
     # ---- limbs, gloves, shoes
@@ -448,21 +521,25 @@ def build_character(s, collection, arm):
             q = knee + kd * (0.035 + t * 0.2)
             A.add(sweep([q, q + kd * 0.018], [0.062, 0.062], 16, 1.0, cap0=False, cap1=False), s["sock_stripe"], "shin_" + side)
         fx = HIP_X * sx
-        Sh.add(superellipsoid((0.135, 0.245, 0.045), 0.4, 0.5, 22, 10, (fx, -0.045, 0.0225)), "rubber_dark", "foot_" + side)
-        Sh.add(superellipsoid((0.125, 0.19, 0.10), 0.6, 0.55, 22, 12, (fx, -0.02, 0.075)), s["shoe"], "foot_" + side)
-        Sh.add(superellipsoid((0.12, 0.10, 0.075), 0.6, 0.6, 18, 10, (fx, -0.115, 0.058)), s["shoe"], "toe_" + side)
-        Sh.add(superellipsoid((0.128, 0.06, 0.05), 0.6, 0.6, 14, 8, (fx, 0.07, 0.09)), s["shoe_accent"], "foot_" + side)
-        Sh.add(sweep([(fx + 0.045 * sx, -0.10, 0.06), (fx + 0.064 * sx, -0.02, 0.085), (fx + 0.064 * sx, 0.05, 0.07)], [0.012, 0.014, 0.01], 6, 0.5, up=(sx, 0, 0)), s["shoe_accent"], "foot_" + side)
+        kS = s.get("shoe_k", 1.0); Ms = Matrix.Translation((fx, -0.02, 0)) @ Matrix.Scale(kS, 4) @ Matrix.Translation((-fx, 0.02, 0))
+        Sh.add(xform(superellipsoid((0.135, 0.245, 0.045), 0.4, 0.5, 22, 10, (fx, -0.045, 0.0225)), Ms), "rubber_dark", "foot_" + side)
+        Sh.add(xform(superellipsoid((0.125, 0.19, 0.10), 0.6, 0.55, 22, 12, (fx, -0.02, 0.075)), Ms), s["shoe"], "foot_" + side)
+        Sh.add(xform(superellipsoid((0.12, 0.10, 0.075), 0.6, 0.6, 18, 10, (fx, -0.115, 0.058)), Ms), s["shoe"], "toe_" + side)
+        Sh.add(xform(superellipsoid((0.128, 0.06, 0.05), 0.6, 0.6, 14, 8, (fx, 0.07, 0.09)), Ms), s["shoe_accent"], "foot_" + side)
+        Sh.add(xform(sweep([(fx + 0.045 * sx, -0.10, 0.06), (fx + 0.064 * sx, -0.02, 0.085), (fx + 0.064 * sx, 0.05, 0.07)], [0.012, 0.014, 0.01], 6, 0.5, up=(sx, 0, 0)), Ms), s["shoe_accent"], "foot_" + side)
     parts["limbs"] = A.build(collection, arm)
     parts["gloves"] = Gl.build(collection, arm)
     parts["shoes"] = Sh.build(collection, arm)
     if s.get("chest_protector"):
         C = Builder(s["name"] + "_chest_protector")
-        C.add(superellipsoid((0.40, 0.10, 0.28), 0.45, 0.5, 26, 16, (0, -0.10, 0.765)), "plastic_white", "chest_pad")
-        for k, z in enumerate((0.84, 0.77, 0.70)):
-            C.add(superellipsoid((0.34 - 0.03 * k, 0.03, 0.05), 0.4, 0.4, 20, 8, (0, -0.152, z)), "plastic_blue", "chest_pad")
+        pm, pa = s.get("protector_mat", "plastic_white"), s.get("protector_accent", "plastic_blue")
+        C.add(superellipsoid((0.40, 0.10, 0.28), 0.45, 0.5, 26, 16, (0, -0.10, 0.765)), pm, "chest_pad")
+        for k, z in enumerate((0.84, 0.70)):
+            C.add(superellipsoid((0.34 - 0.03 * k, 0.03, 0.025), 0.4, 0.4, 20, 8, (0, -0.152, z)), pa, "chest_pad")
+        num_c = text_mesh("num_c", s["number"] or " ", 0.12, collection, 0.012)
+        C.add(xform(num_c, Matrix.Translation((0, -0.156, 0.77)) @ Matrix.Rotation(math.radians(90), 4, "X")), s.get("number_mat", "kit_white"), "chest_pad")
         for sx in (1, -1):
-            C.add(superellipsoid((0.15, 0.20, 0.08), 0.5, 0.6, 18, 10, (0.16 * sx, -0.01, 0.905)), "plastic_white", "chest")
+            C.add(superellipsoid((0.15, 0.20, 0.08), 0.5, 0.6, 18, 10, (0.16 * sx, -0.01, 0.905)), pm, "chest")
         parts["chest_protector"] = C.build(collection, arm)
     return parts
 
@@ -558,15 +635,15 @@ def add_socket(name, arm, bone, world, collection, size=0.06):
 C_MAT = Euler((math.radians(90), 0, math.radians(180)), "XYZ").to_matrix().to_4x4()
 
 def add_character_sockets(s, arm, collection, stick_meta):
-    H = Head(s)
+    H = Head(s); body, head = prop_xf(s)
     ad = arm.data
     ad.pose_position = "REST"; bpy.context.view_layer.update()
     Ms = ad.bones["stick"].matrix_local.copy()
     S = {}
     S["stick_socket"] = add_socket("stick_socket", arm, "stick", Ms, collection)
     S["pocket_socket"] = add_socket("pocket_socket", arm, "pocket_01", Ms @ Matrix.Translation(stick_meta["pocket_center"]), collection, 0.04)
-    S["helmet_socket"] = add_socket("helmet_socket", arm, "head", Matrix.Translation(H.c) @ C_MAT, collection, 0.12)
-    S["effect_socket"] = add_socket("effect_socket", arm, "chest", Matrix.Translation((0, -0.15, 0.80)) @ C_MAT, collection, 0.08)
+    S["helmet_socket"] = add_socket("helmet_socket", arm, "head", Matrix.Translation(head(H.c)) @ C_MAT, collection, 0.12)
+    S["effect_socket"] = add_socket("effect_socket", arm, "chest", Matrix.Translation(body((0, -0.15, 0.80))) @ C_MAT, collection, 0.08)
     for side, key in (("L", "left_hand_socket"), ("R", "right_hand_socket")):
         S[key] = add_socket(key, arm, "hand_" + side, ad.bones["hand_" + side].matrix_local.copy(), collection, 0.05)
     ad.pose_position = "POSE"; bpy.context.view_layer.update()

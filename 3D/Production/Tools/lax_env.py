@@ -3,19 +3,19 @@
 GOAL_W, GOAL_H, GOAL_D, PIPE_R = 2.0, 2.0, 2.1, 0.045
 GOAL_Y = -5.7
 
-def field_platform(collection, x0=-7.0, x1=7.0, y0=-13.0, y1=6.0, skirt=0.45, stripe=1.6):
+def field_platform(collection, x0=-7.0, x1=7.0, y0=-13.0, y1=6.0, skirt=0.45, stripe=1.6, turf=("turf_a", "turf_b")):
     """Rounded diorama slab: mowed stripes on top, soil cross-section skirt, white markings."""
     B = Builder("field_platform")
     W, L = x1 - x0, y1 - y0
     B.add(superellipsoid((W, L, skirt), 0.12, 0.06, 64, 8, ((x0 + x1) / 2, (y0 + y1) / 2, -skirt / 2 - 0.004)), "soil")
-    B.add(superellipsoid((W - 0.2, L - 0.2, 0.05), 0.12, 0.06, 64, 4, ((x0 + x1) / 2, (y0 + y1) / 2, -0.026)), "turf_a")
+    B.add(superellipsoid((W - 0.2, L - 0.2, 0.05), 0.12, 0.06, 64, 4, ((x0 + x1) / 2, (y0 + y1) / 2, -0.026)), turf[0])
     n = int(L / stripe) + 1
     for i in range(1, n, 2):   # mowing stripes: flat darker bands laid on the base turf (no gaps)
         ya = y0 + 0.1 + i * stripe; yb = min(y1 - 0.1, ya + stripe)
         if yb - ya < 0.05:
             continue
         verts = [(x0 + 0.12, ya, 0.0), (x1 - 0.12, ya, 0.0), (x1 - 0.12, yb, 0.0), (x0 + 0.12, yb, 0.0)]
-        B.add((verts, [(0, 1, 2, 3)]), "turf_b", smooth=False)
+        B.add((verts, [(0, 1, 2, 3)]), turf[1], smooth=False)
     ob = B.build(collection)
     return ob
 
@@ -74,11 +74,11 @@ def goal_geo(detail=1.0):
     meta = dict(mouth_w=GOAL_W, mouth_h=GOAL_H, depth=d, pipe_r=r)
     return frame, cords, meta, net_pt
 
-def build_goal(collection, loc=(0, GOAL_Y, 0), name="goal"):
+def build_goal(collection, loc=(0, GOAL_Y, 0), name="goal", pipe_mat="goal_orange"):
     frame, cords, meta, net_pt = goal_geo()
     Bf = Builder(name + "_frame")
     for g in frame:
-        Bf.add(g, "metal_red")
+        Bf.add(g, pipe_mat)
     of = Bf.build(collection); of.location = loc
     Bn = Builder(name + "_net")
     for g in cords:
@@ -114,26 +114,27 @@ def blob_cluster(seed, center, size, n=5, mats=("foliage_a", "foliage_b"), useg=
         g = ellipsoid(V(center) + off, r, useg, vseg)
         def bumpy(q, c=V(center) + off, r=r, ph=rnd.uniform(0, 6)):
             d = q - c
-            k = 1 + 0.06 * math.sin(5 * math.atan2(d.y, d.x) + ph) * math.cos(3 * d.z / max(r.z, 1e-3))
+            a = math.atan2(d.y, d.x); e = d.z / max(r.z, 1e-3)
+            k = 1 + 0.07 * math.sin(5 * a + ph) * math.cos(3 * e) + 0.05 * math.sin(11 * a + 2 * ph) * math.cos(6 * e + ph)
             d = V((d.x * k, d.y * k, d.z * (0.85 if d.z < 0 else 1.0)))
             return c + d
         out.append((deform(g, bumpy), mats[i % len(mats)]))
     return out
 
-def deciduous(seed, h=3.2, collection=None, loc=(0, 0, 0), name=None):
+def deciduous(seed, h=3.2, collection=None, loc=(0, 0, 0), name=None, mats=("leaf_a", "leaf_b", "leaf_c"), n=8):
     rnd = random.Random(seed)
     B = Builder(name or "tree_%d" % seed)
     B.add(sweep([(0, 0, 0), (0.02 * h, 0, h * 0.35), (0, 0.03 * h, h * 0.55)], [h * 0.07, h * 0.05, h * 0.035], 9, 1.0), "bark")
     for sx in (-1, 1):
         B.add(sweep([(0.01 * h, 0, h * 0.38), (0.14 * h * sx, 0.02 * h, h * 0.55)], [h * 0.03, h * 0.015], 7, 1.0), "bark")
-    for g, m in blob_cluster(seed, (0, 0, h * 0.68), (h * 0.62, h * 0.58, h * 0.52), 6):
+    for g, m in blob_cluster(seed, (0, 0, h * 0.66), (h * 0.78, h * 0.70, h * 0.56), n, mats, 20, 12):
         B.add(g, m)
     ob = B.build(collection); ob.location = loc
     return ob
 
-def bush(seed, s=0.6, collection=None, loc=(0, 0, 0)):
+def bush(seed, s=0.6, collection=None, loc=(0, 0, 0), mats=("leaf_a", "leaf_b", "leaf_c")):
     B = Builder("bush_%d" % seed)
-    for g, m in blob_cluster(seed, (0, 0, s * 0.32), (s, s * 0.9, s * 0.7), 4, useg=14, vseg=8):
+    for g, m in blob_cluster(seed, (0, 0, s * 0.32), (s, s * 0.9, s * 0.7), 5, mats, 14, 8):
         B.add(g, m)
     ob = B.build(collection); ob.location = loc
     return ob
@@ -270,7 +271,7 @@ def props_balls(collection, pts, r=None):
     r = BALL_R if r is None else r
     B = Builder("balls")
     for p in pts:
-        B.add(ball_geo((p[0], p[1], r), r), "ball_yellow")
+        B.add(ball_geo((p[0], p[1], r), r), "ball")
     return B.build(collection)
 
 def fence(collection, x0, x1, y, h=0.7, rot=0.0):
@@ -282,6 +283,40 @@ def fence(collection, x0, x1, y, h=0.7, rot=0.0):
         B.add(superellipsoid((x1 - x0, 0.05, 0.07), 0.3, 0.3, 24, 4, ((x0 + x1) / 2, y + 0.05, z)), "wood_dark")
     ob = B.build(collection); ob.rotation_euler.z = rot
     return ob
+
+def rail_fence(collection, pts, h=0.8, spacing=1.6, name="rail_fence"):
+    """Rustic post-and-rail fence along a polyline (Blender XY)."""
+    B = Builder(name)
+    P = [V((x, y, 0)) for x, y in pts]
+    for a, b in zip(P, P[1:]):
+        d = b - a; n = max(1, int(d.length / spacing))
+        for i in range(n + 1):
+            q = a + d * (i / n)
+            B.add(superellipsoid((0.13, 0.13, h + 0.08), 0.35, 0.35, 8, 6, (q.x, q.y, (h + 0.08) / 2)), "wood_dark" if i % 2 else "wood")
+        for z in (h * 0.5, h * 0.9):
+            B.add(sweep([(a.x, a.y, z), (b.x, b.y, z)], [0.045, 0.045], 8, 0.7), "wood")
+    return B.build(collection)
+
+def shore_rocks(collection, x0, x1, y, seed=11, n=18):
+    rnd = random.Random(seed); B = Builder("shore_rocks")
+    for i in range(n):
+        x = x0 + (x1 - x0) * (i + rnd.uniform(0, 0.8)) / n
+        sz = (rnd.uniform(0.6, 1.4), rnd.uniform(0.5, 1.0), rnd.uniform(0.35, 0.8))
+        v, f = hull_rock(seed * 100 + i, sz)
+        B.add(([(p[0] + x, p[1] + y + rnd.uniform(-0.6, 0.6), p[2] - 0.5) for p in v], f), "rock_warm" if i % 3 else "rock")
+    return B.build(collection)
+
+def far_shore(collection, y, x0, x1, seed=21, h=6.0, name="far_shore"):
+    """Forested far shore: overlapping canopy blobs on a low bank (cheap, reads as distant woods)."""
+    rnd = random.Random(seed); B = Builder(name)
+    B.add(superellipsoid((x1 - x0, 8.0, 1.2), 0.3, 0.3, 32, 6, ((x0 + x1) / 2, y, -0.3)), "leaf_c")
+    x = x0
+    while x < x1:
+        s = rnd.uniform(0.7, 1.3) * h
+        for g, m in blob_cluster(rnd.randint(0, 9999), (x, y + rnd.uniform(-2, 2), s * 0.35), (s * 1.3, s, s * 0.9), 3, ("leaf_c", "leaf_a", "pine"), 12, 8):
+            B.add(g, m)
+        x += s * 0.9
+    return B.build(collection)
 
 def banner(collection, loc, text, w=1.6, h=0.5, m="kit_blue"):
     B = Builder("banner")
