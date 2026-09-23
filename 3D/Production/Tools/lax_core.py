@@ -316,6 +316,8 @@ class Builder:
                     vw.append({})
             for fc in f:
                 faces.append(tuple(i + o for i in fc)); fmat.append(mats.index(m)); fsm.append(sm)
+        vw = [dict(sorted(w.items(), key=lambda kv: -kv[1])[:4]) if len(w) > 4 else w for w in vw]   # <=4 influences
+        vw = [({k: x / (sum(w.values()) or 1.0) for k, x in w.items()} if w else w) for w in vw]
         xf = globals().get("BUILD_XF")
         if xf is not None:
             verts = [tuple(xf(V(p), w)) for p, w in zip(verts, vw)]

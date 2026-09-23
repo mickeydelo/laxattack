@@ -97,5 +97,6 @@
   "ball_visual_radius_m": 0.08,
   "pocket_depth_m": 0.068,
   "ball_clearance_m": 0.0074,
+  "kind": "attack",
   "tris": 3744
 }

@@ -3,7 +3,7 @@
 - **Ball size contract:** the runtime renders the ball at 0.12 m radius. Production pockets fit a 0.08 m visual ball
   (7 mm side clearance). Recommendation: set the visual sphere to 0.08 m (0.06 m would match the key art even better); the
   collider can stay 0.12 m.
-- **Face joint scale at runtime:** lids and mouth use joint *scale*. UsdSkel exports it, but RealityKit playback of joint
+- **(Resolved: faces no longer use joint scale.)** Old note: lids and mouth use joint *scale*. UsdSkel exports it, but RealityKit playback of joint
   scale must be confirmed on device. If it fails, lids and mouth will render authored-closed / authored-open. The fallback is
   to swap to rotation-driven lids.
 - **Glove/helmet proximity:** the sphere-based clearance estimate reports overlaps up to ~0.27 m in reaction clips because
@@ -26,3 +26,4 @@ Phase 1 commit: `3ef396d58503f5e7844da3cee169684900893c22`.
 - **Goalie hands:** the goalie rig is right-hand-top only. Low saves tilt the stick forward instead of flipping hands.
 - **Crowd not built:** crowd figures and reaction clips (Phase 6) are not built yet; the arena has bleachers but no crowd.
 - **Heavy arena:** the arena is about 90k tris and 30 materials. Optimize before shipping.
+- **Brief items still to do:** grass PBR/tufts/masks, DOF fallback layers, LODs, the expanded animation library (idle variants, roll/face dodges, celebrations, goalie extras), crowd, teammates, and RealityKit round-trip screenshots.

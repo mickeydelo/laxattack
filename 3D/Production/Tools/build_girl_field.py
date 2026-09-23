@@ -5,7 +5,8 @@ EXP = os.path.join(PROD, "Exports")
 REQUIRED_CLIPS = ["idle", "cradle", "aim_overhand", "aim_bounce", "aim_sidearm", "split_dodge_left", "split_dodge_right",
                   "release_overhand", "release_bounce", "release_sidearm", "quick_stick_catch", "quick_stick_release",
                   "celebrate", "disappointed"]
-REQUIRED_SOCKETS = ["stick_socket", "helmet_socket", "effect_socket", "pocket_socket", "left_hand_socket", "right_hand_socket"]
+REQUIRED_SOCKETS = ["stick_socket", "helmet_socket", "effect_socket", "pocket_socket", "left_hand_socket", "right_hand_socket",
+                    "eyes_socket", "camera_focus_socket", "chest_socket"]
 
 GB = finalize(P(BASE_FIELD, G=(-0.27, -0.26, 0.82), D=(-0.60, 0.05, 0.80), F=(0.55, -0.83, 0.10), face="neutral"))
 def K(**kw):

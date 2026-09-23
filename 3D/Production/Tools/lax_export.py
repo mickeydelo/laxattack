@@ -14,10 +14,16 @@ def export_asset(objects, root_name, content_name, out_usdz, fps=30, end_frame=0
     for o in objects:
         o.hide_set(False); o.hide_render = False; o.select_set(True)
     bpy.context.view_layer.objects.active = objects[0]
+    bake_axes(objects, content_name, face_plus_z)
+    for o in bpy.context.selected_objects:
+        o.select_set(False)
+    for o in objects:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = objects[0]
     want = dict(filepath=raw, selected_objects_only=True, export_animation=animated, export_armatures=True,
                 only_deform_bones=True, export_materials=True, generate_preview_surface=True, export_textures=True,
                 overwrite_textures=True, relative_paths=True, export_uvmaps=True, export_normals=True, export_mesh_colors=False,
-                convert_orientation=True, export_global_forward_selection="Z", export_global_up_selection="Y",
+                convert_orientation=False,
                 export_lights=False, export_cameras=False, export_shapekeys=False, author_blender_name=False,
                 export_custom_properties=False, root_prim_path="/" + root_name, evaluation_mode="RENDER")
     props = {p.identifier for p in bpy.ops.wm.usd_export.get_rna_type().properties}
@@ -32,10 +38,7 @@ def export_asset(objects, root_name, content_name, out_usdz, fps=30, end_frame=0
         for a in list(prim.GetAttributes()):
             if a.GetName().startswith("xformOp:"):
                 prim.RemoveProperty(a.GetName())
-    cx = UsdGeom.Xformable(content)
-    if face_plus_z:
-        cx.AddRotateYOp().Set(180.0)          # turn the whole asset to face +Z (root stays identity)
-    cx.AddRotateXYZOp().Set(Gf.Vec3f(90, 0, 180))   # Blender Z-up/-Y-forward -> USD Y-up/-Z-forward
+    # axis conversion is baked into geometry + skeleton rest pose (bake_axes): every prim stays identity
     st.SetDefaultPrim(root); Usd.ModelAPI(root).SetKind(Kind.Tokens.component)
     UsdGeom.SetStageUpAxis(st, UsdGeom.Tokens.y); UsdGeom.SetStageMetersPerUnit(st, 1.0)
     st.SetTimeCodesPerSecond(fps); st.SetFramesPerSecond(fps); st.SetStartTimeCode(0); st.SetEndTimeCode(max(end_frame, 0))
@@ -65,6 +68,51 @@ def export_asset(objects, root_name, content_name, out_usdz, fps=30, end_frame=0
     rep["usdz_open"] = bool(z and z.GetDefaultPrim())
     rep["usdz_textures"] = [str(a.path) for a in []]
     return rep
+
+def bake_axes(objects, content_name, face_plus_z):
+    """Bake the Blender->RealityKit axis change (and optional +Z facing) into mesh data, bone rest poses and socket
+    transforms, so the exported USD has identity transforms on every prim (fixes combined skinned-mesh bind issues)."""
+    R = Euler((math.radians(90), 0, math.radians(180)), "XYZ").to_matrix().to_4x4()
+    if face_plus_z:
+        R = R @ Matrix.Rotation(math.pi, 4, "Z")
+    arms = [o for o in objects if o.type == "ARMATURE"]
+    for a in arms:
+        a.data.pose_position = "REST"
+    bpy.context.view_layer.update()
+    emp = {o: o.matrix_world.copy() for o in objects if o.type == "EMPTY" and o.name != content_name
+           and not any(c.parent == o for c in objects)}   # group empties stay identity
+    meshes = [o for o in objects if o.type == "MESH"]; parents = {}
+    for o in meshes:
+        mw = o.matrix_world.copy(); parents[o] = o.parent
+        o.parent = None; o.matrix_world = Matrix.Identity(4)
+        o.data.transform(R @ mw); o.data.update()
+    for a in arms:
+        for x in bpy.context.selected_objects:
+            x.select_set(False)
+        bpy.context.view_layer.objects.active = a; a.select_set(True)
+        bpy.ops.object.mode_set(mode="EDIT")
+        ebs = a.data.edit_bones   # exact rigid re-orientation (keeps roll): set full matrices, parents first
+        old = {eb.name: (eb.matrix.copy(), eb.length) for eb in ebs}
+        order = []
+        def walk(b):
+            order.append(b.name)
+            for ch in b.children:
+                walk(ch)
+        for b in [b for b in ebs if b.parent is None]:
+            walk(b)
+        for n in order:
+            M, L = old[n]; eb = ebs[n]
+            eb.matrix = R @ M; eb.length = L
+        bpy.ops.object.mode_set(mode="OBJECT")
+    for o in meshes:
+        if parents[o] is not None:
+            o.parent = parents[o]; o.matrix_parent_inverse = Matrix.Identity(4); o.matrix_world = Matrix.Identity(4)
+    bpy.context.view_layer.update()
+    for o, mw in emp.items():
+        o.matrix_world = R @ mw
+    for a in arms:
+        a.data.pose_position = "POSE"
+    bpy.context.view_layer.update()
 
 def verify_usd(path, root_name, sockets, end_frame, animated):
     from pxr import Usd, UsdGeom, UsdSkel, Gf, UsdShade

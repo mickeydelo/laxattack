@@ -143,6 +143,8 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 
 - 2026-09-23: Girl shooter switched to the women's field kit (goggles, headband + ponytail, jersey, kilt, bare hands) per Mickey's reference; clip timeline and sockets unchanged. Boy field keeps the men's helmet kit; goalies keep helmets.
 
+- 2026-09-23: Codex brief P0 pass: all exports re-baked with identity transforms on every prim (skinned bind fix), max 4 joint influences, faces moved to rotation-driven lid/mouth covers (no joint scale), new eyes/camera_focus/chest sockets, women's gloves, net clips return exactly to rest, arena re-exported as lax_arena_pinebrook.usdz with named groups and camera markers.
+
 # 2026-09-22: Competitive feel and art direction
 
 - Product name is **Lax Attack**. The runtime remains SwiftUI + RealityKit in portrait orientation.

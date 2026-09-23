@@ -50,3 +50,15 @@ Re-opens the stage and checks:
 
 It also checks, per clip: hand-IK error, foot-IK error, ankle height, a glove/helmet sphere-clearance estimate, a shaft/helmet
 clearance estimate, root motion, loop seams, and static ball/pocket clearance.
+
+
+## Update: identity-transform export (Codex brief P0, bind fix)
+`export_asset` now bakes the axis change into the asset before exporting. It rotates mesh data, sets every bone's rest matrix
+exactly (parents first, roll preserved) and re-places sockets. Assets that face +Z get an extra 180° in the same bake.
+
+- The USD is written with `convert_orientation=False`.
+- **Every prim is identity** (root, rig, meshes), which removes the combined skinned-mesh bind-transform issue seen in
+  RealityKit.
+- Validated: bone positions match the pre-bake poses exactly (0.0 m) on sampled frames; baked skin ranges are unchanged.
+- Weights are capped at **4 joint influences** per vertex (normalized) in `Builder`.
+- `lax_arena_environment.usdz` is replaced by **`lax_arena_pinebrook.usdz`**.

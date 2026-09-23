@@ -104,3 +104,16 @@ Women's field lacrosse uses a different kit from the men's game, per Mickey's re
 - 24,948 tris (lighter than the helmet version).
 - `lax_boy_field` keeps the men's kit (helmet, gloves, shorts); its spec is now pinned explicitly.
 - Goalies of both genders keep helmets, throat guards and chest protectors, which is correct for women's goalies too.
+
+
+## Update: face without joint scale; new sockets; women's gloves
+- **Lids:** skin patches hugging the head over each eye, rotated by `lid_L/R` about the head centre (open = rotated up onto the
+  forehead).
+- **Mouth:** a skin cover over the mouth decal, rotated down by `jaw` to open it. When closed, a smile line stays visible and
+  the corners still translate.
+- **No joint scale anywhere.** Presets are unchanged: blink, squint (`focused`), smile, open cheer (`big_smile`), grimace
+  (`strain`), determined brows.
+- **Eyes and mouth decals** are flattened to 3–6 mm so the patches sit nearly flush.
+- **New sockets on every character:** `eyes_socket`, `camera_focus_socket`, `chest_socket`, in addition to the previous
+  seven.
+- **Women's field kit** now has thin white/red gloves, per the brief.

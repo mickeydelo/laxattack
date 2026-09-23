@@ -6,7 +6,7 @@ KEYED = [("pelvis", "location"), ("pelvis", "rotation_euler"), ("spine", "rotati
          ("hair_01", "rotation_euler"), ("hair_02", "rotation_euler"), ("hair_03", "rotation_euler"),
          ("hem_F", "rotation_euler"), ("hem_B", "rotation_euler"), ("pocket_01", "location"), ("pocket_02", "location"),
          ("fingers_L", "rotation_euler"), ("fingers_R", "rotation_euler"),
-         ("lid_L", "scale"), ("lid_R", "scale"), ("jaw", "scale"), ("brow_L", "location"), ("brow_R", "location"),
+         ("lid_L", "rotation_euler"), ("lid_R", "rotation_euler"), ("jaw", "rotation_euler"), ("brow_L", "location"), ("brow_R", "location"),
          ("brow_L", "rotation_euler"), ("brow_R", "rotation_euler"), ("mouth_L", "location"), ("mouth_R", "location"),
          ("eye_L", "rotation_euler"), ("eye_R", "rotation_euler")]
 GOALIE_EXTRA = [("chest_pad", "rotation_euler"), ("throat_guard", "rotation_euler")]

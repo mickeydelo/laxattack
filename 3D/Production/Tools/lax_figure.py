@@ -14,7 +14,7 @@ GIRL_FIELD = dict(   # women's field kit (reference photo): goggles, headband + 
     mouth_w=0.036, mouth_el=-31.0, hair_style="ponytail", pony_el=30.0, pony_len=1.0, headgear="goggles",
     kit="kit_red", kit_trim="kit_cream", number_mat="kit_cream", bottom="kilt", bottom_mat="kit_red",
     sock="kit_white", sock_stripe="kit_white", shoe="kit_white", shoe_accent="kit_red",
-    glove=None, glove_cuff=None, glove_size=(0.1, 0.1, 0.1), shoe_k=1.28,
+    glove="kit_white", glove_cuff="kit_red", glove_size=(0.125, 0.11, 0.13), shoe_k=1.28,   # thin women's gloves
     number="10", stance=0.0, body_scale=0.82, head_k=1.15,
 )
 BOY_GOALIE = dict(   # v2: away team navy/teal
@@ -208,18 +208,19 @@ def build_skeleton(s, collection, name):
     # face: jaw (mouth open/close by scale), mouth corners, eyes (aim), lids (blink by scale), brows
     mel = s.get("mouth_el", -27.0)
     mt = H.point(0, mel + 1.0)
-    bone("jaw", mt + V((0, -0.004, 0.0)), mt + V((0, -0.004, -0.06)), "head", roll_z=(0, -1, 0))
+    mdir = (H.point(0, mel) - hc).normalized()   # jaw = mouth-cover hinge about the head centre (rotation only, no scale)
+    bone("jaw", hc, hc + mdir * 0.1, "head", roll_z=(0, 0, 1))
     for side, sx in (("L", 1), ("R", -1)):
         az = s["eye_az"] * sx
         p, tx, n, tu = H.frame(az, s["eye_el"])
         ctr = p - n * 0.10
         bone("eye_" + side, ctr, ctr + n * 0.04, "head", roll_z=(0, 0, 1))
         top = p + tu * (s["eye_size"][1] + 0.004) + n * 0.004
-        bone("lid_" + side, top, top - tu * 0.12, "head", roll_z=tuple(n))
+        bone("lid_" + side, hc, hc + (p - hc).normalized() * 0.1, "head", roll_z=(0, 0, 1))   # lid hinge about head centre
         bp = H.point(az * 1.02, s["eye_el"] + 23.0)
         bone("brow_" + side, bp, bp + H.frame(az, s["eye_el"] + 23.0)[2] * 0.03, "head", roll_z=(0, 0, 1))
         mc = H.point(s["mouth_w"] / 0.25 * 57.3 * 0.95 * sx, mel)
-        bone("mouth_" + side, mc, mc + V((0, -0.03, 0)), "jaw", roll_z=(0, 0, 1))
+        bone("mouth_" + side, mc, mc + V((0, -0.03, 0)), "head", roll_z=(0, 0, 1))
     for side, sx in (("L", 1.0), ("R", -1.0)):
         r = L[side]
         hd = r["gl"] + r["fdir"] * 0.06
@@ -255,6 +256,7 @@ def build_skeleton(s, collection, name):
     bone("ik_hand_R", g0, g0 + V((0, 0, 0.05)), "stick", deform=False)
     bone("ik_hand_L", g0 + V((0, 0, -GRIP_SPREAD)), g0 + V((0, 0, -GRIP_SPREAD + 0.05)), "stick", deform=False)
     bpy.ops.object.mode_set(mode="OBJECT")
+    arm["lid_open_deg"] = math.degrees(s["eye_size"][1] / s["head_r"][2]) * 2 + 4; arm["mouth_open_deg"] = 15.0
     arm["body_scale"] = s.get("body_scale", 1.0); arm["head_k"] = s.get("head_k", 1.0); arm["family"] = s["family"]
     pb = arm.pose.bones
     for side in ("L", "R"):
@@ -301,9 +303,9 @@ def _build_character(s, collection, arm):
     for side, sx in (("L", 1), ("R", -1)):
         az, el = s["eye_az"] * sx, s["eye_el"]
         if s.get("eye_style") == "toy":   # vinyl-toy eye: one glossy dark oval + two painted highlights
-            F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.016, eh), 22, 12), az, el, -0.002), s["iris"], "eye_" + side)
-            F.add(H.place(ellipsoid((0, 0, 0), (0.015, 0.008, 0.017), 10, 6), az + 3.5 * sx, el + 5.0, 0.012), "eye_white", "eye_" + side)
-            F.add(H.place(ellipsoid((0, 0, 0), (0.007, 0.006, 0.007), 8, 5), az - 4.0 * sx, el - 6.0, 0.011), "eye_white", "eye_" + side)
+            F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.006, eh), 22, 12), az, el, -0.003), s["iris"], "eye_" + side)
+            F.add(H.place(ellipsoid((0, 0, 0), (0.015, 0.003, 0.017), 10, 6), az + 3.5 * sx, el + 5.0, 0.0035), "eye_white", "eye_" + side)
+            F.add(H.place(ellipsoid((0, 0, 0), (0.007, 0.003, 0.007), 8, 5), az - 4.0 * sx, el - 6.0, 0.0035), "eye_white", "eye_" + side)
         else:
             F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.018, eh), 20, 12), az, el, -0.004), "eye_white", "head")
             F.add(H.place(ellipsoid((0, 0, 0), (ew * 0.72, 0.012, eh * 0.78), 18, 10), az - 2.0 * sx, el - 1.5, 0.004), s["iris"], "eye_" + side)
@@ -313,8 +315,9 @@ def _build_character(s, collection, arm):
         # lid: authored closed (covers the eye), collapsed to a thin upper lid by lid bone scale in every pose
         p, tx, n, tu = H.frame(az, el)
         top = p + tu * (eh + 0.004) + n * 0.004
-        lid = H.place(ellipsoid((0, 0, 0), (ew * 1.10, 0.022, eh * 1.08), 20, 12), az, el, 0.005)
-        F.add(lid, skin, "lid_" + side)
+        # lid: skin patch hugging the head over the eye (authored closed); lid bone rotates it up onto the forehead to open
+        dA = math.degrees(ew / H.r.x) * 1.25 + 2; dE = math.degrees(eh / H.r.z) + 2
+        F.add(surface_patch(H, az - dA, az + dA, el - dE, el + dE, 0.0065), skin, "lid_" + side)
         # upper lash line (painted)
         pts = [H.point(az + dx * sx, el + 14.2 - 5.0 * (dx / 12.0) ** 2) for dx in (-12, -6, 0, 6, 12)]
         pts = [tuple(V(q) + (V(q) - H.c).normalized() * 0.016) for q in pts]
@@ -338,13 +341,16 @@ def _build_character(s, collection, arm):
         x = q.x / mw; z = q.z
         z = z * (1.0 if z < 0 else 0.25) + 0.012 * x * x   # flat top with smile curve
         return V((q.x, q.y, z))
-    mouth = deform(ellipsoid((0, 0, 0), (mw * 1.12, 0.013, 0.052), 22, 12), mouth_shape)
+    mouth = deform(ellipsoid((0, 0, 0), (mw * 1.12, 0.005, 0.052), 22, 12), mouth_shape)
     def mouth_w(p):
         loc = p - H.point(0, mel)
         wl = smoothstep(0.012, mw * 0.95, loc.x); wr = smoothstep(0.012, mw * 0.95, -loc.x)
-        return {"jaw": max(0.0, 1 - wl - wr), "mouth_L": wl, "mouth_R": wr}
+        return {"head": max(0.0, 1 - wl - wr), "mouth_L": wl, "mouth_R": wr}
     F.add(H.place(mouth, 0, mel, -0.002), "mouth", weights=mouth_w)
-    F.add(H.place(ellipsoid((0, 0, 0), (mw * 0.58, 0.010, 0.018), 12, 6), 0, mel - 6.5, 0.001), "blush", "jaw")
+    F.add(H.place(ellipsoid((0, 0, 0), (mw * 0.58, 0.004, 0.018), 12, 6), 0, mel - 6.5, 0.0), "blush", "head")
+    # mouth cover: skin patch that leaves only the top smile line visible; jaw bone rotates it down onto the chin to open
+    mA = math.degrees(mw * 1.12 / H.r.x) * 1.25 + 2
+    F.add(surface_patch(H, -mA, mA, mel - 13.5, mel + 1.8, 0.0055), skin, "jaw")
     parts["face"] = F.build(collection, arm)
     # ---- hair
     Hb = Builder(s["name"] + "_hair")
@@ -642,6 +648,9 @@ def add_character_sockets(s, arm, collection, stick_meta):
     S["stick_socket"] = add_socket("stick_socket", arm, "stick", Ms, collection)
     S["pocket_socket"] = add_socket("pocket_socket", arm, "pocket_01", Ms @ Matrix.Translation(stick_meta["pocket_center"]), collection, 0.04)
     S["helmet_socket"] = add_socket("helmet_socket", arm, "head", Matrix.Translation(head(H.c)) @ C_MAT, collection, 0.12)
+    S["eyes_socket"] = add_socket("eyes_socket", arm, "head", Matrix.Translation(head(H.point(0, s["eye_el"], 1.0))) @ C_MAT, collection, 0.05)
+    S["camera_focus_socket"] = add_socket("camera_focus_socket", arm, "chest", Matrix.Translation(body((0, 0, 0.95))) @ C_MAT, collection, 0.08)
+    S["chest_socket"] = add_socket("chest_socket", arm, "chest", Matrix.Translation(body((0, -0.14, 0.78))) @ C_MAT, collection, 0.06)
     S["effect_socket"] = add_socket("effect_socket", arm, "chest", Matrix.Translation(body((0, -0.15, 0.80))) @ C_MAT, collection, 0.08)
     for side, key in (("L", "left_hand_socket"), ("R", "right_hand_socket")):
         S[key] = add_socket(key, arm, "hand_" + side, ad.bones["hand_" + side].matrix_local.copy(), collection, 0.05)
@@ -659,14 +668,35 @@ FACE = {
     "big_smile":   dict(lid=0.24, jaw=1.00, mouth=(0.016, 0.009), brow=(0.017, -10.0), eye=(0, 0)),
     "strain":      dict(lid=0.58, jaw=0.50, mouth=(-0.012, 0.010), brow=(-0.016, 28.0), eye=(0, 0)),
     "surprise":    dict(lid=0.02, jaw=0.90, mouth=(-0.004, -0.010), brow=(0.026, -8.0), eye=(0, 0)),
-    "disappointed":dict(lid=0.42, jaw=0.20, mouth=(-0.018, -0.003), brow=(0.010, -22.0), eye=(0, -7)),
+    "disappointed":dict(lid=0.36, jaw=0.24, mouth=(-0.005, -0.002), brow=(0.010, -22.0), eye=(0, -7)),
     "smirk":       dict(lid=0.30, jaw=0.18, mouth=(0.016, 0.0), brow=(0.006, 10.0), eye=(5, 0), asym=True),
 }
+
+def lid_rot(arm, lid):     # lid preset value: 0.1 open .. 1.0 closed  ->  hinge rotation (radians), no joint scale
+    c = min(1.0, max(0.0, (lid - 0.1) / 0.9))
+    return (math.radians(arm.get("lid_open_deg", 30.0) * (1 - c)), 0, 0)
+
+def jaw_rot(arm, jaw):     # jaw preset value: 0.14 closed line .. 1.0 open  ->  cover rotates down
+    o = min(1.0, max(0.0, (jaw - 0.14) / 0.86))
+    return (-math.radians(arm.get("mouth_open_deg", 15.0) * o), 0, 0)
+
+def surface_patch(H, az0, az1, el0, el1, off, nu=10, nv=8):
+    verts, faces = [], []
+    for j in range(nv + 1):
+        for i in range(nu + 1):
+            az = az0 + (az1 - az0) * i / nu; el = el0 + (el1 - el0) * j / nv
+            p, tx, n, tu = H.frame(az, el)
+            verts.append(tuple(p + n * off))
+    for j in range(nv):
+        for i in range(nu):
+            a = j * (nu + 1) + i
+            faces.append((a, a + 1, a + nu + 2, a + nu + 1))
+    return verts, faces
 
 def apply_face(arm, name, eye_aim=None):
     f = FACE[name]; pb = arm.pose.bones
     for side, sx in (("L", 1), ("R", -1)):
-        pb["lid_" + side].scale = (1, f["lid"], 1)
+        pb["lid_" + side].rotation_euler = lid_rot(arm, f["lid"])
         du, rot = f["brow"]
         pb["brow_" + side].location = (0, 0, du)
         pb["brow_" + side].rotation_euler = (0, math.radians(rot * -sx), 0)
@@ -675,4 +705,4 @@ def apply_face(arm, name, eye_aim=None):
         pb["mouth_" + side].location = (-mo * sx * k, 0, mu * k)
         ex, ez = eye_aim if eye_aim else f["eye"]
         pb["eye_" + side].rotation_euler = (math.radians(ez), 0, math.radians(-ex))
-    pb["jaw"].scale = (1, f["jaw"], 1)
+    pb["jaw"].rotation_euler = jaw_rot(arm, f["jaw"])

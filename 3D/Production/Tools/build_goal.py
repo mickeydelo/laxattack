@@ -89,8 +89,10 @@ def build_goal_asset(export=True):
         for name, start, length, loop, fn, contact, notes in specs:
             act = bpy.data.actions.new(name); act.use_fake_user = True; anim.action = act
             for f in range(length + 1):
+                x = f / length   # envelopes guarantee an exact return to the rest pose
+                env = (0.5 - 0.5 * math.cos(2 * math.pi * x)) if loop else (1.0 - smoothstep(0.72, 1.0, x))
                 for bn in bones:
-                    arm.pose.bones[bn].location = arm.data.bones[bn].matrix_local.to_3x3().inverted() @ V(fn(bn, f))
+                    arm.pose.bones[bn].location = arm.data.bones[bn].matrix_local.to_3x3().inverted() @ (V(fn(bn, f)) * env)
                     arm.pose.bones[bn].keyframe_insert("location", frame=f, group=bn)
             anim.action = None
             clips.append(Clip(name, start, length, loop, None, contact=contact, notes=notes))

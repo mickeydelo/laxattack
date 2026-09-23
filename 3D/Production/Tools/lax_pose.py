@@ -110,14 +110,14 @@ def apply_pose(arm, p, family="field", blink=None):
     fv = face_values(p)
     for side, sx in (("L", 1), ("R", -1)):
         lid = 1.0 if blink else fv["lid"]
-        pbs["lid_" + side].scale = (1, lid, 1)
+        pbs["lid_" + side].rotation_euler = lid_rot(arm, lid)
         pbs["brow_" + side].location = (0, 0, fv["brow"][0])
         pbs["brow_" + side].rotation_euler = (0, math.radians(fv["brow"][1] * -sx), 0)
         k = 1.0 if not fv["asym"] or side == "L" else 0.0
         pbs["mouth_" + side].location = (-fv["mouth"][1] * sx * k, 0, fv["mouth"][0] * k)
         ex, ez = p["eye"]
         pbs["eye_" + side].rotation_euler = (math.radians(ez), 0, math.radians(-ex))
-    pbs["jaw"].scale = (1, fv["jaw"], 1)
+    pbs["jaw"].rotation_euler = jaw_rot(arm, fv["jaw"])
 
 def calibrate_poles(arm, poses, family):
     def evaluated():

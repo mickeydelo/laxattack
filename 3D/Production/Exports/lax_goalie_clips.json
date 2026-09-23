@@ -148,7 +148,10 @@
     "effect_socket",
     "pocket_socket",
     "left_hand_socket",
-    "right_hand_socket"
+    "right_hand_socket",
+    "eyes_socket",
+    "camera_focus_socket",
+    "chest_socket"
   ],
   "extra_sockets": [
     "ball_contact_socket"
