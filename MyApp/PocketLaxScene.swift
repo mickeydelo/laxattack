@@ -18,9 +18,7 @@ private struct BurstParticle {
 @MainActor
 final class PocketLaxScene {
     private static let physicsVersion = 1
-    // The current USDZ has a combined skinned mesh with separated jersey/equipment
-    // bind transforms in RealityKit. Flip this after the corrected Blender export.
-    private static let useProductionShooter = false
+    private static let useProductionShooter = true
     private let ballStart = SIMD3<Float>(0, 0.18, 1.45)
     private let quickStickCatch = SIMD3<Float>(-0.38, 1.16, 1.82)
     private let goalieBaseHeight: Float = 0.625
@@ -45,6 +43,7 @@ final class PocketLaxScene {
     private var shooterAnimationDriver: CharacterAnimationDriver?
     private var goalieAnimationDriver: CharacterAnimationDriver?
     private var goalAnimationDriver: TimelineAnimationDriver?
+    private var ambientAnimationDrivers: [TimelineAnimationDriver] = []
     private var goalieTorso: ModelEntity?
     private var goalieHead: ModelEntity?
     private var goalieEyes: [ModelEntity] = []
@@ -154,6 +153,7 @@ final class PocketLaxScene {
         guard let arenaRoot else { return }
 
         await installArena(in: arenaRoot)
+        await installSupportCast(in: arenaRoot)
         await installGoal(in: arenaRoot)
         await installGoalie(in: arenaRoot)
         await installShooter(in: arenaRoot)
@@ -265,12 +265,16 @@ final class PocketLaxScene {
         do {
             let importedArena = try await CharacterAssetContract.load(named: CharacterAssetContract.arenaAssetName)
             importedArena.name = "Production Arena"
-            quarantineMisplacedArenaMeshes(under: importedArena)
+            setGroup(named: "far_background", enabled: false, under: importedArena)
+            setGroup(named: "far_background_soft", enabled: true, under: importedArena)
+            setGroup(named: "foreground_framing", enabled: false, under: importedArena)
+            setGroup(named: "foreground_framing_soft", enabled: true, under: importedArena)
+            setGroup(named: "collision_only", enabled: false, under: importedArena)
             arenaRoot.addChild(importedArena)
             proceduralEnvironment?.isEnabled = false
             arenaRoot.findEntity(named: "Field")?.components.remove(ModelComponent.self)
         } catch {
-            print("Using procedural arena because lax_arena_environment failed to load: \(error)")
+            print("Using procedural arena because lax_arena_pinebrook failed to load: \(error)")
         }
     }
 
@@ -279,15 +283,65 @@ final class PocketLaxScene {
         for child in entity.children { hideModels(named: name, under: child) }
     }
 
-    private func quarantineMisplacedArenaMeshes(under entity: Entity) {
-        let malformedPrefixes = ["tree_", "bush_", "pine_", "cloud_"]
-        let malformedNames = ["sign_slogan", "fg_post", "bottle", "equipment_bag", "rock_4"]
-        if malformedNames.contains(entity.name)
-            || malformedPrefixes.contains(where: { entity.name.hasPrefix($0) }) {
-            entity.isEnabled = false
+    private func setGroup(named name: String, enabled: Bool, under entity: Entity) {
+        entity.findEntity(named: name)?.isEnabled = enabled
+    }
+
+    private func installSupportCast(in arenaRoot: Entity) async {
+        guard ambientAnimationDrivers.isEmpty else { return }
+
+        let fanPositions: [SIMD3<Float>] = [
+            [-2.25, 0.48, -7.15],
+            [0, 0.48, -7.45],
+            [2.25, 0.48, -7.15]
+        ]
+        for (assetName, position) in zip(CharacterAssetContract.fanAssetNames, fanPositions) {
+            await installAmbientCharacter(
+                named: assetName,
+                manifestName: "\(assetName)_clips",
+                clipName: "crowd_idle",
+                position: position,
+                yaw: .pi,
+                in: arenaRoot
+            )
         }
-        for child in entity.children {
-            quarantineMisplacedArenaMeshes(under: child)
+
+        await installAmbientCharacter(
+            named: CharacterAssetContract.homeTeammateAssetName,
+            manifestName: "lax_team_home_7_clips",
+            clipName: "idle_relaxed",
+            position: [-2.8, 0, -1.7],
+            yaw: -.pi / 2,
+            in: arenaRoot
+        )
+        await installAmbientCharacter(
+            named: CharacterAssetContract.awayTeammateAssetName,
+            manifestName: "lax_team_away_5_clips",
+            clipName: "idle_competitive",
+            position: [2.8, 0, -3.3],
+            yaw: .pi / 2,
+            in: arenaRoot
+        )
+    }
+
+    private func installAmbientCharacter(
+        named assetName: String,
+        manifestName: String,
+        clipName: String,
+        position: SIMD3<Float>,
+        yaw: Float,
+        in arenaRoot: Entity
+    ) async {
+        do {
+            let entity = try await CharacterAssetContract.load(named: assetName)
+            let driver = try CharacterAssetContract.prepareTimeline(entity, manifestName: manifestName)
+            entity.position = position
+            entity.orientation = simd_quatf(angle: yaw, axis: [0, 1, 0])
+            arenaRoot.addChild(entity)
+            driver.transition(to: clipName, duration: 0)
+            ambientAnimationDrivers.append(driver)
+        } catch {
+            print("Skipping optional ambient asset \(assetName): \(error)")
         }
     }
 
@@ -529,6 +583,18 @@ final class PocketLaxScene {
             if session.registerGoal(style: style, hitHotZone: hitHotZone) {
                 calledShotHitTime = hitHotZone ? 0.72 : 0
                 celebrationTime = 1
+                let celebrations: [CharacterPerformanceState] = [
+                    .celebrateFistPump,
+                    .celebrateStickTwirl,
+                    .celebrateJumpTuck,
+                    .celebratePoint,
+                    .celebrateRestrained
+                ]
+                let wasClutch = session.shotHistory.last?.wasClutch == true
+                shooterReactionState = wasClutch
+                    ? .celebrateClutch
+                    : celebrations[session.goals % celebrations.count]
+                shooterReactionTime = wasClutch ? 1.8 : 1.25
                 goalieSlumpTime = 0.8
                 netPulseTime = 0.45
                 netImpactOffset = [ball?.position.x ?? 0, (ball?.position.y ?? 1) - 1]

@@ -20,6 +20,13 @@ enum CharacterPerformanceState: String, CaseIterable, Sendable {
     case quickStickCatch = "quick_stick_catch"
     case quickStickRelease = "quick_stick_release"
     case celebrate
+    case celebrateFistPump = "celebrate_fist_pump"
+    case celebrateStickTwirl = "celebrate_stick_twirl"
+    case celebrateJumpTuck = "celebrate_jump_tuck"
+    case celebrateKneeSlide = "celebrate_knee_slide"
+    case celebratePoint = "celebrate_point"
+    case celebrateRestrained = "celebrate_restrained"
+    case celebrateClutch = "celebrate_clutch"
     case disappointed
     case nearMissReaction = "near_miss_reaction"
     case pipeReaction = "pipe_reaction"
@@ -40,6 +47,7 @@ enum CharacterPerformanceState: String, CaseIterable, Sendable {
     case goalieFiveHoleClose = "goalie_five_hole_close"
     case goalieBodySave = "goalie_body_save"
     case goalieCelebrate = "goalie_celebrate"
+    case goalieBigClutchSave = "goalie_big_clutch_save"
 }
 
 struct CharacterAssetValidationReport: Sendable {
@@ -130,7 +138,10 @@ enum CharacterAssetContract {
     static let shooterAssetName = "lax_shooter"
     static let goalieAssetName = "lax_goalie"
     static let goalAssetName = "lax_goal"
-    static let arenaAssetName = "lax_arena_environment"
+    static let arenaAssetName = "lax_arena_pinebrook"
+    static let homeTeammateAssetName = "lax_team_home_7"
+    static let awayTeammateAssetName = "lax_team_away_5"
+    static let fanAssetNames = ["lax_fan_a", "lax_fan_b", "lax_fan_c"]
 
     static let requiredSockets = [
         "stick_socket",

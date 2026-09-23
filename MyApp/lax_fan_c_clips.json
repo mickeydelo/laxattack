@@ -1,0 +1,110 @@
+{
+  "asset": "lax_fan_c",
+  "fps": 30,
+  "timeline_end": 588,
+  "left_right_convention": "n/a",
+  "clips": [
+    {
+      "name": "crowd_idle",
+      "start": 0,
+      "end": 48,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "seated breathing, small look-around"
+    },
+    {
+      "name": "crowd_watch_left",
+      "start": 55,
+      "end": 103,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "fan's own left"
+    },
+    {
+      "name": "crowd_watch_right",
+      "start": 110,
+      "end": 158,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "fan's own right"
+    },
+    {
+      "name": "crowd_anticipate",
+      "start": 165,
+      "end": 213,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "leaning in, hands clasped"
+    },
+    {
+      "name": "crowd_goal_cheer",
+      "start": 220,
+      "end": 268,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "pops up from the seat, arms overhead, bounces, sits"
+    },
+    {
+      "name": "crowd_save_cheer",
+      "start": 275,
+      "end": 311,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "seated arms-up clap"
+    },
+    {
+      "name": "crowd_pipe_groan",
+      "start": 320,
+      "end": 360,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "hands on head"
+    },
+    {
+      "name": "crowd_near_miss",
+      "start": 370,
+      "end": 410,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "lean in, 'ooh!', slump"
+    },
+    {
+      "name": "crowd_streak_hype",
+      "start": 420,
+      "end": 444,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "arm pumps"
+    },
+    {
+      "name": "crowd_final_shot",
+      "start": 450,
+      "end": 498,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "biting-nails intensity"
+    },
+    {
+      "name": "crowd_gasp",
+      "start": 505,
+      "end": 535,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "hands to cheeks"
+    },
+    {
+      "name": "crowd_wave",
+      "start": 540,
+      "end": 588,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "arms-up sway"
+    }
+  ],
+  "usage": "seated spectator; place the root on the bleacher seat top; offset clip start times per instance for asynchronous motion",
+  "tiers": {
+    "hero": "lax_fan_c.usdz",
+    "midground": "lax_fan_c_lod1.usdz",
+    "distant": "lax_fan_c_lod2.usdz"
+  }
+}

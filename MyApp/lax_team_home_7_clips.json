@@ -1,5 +1,5 @@
 {
-  "asset": "lax_shooter",
+  "asset": "lax_team_home_7",
   "fps": 30,
   "timeline_end": 1558,
   "left_right_convention": "left/right are the shooter's own left/right (shooter faces -Z; shooter-left = -X in game space)",
@@ -315,38 +315,6 @@
       "notes": "trip, windmill, laugh it off"
     }
   ],
-  "required_sockets": [
-    "stick_socket",
-    "helmet_socket",
-    "effect_socket",
-    "pocket_socket",
-    "left_hand_socket",
-    "right_hand_socket",
-    "eyes_socket",
-    "camera_focus_socket",
-    "chest_socket"
-  ],
-  "extra_sockets": [
-    "ball_contact_socket"
-  ],
-  "legacy_ranges_unchanged": {
-    "idle": [
-      0,
-      48
-    ],
-    "cradle": [
-      60,
-      88
-    ],
-    "release_overhand": [
-      100,
-      133
-    ],
-    "celebrate": [
-      150,
-      186
-    ]
-  },
-  "ball_visual_radius_recommended_m": 0.08,
-  "stick_axes_blender": "shaft +Y, pocket open face +Z, origin = top-hand grip"
+  "shares_timeline_with": "lax_shooter",
+  "note": "same clip names and frame ranges as the shared-family hero; personality layer changes the motion, not the timing"
 }

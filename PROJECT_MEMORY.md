@@ -190,3 +190,14 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - Quick-stick opportunities now recur during longer runs instead of being hardcoded to shot three of a five-shot round.
 - Replaced the shot dots with contextual survival shields or a live timer as appropriate.
 - Removed the persistent perfect-release and split-dodge instruction block. The only always-visible control instruction is the swipe prompt; advanced mechanics should be surfaced progressively and briefly.
+# 2026-09-23 — Production art refresh `a0a716f`
+
+- Rebasing target: Blender `main` commit `a0a716f44bec405f3b2333ebc00ba3a0f398641c`.
+- Mirrored every USDZ and JSON in `3D/Production/Exports/` into the app resource folder, including all character/arena LODs, fans, teammates, sticks, goalie variants, shooter, goal, and manifests.
+- Replaced `lax_arena_environment.usdz` with `lax_arena_pinebrook.usdz` and changed `CharacterAssetContract.arenaAssetName` accordingly.
+- Re-enabled the production shooter after the corrected one-mesh/identity-transform bind export.
+- Removed the obsolete arena mesh quarantine. Runtime now shows `far_background_soft` and `foreground_framing_soft`, hides their sharp counterparts, and hides `collision_only` as the mobile diorama-depth fallback.
+- Added three animated crowd modules behind the goal plus home/away sideline teammates, driven from their production manifests.
+- Added the expanded shooter celebration states and rotates goal celebrations, with the clutch clip reserved for clutch goals.
+- Clean Xcode build and launch. Runtime console contained no asset fallback, missing socket, optional asset skip, failure, error, or warning messages.
+- Screenshot automation remains blocked by the simulator service/runtime mismatch; visual placement still requires a human/device screenshot pass.

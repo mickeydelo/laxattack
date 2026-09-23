@@ -1,5 +1,5 @@
 {
-  "asset": "lax_goalie",
+  "asset": "lax_girl_goalie",
   "fps": 30,
   "timeline_end": 1398,
   "left_right_convention": "left/right are from the SHOOTER's perspective (goalie faces +Z); goalie_save_left = shooter's left = game -X",
@@ -315,20 +315,6 @@
       "notes": "high save flowing into celebration"
     }
   ],
-  "facing": "+Z (toward the shooter); root identity at field level between the feet",
-  "required_sockets": [
-    "stick_socket",
-    "helmet_socket",
-    "effect_socket",
-    "pocket_socket",
-    "left_hand_socket",
-    "right_hand_socket",
-    "eyes_socket",
-    "camera_focus_socket",
-    "chest_socket"
-  ],
-  "extra_sockets": [
-    "ball_contact_socket"
-  ],
-  "runtime_note": "the procedural goalie used a 0.625 m base height; this asset's origin is at field level (y = 0)"
+  "shares_timeline_with": "lax_goalie",
+  "note": "same clip names and frame ranges as the shared-family hero; personality layer changes the motion, not the timing"
 }

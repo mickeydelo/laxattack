@@ -123,3 +123,11 @@ The full mockup population is a presentation milestone, not a prerequisite for t
 # Production brief
 
 The complete forward-looking asset, animation, environment, grass, lighting, LOD, socket, and export request is now maintained in `BLENDER_PRODUCTION_BRIEF.md`. Treat that file as the production checklist and this file as runtime defect feedback from specific deliveries.
+# `a0a716f` integration result
+
+- Shooter production loading re-enabled. No load, manifest, or socket fallback appeared in the runtime console.
+- Pinebrook replaces the former environment asset. The malformed-mesh quarantine was removed.
+- Runtime selects `far_background_soft` and `foreground_framing_soft`, hides the matching sharp groups, and hides `collision_only`.
+- Fan A/B/C and both teammate assets load through their manifests and begin ambient idle clips.
+- All exported USDZ/JSON files and LOD variants are mirrored into the application resources.
+- Project builds and launches cleanly. A visual placement/device screenshot pass is still required because automated simulator capture is unavailable in the current environment.
