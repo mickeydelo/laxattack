@@ -10,6 +10,11 @@ RealityKit owns gameplay, physics, camera, effects, animation state, and input. 
 - Large heads, expressive eyes, oversized gloves and lacrosse heads, and clear team colors.
 - Animation poses should read at game speed before secondary detail is added.
 - Lacrosse identity comes from cradling, pocket deformation cues, release styles, goalie stance, crease play, checks, dodges, and stick celebrations.
+- Compose each screen like a handcrafted sports diorama: foreground framing, playable middle ground, goal focal point, and softly simplified scenic depth.
+- Use tactile material families—painted wood, stitched fabric, molded plastic, rubber, turf, metal pipe, and woven mesh—rather than uniformly colored primitives.
+- Keep UI shapes chunky and physical with strong value separation, restrained shadows, and a small set of repeatable color roles.
+- Give every important outcome a coordinated response across character pose, camera, particles, sound, haptics, and score presentation.
+- Preserve generous negative space around the ball path and goal. Decorative richness must not compete with aiming readability.
 
 ## Asset conventions
 
@@ -63,4 +68,3 @@ These are production starting points, not fixed engine limits. Profile before in
 5. Only after the vertical slice works, produce variants and customization pieces.
 
 RealityKit supports skeletal resources, animation retargeting, named animation libraries, additive animation processing, and animation graphs. That makes Blender-to-USDZ-to-RealityKit the intended next production step without changing the current engine.
-

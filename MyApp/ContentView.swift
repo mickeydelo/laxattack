@@ -27,10 +27,20 @@ struct ContentView: View {
                 aimPower: aimSample?.normalizedPower ?? 0,
                 selectedShotType: session.selectedShotType,
                 canSelectShot: !session.isAwaitingResult,
+                isQuickStickChallenge: session.isQuickStickChallenge,
                 isRoundComplete: session.isRoundComplete,
                 onSelectShotType: { type in
                     session.selectShotType(type)
                     gameScene.setShotType(type)
+                },
+                quickStickPhase: { date in
+                    session.quickStickPhase(at: date)
+                },
+                onQuickStick: { date in
+                    gameScene.shootQuickStick(
+                        quality: session.quickStickQuality(at: date),
+                        session: session
+                    )
                 },
                 onPlayAgain: {
                     session.startNewRound()
@@ -85,8 +95,11 @@ struct GameHUD: View {
     let aimPower: Double
     let selectedShotType: ShotType
     let canSelectShot: Bool
+    let isQuickStickChallenge: Bool
     let isRoundComplete: Bool
     let onSelectShotType: (ShotType) -> Void
+    let quickStickPhase: (Date) -> Double
+    let onQuickStick: (Date) -> Void
     let onPlayAgain: () -> Void
 
     var body: some View {
@@ -117,6 +130,11 @@ struct GameHUD: View {
                     accuracy: accuracy,
                     onPlayAgain: onPlayAgain
                 )
+            } else if isQuickStickChallenge {
+                QuickStickMeter(
+                    phase: quickStickPhase,
+                    onQuickStick: onQuickStick
+                )
             } else {
                 ShotTypePicker(
                     selection: selectedShotType,
@@ -139,7 +157,7 @@ struct ShotTypePicker: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            ForEach(ShotType.allCases) { type in
+            ForEach(ShotType.selectableCases) { type in
                 Button {
                     onSelect(type)
                 } label: {
@@ -162,6 +180,56 @@ struct ShotTypePicker: View {
             }
         }
         .opacity(isEnabled ? 1 : 0.55)
+    }
+}
+
+struct QuickStickMeter: View {
+    let phase: (Date) -> Double
+    let onQuickStick: (Date) -> Void
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1 / 30)) { context in
+            let currentPhase = phase(context.date)
+
+            Button {
+                onQuickStick(context.date)
+            } label: {
+                VStack(spacing: 9) {
+                    HStack {
+                        Image(systemName: "bolt.fill")
+                        Text("QUICK STICK")
+                        Image(systemName: "bolt.fill")
+                    }
+                    .font(.headline.bold())
+                    .foregroundStyle(.yellow)
+
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(.black.opacity(0.68))
+                            Capsule()
+                                .fill(.green.opacity(0.72))
+                                .frame(width: proxy.size.width * 0.18)
+                                .position(x: proxy.size.width * 0.5, y: proxy.size.height * 0.5)
+                            Circle()
+                                .fill(.white)
+                                .shadow(color: .cyan, radius: 5)
+                                .frame(width: 18, height: 18)
+                                .offset(x: (proxy.size.width - 18) * currentPhase)
+                        }
+                    }
+                    .frame(height: 20)
+
+                    Text("TAP AS THE PASS HITS THE POCKET")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 13)
+                .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 18))
+            }
+            .buttonStyle(.plain)
+        }
     }
 }
 

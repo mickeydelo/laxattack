@@ -18,6 +18,7 @@ private struct BurstParticle {
 @MainActor
 final class PocketLaxScene {
     private let ballStart = SIMD3<Float>(0, 0.18, 1.45)
+    private let quickStickCatch = SIMD3<Float>(-0.38, 1.16, 1.82)
 
     private var ball: ModelEntity?
     private var camera: Entity?
@@ -51,12 +52,17 @@ final class PocketLaxScene {
     private var goalieReactionTime: Float = 0
     private var goalieReactionDirection: Float = 0
     private var goalieSlumpTime: Float = 0
+    private var goalieReadTime: Float = 0
+    private var goalieReadDirection: Float = 0
+    private var goalieReadStrength: Float = 0
     private var netPulseTime: Float = 0
     private var cameraKickTime: Float = 0
     private var impactShakeTime: Float = 0
     private var selectedShotType: ShotType = .overhand
     private var activeShotType: ShotType?
     private var activeCurveDirection: Float = 0
+    private var isQuickStickSetup = false
+    private var quickStickPhase: Float = 0
     private var isBuilt = false
 
     func build(in content: inout RealityViewCameraContent, session: GameSession) {
@@ -132,6 +138,7 @@ final class PocketLaxScene {
     func shoot(
         using sample: ShotControlSample,
         shotType: ShotType,
+        timingQuality: Float? = nil,
         session: GameSession
     ) {
         guard let ball else { return }
@@ -140,7 +147,8 @@ final class PocketLaxScene {
             horizontal: sample.direction,
             power: sample.power,
             releaseSpeed: sample.releaseSpeed,
-            type: shotType
+            type: shotType,
+            timingQuality: timingQuality
         )
         guard session.beginShot(input: input) else { return }
 
@@ -154,6 +162,13 @@ final class PocketLaxScene {
         activeShotType = shotType
         activeCurveDirection = abs(sample.direction) > 0.12 ? sample.direction : 1
         cameraKickTime = 0.34
+        goalieReadTime = shotType == .bounce ? 0.48 : 0.72
+        goalieReadDirection = sample.direction
+        let timingDeception = 1 - (timingQuality ?? 0)
+        goalieReadStrength = 0.1 + Float(session.difficultyLevel) * 0.055
+        if shotType == .quickStick {
+            goalieReadStrength *= 0.35 + timingDeception * 0.65
+        }
 
         var body = ball.components[PhysicsBodyComponent.self] ?? PhysicsBodyComponent()
         body.mode = .dynamic
@@ -174,12 +189,34 @@ final class PocketLaxScene {
         }
     }
 
+    func shootQuickStick(quality: Double, session: GameSession) {
+        guard session.isQuickStickChallenge else { return }
+
+        let clampedQuality = Float(max(0, min(1, quality)))
+        let goalieX = goalie?.position.x ?? 0
+        let placement: Float = goalieX >= 0 ? -0.58 : 0.58
+        let timingError = (1 - clampedQuality) * sin(Float(elapsedTime) * 9) * 0.32
+        let sample = ShotControlSample(
+            direction: max(-1, min(1, placement + timingError)),
+            power: 1.15 + clampedQuality * 1.05,
+            releaseSpeed: 1_100 + clampedQuality * 1_000
+        )
+        ball?.position = quickStickCatch
+        shoot(
+            using: sample,
+            shotType: .quickStick,
+            timingQuality: clampedQuality,
+            session: session
+        )
+    }
+
     func prepareForNewRound() {
         shotTask?.cancel()
         celebrationTime = 0
         disappointmentTime = 0
         goalieReactionTime = 0
         goalieSlumpTime = 0
+        goalieReadTime = 0
         selectedShotType = .overhand
         resetBall()
     }
@@ -208,6 +245,12 @@ final class PocketLaxScene {
                 sample.direction * 1.7,
                 1.7 + sample.power * 0.72,
                 -(9.5 + sample.power * 1.78)
+            ]
+        case .quickStick:
+            return [
+                sample.direction * 1.8,
+                2.15 + sample.power * 0.72,
+                -(10.4 + sample.power * 2.05)
             ]
         }
     }
@@ -285,6 +328,7 @@ final class PocketLaxScene {
         ball.orientation = .init()
         activeShotType = nil
         activeCurveDirection = 0
+        isQuickStickSetup = false
         trailHistory.removeAll(keepingCapacity: true)
         for trail in ballTrail {
             trail.isEnabled = false
@@ -293,6 +337,7 @@ final class PocketLaxScene {
 
     private func update(deltaTime: TimeInterval, session: GameSession) {
         elapsedTime += deltaTime
+        updateQuickStickSetup(session: session)
         updateGoalie(deltaTime: Float(deltaTime), level: session.difficultyLevel)
         updateShooter(deltaTime: Float(deltaTime))
         updateCharacterEyes()
@@ -314,6 +359,14 @@ final class PocketLaxScene {
         var rootY = readyBounce
         var roll: Float = 0
         var squash = SIMD3<Float>(1, 1, 1)
+
+        if goalieReadTime > 0 {
+            goalieReadTime = max(0, goalieReadTime - deltaTime)
+            let readProgress = 1 - goalieReadTime / (selectedShotType == .bounce ? 0.48 : 0.72)
+            let committedRead = readProgress * readProgress
+            x += goalieReadDirection * committedRead * goalieReadStrength
+            roll -= goalieReadDirection * committedRead * 0.08
+        }
 
         if goalieReactionTime > 0 {
             goalieReactionTime = max(0, goalieReactionTime - deltaTime)
@@ -350,11 +403,19 @@ final class PocketLaxScene {
         var rootY = idleBob
         var rootZ: Float = 1.72
         var rootRoll: Float = 0
-        var stickAngle: Float = -0.28
+        var stickAngle: Float = -0.28 + sin(Float(elapsedTime) * 3.6) * 0.055
         var torsoScale = SIMD3<Float>(1, 1, 1)
         var headTilt: Float = 0
 
-        if isAiming {
+        if isQuickStickSetup {
+            let pocketPulse = sin(quickStickPhase * .pi)
+            rootY -= pocketPulse * 0.025
+            rootZ += pocketPulse * 0.035
+            rootRoll = -0.08 + pocketPulse * 0.06
+            stickAngle = -0.72 + pocketPulse * 0.38
+            torsoScale = [1.04, 0.96, 1]
+            headTilt = 0.08
+        } else if isAiming {
             let normalizedPower = max(0, min(1, (aimPower - 0.65) / 1.55))
             rootY -= normalizedPower * 0.035
             rootZ += normalizedPower * 0.055
@@ -364,6 +425,7 @@ final class PocketLaxScene {
             case .overhand: shotWindup = -0.36 - normalizedPower * 0.58
             case .bounce: shotWindup = -0.18 - normalizedPower * 0.42
             case .sidearm: shotWindup = -1.02 - normalizedPower * 0.24
+            case .quickStick: shotWindup = -0.72
             }
             stickAngle = shotWindup + aimDirection * 0.14
             torsoScale = [1 + normalizedPower * 0.06, 1 - normalizedPower * 0.055, 1]
@@ -386,6 +448,9 @@ final class PocketLaxScene {
             case .sidearm:
                 stickAngle = -1.18 + attack * 2.15 - settle * 0.3
                 rootRoll += activeCurveDirection * attack * 0.12
+            case .quickStick:
+                stickAngle = -0.48 + attack * 1.35 - settle * 0.18
+                rootZ -= attack * 0.08
             }
             torsoScale = [1 - attack * 0.08, 1 + attack * 0.11, 1]
             headTilt = -aimDirection * attack * 0.09
@@ -433,6 +498,29 @@ final class PocketLaxScene {
             let restingX: Float = eye.position.x < 0 ? -0.065 : 0.065
             eye.position.x += (restingX + goalieLook - eye.position.x) * 0.1
             eye.scale.y = blink ? 0.15 : 1
+        }
+    }
+
+    private func updateQuickStickSetup(session: GameSession) {
+        guard session.isQuickStickChallenge, let ball else {
+            isQuickStickSetup = false
+            return
+        }
+
+        isQuickStickSetup = true
+        selectedShotType = .quickStick
+        quickStickPhase = Float(session.quickStickPhase())
+
+        if quickStickPhase <= 0.5 {
+            let rawProgress = quickStickPhase / 0.5
+            let progress = rawProgress * rawProgress * (3 - 2 * rawProgress)
+            let start = SIMD3<Float>(-2.15, 0.82, 1.34)
+            var position = simd_mix(start, quickStickCatch, SIMD3<Float>(repeating: progress))
+            position.y += sin(progress * .pi) * 0.16
+            ball.position = position
+        } else {
+            let cradle = sin((quickStickPhase - 0.5) * .pi * 4) * 0.035
+            ball.position = quickStickCatch + [cradle, abs(cradle) * 0.4, 0]
         }
     }
 

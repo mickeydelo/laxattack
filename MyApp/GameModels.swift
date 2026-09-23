@@ -50,20 +50,25 @@ struct ShotInput: Equatable, Sendable {
     let power: Float
     let releaseSpeed: Float
     let type: ShotType
+    let timingQuality: Float?
 }
 
 enum ShotType: String, CaseIterable, Equatable, Sendable, Identifiable {
     case overhand
     case bounce
     case sidearm
+    case quickStick
 
     var id: Self { self }
+
+    static let selectableCases: [ShotType] = [.overhand, .bounce, .sidearm]
 
     var title: LocalizedStringResource {
         switch self {
         case .overhand: "OVERHAND"
         case .bounce: "BOUNCE"
         case .sidearm: "SIDEARM"
+        case .quickStick: "QUICK STICK"
         }
     }
 
@@ -72,6 +77,7 @@ enum ShotType: String, CaseIterable, Equatable, Sendable, Identifiable {
         case .overhand: "arrow.up.forward"
         case .bounce: "arrow.down.forward.and.arrow.up"
         case .sidearm: "arrow.turn.up.right"
+        case .quickStick: "bolt.fill"
         }
     }
 
@@ -80,6 +86,7 @@ enum ShotType: String, CaseIterable, Equatable, Sendable, Identifiable {
         case .overhand: "RELEASE OVERHAND"
         case .bounce: "RELEASE BOUNCE SHOT"
         case .sidearm: "RELEASE SIDEARM"
+        case .quickStick: "TAP TO QUICK STICK"
         }
     }
 }
@@ -116,6 +123,7 @@ enum ShotFeedback: Equatable {
     case fiveHole
     case bounceGoal
     case sidearmGoal
+    case quickStickGoal
     case save
     case pipe
     case miss
@@ -138,6 +146,8 @@ enum ShotFeedback: Equatable {
             "BOUNCE GOAL!"
         case .sidearmGoal:
             "SIDEARM RIP!"
+        case .quickStickGoal:
+            "QUICK STICK!"
         case .save:
             "SAVE!"
         case .pipe:
@@ -149,7 +159,7 @@ enum ShotFeedback: Equatable {
 
     var color: Color {
         switch self {
-        case .goal, .topCorner, .lowCorner, .fiveHole, .bounceGoal, .sidearmGoal:
+        case .goal, .topCorner, .lowCorner, .fiveHole, .bounceGoal, .sidearmGoal, .quickStickGoal:
             .yellow
         case .save:
             .cyan
@@ -174,6 +184,7 @@ final class GameSession {
     private(set) var isAwaitingResult = false
     private(set) var shotHistory: [ShotResult] = []
     private(set) var selectedShotType: ShotType = .overhand
+    private(set) var quickStickStartedAt: Date?
 
     private var pendingInput: ShotInput?
     private var pendingHitPipe = false
@@ -196,6 +207,21 @@ final class GameSession {
         min(3, max(0, combo / 2))
     }
 
+    var isQuickStickChallenge: Bool {
+        quickStickStartedAt != nil && !isAwaitingResult && !isRoundComplete
+    }
+
+    func quickStickPhase(at date: Date = .now) -> Double {
+        guard let quickStickStartedAt else { return 0 }
+        let elapsed = max(0, date.timeIntervalSince(quickStickStartedAt))
+        return elapsed.truncatingRemainder(dividingBy: 1.6) / 1.6
+    }
+
+    func quickStickQuality(at date: Date = .now) -> Double {
+        let distance = abs(quickStickPhase(at: date) - 0.5)
+        return max(0, 1 - distance / 0.28)
+    }
+
     func beginShot(input: ShotInput) -> Bool {
         guard shotsRemaining > 0, !isAwaitingResult else { return false }
         shotsRemaining -= 1
@@ -203,6 +229,7 @@ final class GameSession {
         pendingInput = input
         pendingHitPipe = false
         pendingBounced = false
+        quickStickStartedAt = nil
         feedback = .shooting
         return true
     }
@@ -225,12 +252,19 @@ final class GameSession {
         case .fiveHole: placementBonus = 125
         case .standard: placementBonus = 0
         }
-        let releaseBonus = pendingInput?.type == .sidearm ? 50 : 0
+        let releaseBonus: Int
+        switch pendingInput?.type {
+        case .sidearm: releaseBonus = 50
+        case .quickStick: releaseBonus = 150
+        default: releaseBonus = 0
+        }
         let points = 100 * combo + pipeBonus + bounceBonus + placementBonus + releaseBonus
 
         score += points
         if pendingBounced {
             feedback = .bounceGoal
+        } else if pendingInput?.type == .quickStick {
+            feedback = .quickStickGoal
         } else if style == .topCorner {
             feedback = .topCorner
         } else if style == .lowCorner {
@@ -283,6 +317,7 @@ final class GameSession {
         isAwaitingResult = false
         shotHistory = []
         selectedShotType = .overhand
+        quickStickStartedAt = nil
         pendingInput = nil
         pendingHitPipe = false
         pendingBounced = false
@@ -294,6 +329,9 @@ final class GameSession {
             return
         }
         feedback = .ready
+        if shotHistory.count == 2, shotsRemaining == 3 {
+            quickStickStartedAt = .now
+        }
     }
 
     private func finishShot(
@@ -335,6 +373,8 @@ final class GameFeedbackPlayer {
             UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.62)
         case .sidearm:
             UIImpactFeedbackGenerator(style: .rigid).impactOccurred(intensity: 0.82)
+        case .quickStick:
+            UIImpactFeedbackGenerator(style: .heavy).impactOccurred(intensity: 0.92)
         }
         #endif
     }

@@ -22,6 +22,13 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 4. **Skill before stats:** competitive outcomes should primarily reflect timing, aim, deception, and shot choice.
 5. **Playable milestones:** every phase ends in a build that is fun on its own.
 
+## Visual North Star
+
+- The supplied Pocket Lax concepts are the quality and emotional benchmark, not literal production art to copy.
+- Target a premium miniature sports diorama with charming stylized athletes, tactile equipment, layered scenic depth, bold readable HUD cards, and coordinated animation/VFX feedback.
+- Final character quality requires Blender-authored models, shared production rigs, facial shapes, equipment sockets, and authored clips imported as USDZ. Procedural geometry remains gameplay scaffolding.
+- Keep the goal, goalie, ball path, shot choice, and result readable before adding decorative density.
+
 ## Roadmap
 
 1. Prove the shot: goal/save/miss outcomes, fast reset, five-shot rounds, scoring, combo, basic goalie, feedback.
@@ -56,6 +63,9 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - Overhand is the fast high-release precision shot. Bounce launches shallow to contact turf before the cage. Sidearm launches flatter, spins, and develops late lateral curve in flight.
 - Five pulsing goal markers communicate top-corner, low-corner, and five-hole scoring windows. Top corner adds 100 points, low corner adds 75, five-hole adds 125, and a sidearm goal adds 50.
 - The virtual camera adds a restrained forward kick on release and short shake on goal/save/pipe impact.
+- The third attempt in each five-shot round becomes a Quick Stick timing challenge. A pass travels into the visible stick pocket on the same 1.6-second clock as the HUD timing lane; tapping near center increases speed and accuracy and reduces the goalie's read.
+- Quick-stick timing quality is persisted in `ShotInput`, and quick-stick goals earn a 150-point release bonus.
+- The goalie now commits progressively toward the indicated release direction, scaling its read strength with combo difficulty; well-timed quick sticks partially defeat that anticipation.
 - Goal feedback distinguishes standard goals, top-corner finishes, and bounce goals.
 - iOS haptics distinguish release, goal, save, pipe, and miss.
 - The moving goalie is now a readable primitive character silhouette assembled from a helmet, face, torso, legs, and stick, with one kinematic collision body.
@@ -101,6 +111,7 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - 2026-09-22: Added bounce-shot tracking, top-corner classification, stackable skill bonuses, richer goal callouts, a primitive goal net, and a goal-line marking. The updated build compiled and launched successfully on the iPhone 17 Pro simulator.
 - 2026-09-22: Completed the first large vertical-slice upgrade. Split the project into focused HUD/model/scene files; added a live 3D trajectory guide, procedural shooter performance, reactive difficulty-scaling goalie, pulsing net, richer miniature outdoor arena, improved camera framing, best score, shot indicators, live power, accuracy, and animated round presentation. The project compiled and launched successfully on the iPhone 17 Pro simulator.
 - 2026-09-22: Added the first lacrosse decision layer: selectable Overhand/Bounce/Sidearm releases with distinct physics, previews, poses, spin/curve, haptics, and recorded shot type. Added pulsing placement targets, low-corner/five-hole scoring, placement callouts, and restrained camera kick/impact shake. The project built and launched successfully on the iPhone 17 Pro simulator with no crash/fatal/assertion output.
+- 2026-09-23: Added a synchronized Quick Stick timing challenge on the third shot, an incoming pass that reaches the procedural pocket, timing-dependent velocity/placement, a 150-point quick-stick bonus, persisted timing quality, quick-stick animation staging, and direction-aware goalie anticipation. Expanded the art pipeline and memory with the supplied concept's diorama/material/feedback quality principles. The project built and launched successfully with no crash/fatal/assertion output.
 # 2026-09-22: Competitive feel and art direction
 
 - Product name is **Lax Attack**. The runtime remains SwiftUI + RealityKit in portrait orientation.
