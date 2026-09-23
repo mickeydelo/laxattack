@@ -51,6 +51,8 @@ struct ShotInput: Equatable, Sendable {
     let releaseSpeed: Float
     let type: ShotType
     let timingQuality: Float?
+    let dodgeDirection: Float
+    let wasOnFire: Bool
 }
 
 enum ShotType: String, CaseIterable, Equatable, Sendable, Identifiable {
@@ -124,6 +126,8 @@ enum ShotFeedback: Equatable {
     case bounceGoal
     case sidearmGoal
     case quickStickGoal
+    case dodgeGoal
+    case heatGoal
     case save
     case pipe
     case miss
@@ -148,6 +152,10 @@ enum ShotFeedback: Equatable {
             "SIDEARM RIP!"
         case .quickStickGoal:
             "QUICK STICK!"
+        case .dodgeGoal:
+            "ANKLES BROKEN!"
+        case .heatGoal:
+            "ON FIRE!"
         case .save:
             "SAVE!"
         case .pipe:
@@ -159,7 +167,7 @@ enum ShotFeedback: Equatable {
 
     var color: Color {
         switch self {
-        case .goal, .topCorner, .lowCorner, .fiveHole, .bounceGoal, .sidearmGoal, .quickStickGoal:
+        case .goal, .topCorner, .lowCorner, .fiveHole, .bounceGoal, .sidearmGoal, .quickStickGoal, .dodgeGoal, .heatGoal:
             .yellow
         case .save:
             .cyan
@@ -205,6 +213,10 @@ final class GameSession {
 
     var difficultyLevel: Int {
         min(3, max(0, combo / 2))
+    }
+
+    var isOnFire: Bool {
+        combo >= 3
     }
 
     var isQuickStickChallenge: Bool {
@@ -258,13 +270,19 @@ final class GameSession {
         case .quickStick: releaseBonus = 150
         default: releaseBonus = 0
         }
-        let points = 100 * combo + pipeBonus + bounceBonus + placementBonus + releaseBonus
+        let dodgeBonus = abs(pendingInput?.dodgeDirection ?? 0) > 0.5 ? 100 : 0
+        let heatBonus = pendingInput?.wasOnFire == true ? 200 : 0
+        let points = 100 * combo + pipeBonus + bounceBonus + placementBonus + releaseBonus + dodgeBonus + heatBonus
 
         score += points
-        if pendingBounced {
+        if pendingInput?.wasOnFire == true {
+            feedback = .heatGoal
+        } else if pendingBounced {
             feedback = .bounceGoal
         } else if pendingInput?.type == .quickStick {
             feedback = .quickStickGoal
+        } else if abs(pendingInput?.dodgeDirection ?? 0) > 0.5 {
+            feedback = .dodgeGoal
         } else if style == .topCorner {
             feedback = .topCorner
         } else if style == .lowCorner {

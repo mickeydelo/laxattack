@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var session = GameSession()
     @State private var gameScene = PocketLaxScene()
     @State private var aimSample: ShotControlSample?
+    @State private var dodgeDirection: Float = 0
 
     var body: some View {
         ZStack {
@@ -24,7 +25,9 @@ struct ContentView: View {
                 accuracy: session.accuracy,
                 feedback: session.feedback,
                 goalieLevel: session.difficultyLevel,
+                isOnFire: session.isOnFire,
                 aimPower: aimSample?.normalizedPower ?? 0,
+                dodgeDirection: dodgeDirection,
                 selectedShotType: session.selectedShotType,
                 canSelectShot: !session.isAwaitingResult,
                 isQuickStickChallenge: session.isQuickStickChallenge,
@@ -59,6 +62,12 @@ struct ContentView: View {
         DragGesture(minimumDistance: 12)
             .onChanged { value in
                 guard !session.isAwaitingResult, !session.isRoundComplete else { return }
+                if dodgeDirection == 0,
+                   abs(value.translation.width) > 55,
+                   abs(value.translation.height) < 75 {
+                    dodgeDirection = value.translation.width < 0 ? -1 : 1
+                    gameScene.updateDodge(direction: dodgeDirection)
+                }
                 let sample = ShotControlModel.sample(
                     translation: value.translation,
                     velocity: value.velocity
@@ -72,11 +81,14 @@ struct ContentView: View {
                     velocity: value.velocity
                 )
                 gameScene.hideAimGuide()
+                let committedDodge = dodgeDirection
                 aimSample = nil
+                dodgeDirection = 0
                 guard value.translation.height < -24 else { return }
                 gameScene.shoot(
                     using: sample,
                     shotType: session.selectedShotType,
+                    dodgeDirection: committedDodge,
                     session: session
                 )
             }
@@ -92,7 +104,9 @@ struct GameHUD: View {
     let accuracy: Double
     let feedback: ShotFeedback
     let goalieLevel: Int
+    let isOnFire: Bool
     let aimPower: Double
+    let dodgeDirection: Float
     let selectedShotType: ShotType
     let canSelectShot: Bool
     let isQuickStickChallenge: Bool
@@ -109,6 +123,14 @@ struct GameHUD: View {
             HStack {
                 ShotCounter(shotsRemaining: shotsRemaining)
                 Spacer()
+                if isOnFire {
+                    Label("ON FIRE", systemImage: "flame.fill")
+                        .font(.caption.bold())
+                        .foregroundStyle(.yellow)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(.orange.opacity(0.82), in: Capsule())
+                }
                 if goalieLevel > 0 {
                     Text("GOALIE +(goalieLevel)")
                         .font(.caption.bold())
@@ -141,7 +163,11 @@ struct GameHUD: View {
                     isEnabled: canSelectShot,
                     onSelect: onSelectShotType
                 )
-                AimPrompt(power: aimPower, shotType: selectedShotType)
+                AimPrompt(
+                    power: aimPower,
+                    shotType: selectedShotType,
+                    dodgeDirection: dodgeDirection
+                )
             }
         }
         .padding(.horizontal, 18)
@@ -329,9 +355,18 @@ struct ShotCallout: View {
 struct AimPrompt: View {
     let power: Double
     let shotType: ShotType
+    let dodgeDirection: Float
 
     var body: some View {
         VStack(spacing: 8) {
+            if dodgeDirection != 0 {
+                Label("SPLIT DODGE", systemImage: "figure.lacrosse")
+                    .font(.caption.bold())
+                    .foregroundStyle(.yellow)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(.black.opacity(0.68), in: Capsule())
+            }
             if power > 0 {
                 ProgressView(value: power)
                     .tint(power > 0.82 ? .orange : .cyan)
