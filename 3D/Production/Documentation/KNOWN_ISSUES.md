@@ -24,3 +24,5 @@ Phase 1 commit: `3ef396d58503f5e7844da3cee169684900893c22`.
 - **Goalie base height:** `PocketLaxScene` lifts the procedural goalie to a 0.625 m base height. The USDZ goalie must be placed
   at y = 0 (feet on the turf).
 - **Goalie hands:** the goalie rig is right-hand-top only. Low saves tilt the stick forward instead of flipping hands.
+- **Crowd not built:** crowd figures and reaction clips (Phase 6) are not built yet; the arena has bleachers but no crowd.
+- **Heavy arena:** the arena is about 90k tris and 30 materials. Optimize before shipping.
