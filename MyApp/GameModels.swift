@@ -11,7 +11,7 @@ struct ShotControlSample: Equatable, Sendable {
     let releaseSpeed: Float
 
     var normalizedPower: Double {
-        Double((power - 0.65) / 1.55)
+        Double(min(max((power - 0.65) / 1.55, 0), 1))
     }
 }
 
@@ -25,13 +25,16 @@ enum ShotControlModel {
         let lateralTravel = Float(translation.width)
         let lateralSpeed = Float(velocity.width)
 
-        let travelPower = min(upwardTravel / 220, 1)
-        let speedPower = min(upwardSpeed / 1_800, 1)
+        let travelPower = smoothStep(min(upwardTravel / 220, 1))
+        let speedPower = smoothStep(min(upwardSpeed / 1_800, 1))
         let power = clamp(0.65 + travelPower * 1.1 + speedPower * 0.45, 0.65, 2.2)
 
-        let travelAim = lateralTravel / 115
-        let speedAim = lateralSpeed / 3_000
-        let direction = clamp(travelAim + speedAim * 0.22, -1, 1)
+        let travelAim = lateralTravel / 135
+        let speedAim = lateralSpeed / 3_600
+        let rawDirection = clamp(travelAim + speedAim * 0.16, -1, 1)
+        let direction = abs(rawDirection) < 0.035
+            ? 0
+            : rawDirection * (0.82 + abs(rawDirection) * 0.18)
 
         return ShotControlSample(
             direction: direction,
@@ -42,6 +45,10 @@ enum ShotControlModel {
 
     private static func clamp(_ value: Float, _ minimum: Float, _ maximum: Float) -> Float {
         min(max(value, minimum), maximum)
+    }
+
+    private static func smoothStep(_ value: Float) -> Float {
+        value * value * (3 - 2 * value)
     }
 }
 
@@ -55,6 +62,19 @@ struct ShotInput: Equatable, Sendable {
     let wasOnFire: Bool
     let goaliePositionAtRelease: Float
     let physicsVersion: Int
+
+    var releaseQuality: Float {
+        if type == .quickStick {
+            return timingQuality ?? 0
+        }
+        let speedScore = max(0, 1 - abs(releaseSpeed - 1_500) / 900)
+        let controlScore = max(0, 1 - abs(power - 1.65) / 0.85)
+        return min(1, speedScore * 0.72 + controlScore * 0.28)
+    }
+
+    var isPerfectRelease: Bool {
+        releaseQuality >= 0.82
+    }
 }
 
 enum ShotType: String, CaseIterable, Equatable, Sendable, Identifiable {
@@ -67,7 +87,7 @@ enum ShotType: String, CaseIterable, Equatable, Sendable, Identifiable {
 
     static let selectableCases: [ShotType] = [.overhand, .bounce, .sidearm]
 
-    var title: LocalizedStringResource {
+    var title: String {
         switch self {
         case .overhand: "OVERHAND"
         case .bounce: "BOUNCE"
@@ -108,6 +128,43 @@ enum GoalStyle: Equatable, Sendable {
     case fiveHole
 }
 
+enum HotZone: Int, CaseIterable, Equatable, Sendable {
+    case topLeft
+    case topRight
+    case lowLeft
+    case lowRight
+    case fiveHole
+
+    var title: LocalizedStringResource {
+        switch self {
+        case .topLeft: "TOP LEFT"
+        case .topRight: "TOP RIGHT"
+        case .lowLeft: "LOW LEFT"
+        case .lowRight: "LOW RIGHT"
+        case .fiveHole: "FIVE HOLE"
+        }
+    }
+
+    var targetPosition: SIMD3<Float> {
+        switch self {
+        case .topLeft: [-0.68, 1.58, -5.62]
+        case .topRight: [0.68, 1.58, -5.62]
+        case .lowLeft: [-0.67, 0.5, -5.62]
+        case .lowRight: [0.67, 0.5, -5.62]
+        case .fiveHole: [0, 0.38, -5.62]
+        }
+    }
+
+    func contains(_ position: SIMD3<Float>) -> Bool {
+        let target = targetPosition
+        let horizontalRadius: Float = self == .fiveHole ? 0.3 : 0.38
+        let verticalRadius: Float = self == .fiveHole ? 0.26 : 0.34
+        let x = (position.x - target.x) / horizontalRadius
+        let y = (position.y - target.y) / verticalRadius
+        return x * x + y * y <= 1
+    }
+}
+
 struct ShotResult: Equatable, Sendable {
     let input: ShotInput
     let outcome: ShotOutcome
@@ -116,6 +173,8 @@ struct ShotResult: Equatable, Sendable {
     let hitPipe: Bool
     let bounced: Bool
     let goalStyle: GoalStyle?
+    let hitHotZone: Bool
+    let wasClutch: Bool
 }
 
 enum ShotFeedback: Equatable {
@@ -130,6 +189,9 @@ enum ShotFeedback: Equatable {
     case quickStickGoal
     case dodgeGoal
     case heatGoal
+    case perfectRelease
+    case calledShot
+    case clutchGoal
     case save
     case pipe
     case miss
@@ -158,6 +220,12 @@ enum ShotFeedback: Equatable {
             "ANKLES BROKEN!"
         case .heatGoal:
             "ON FIRE!"
+        case .perfectRelease:
+            "PERFECT RELEASE!"
+        case .calledShot:
+            "CALLED SHOT!"
+        case .clutchGoal:
+            "CLUTCH ×2!"
         case .save:
             "SAVE!"
         case .pipe:
@@ -169,7 +237,7 @@ enum ShotFeedback: Equatable {
 
     var color: Color {
         switch self {
-        case .goal, .topCorner, .lowCorner, .fiveHole, .bounceGoal, .sidearmGoal, .quickStickGoal, .dodgeGoal, .heatGoal:
+        case .goal, .topCorner, .lowCorner, .fiveHole, .bounceGoal, .sidearmGoal, .quickStickGoal, .dodgeGoal, .heatGoal, .perfectRelease, .calledShot, .clutchGoal:
             .yellow
         case .save:
             .cyan
@@ -191,19 +259,33 @@ final class GameSession {
     private(set) var combo = 0
     private(set) var shotsRemaining = 5
     private(set) var totalShots = 5
+    private(set) var stopsRemaining = 3
+    private(set) var maximumStops = 3
+    private(set) var secondsRemaining: Double = 0
     private(set) var runSeed = 0
     private(set) var feedback: ShotFeedback = .ready
     private(set) var isAwaitingResult = false
     private(set) var shotHistory: [ShotResult] = []
     private(set) var selectedShotType: ShotType = .overhand
     private(set) var quickStickStartedAt: Date?
+    private(set) var activeHotZone: HotZone = .topLeft
+    private(set) var runRule: RunRule = .shotLimit(5)
 
     private var pendingInput: ShotInput?
     private var pendingHitPipe = false
     private var pendingBounced = false
+    private var pendingClutch = false
 
     var isRoundComplete: Bool {
-        shotsRemaining == 0 && !isAwaitingResult
+        guard !isAwaitingResult else { return false }
+        switch runRule {
+        case .survival:
+            return stopsRemaining == 0
+        case .timed:
+            return secondsRemaining <= 0
+        case .shotLimit:
+            return shotsRemaining == 0
+        }
     }
 
     var goals: Int {
@@ -216,7 +298,7 @@ final class GameSession {
     }
 
     var difficultyLevel: Int {
-        min(3, max(0, combo / 2))
+        min(5, max(0, combo))
     }
 
     var isOnFire: Bool {
@@ -225,6 +307,11 @@ final class GameSession {
 
     var isQuickStickChallenge: Bool {
         quickStickStartedAt != nil && !isAwaitingResult && !isRoundComplete
+    }
+
+    var isClutchShot: Bool {
+        guard case .shotLimit = runRule else { return false }
+        return shotsRemaining == 1 && !isAwaitingResult && !isRoundComplete
     }
 
     func quickStickPhase(at date: Date = .now) -> Double {
@@ -239,8 +326,13 @@ final class GameSession {
     }
 
     func beginShot(input: ShotInput) -> Bool {
-        guard shotsRemaining > 0, !isAwaitingResult else { return false }
-        shotsRemaining -= 1
+        guard !isRoundComplete, !isAwaitingResult else { return false }
+        if case .shotLimit = runRule {
+            pendingClutch = shotsRemaining == 1
+            shotsRemaining -= 1
+        } else {
+            pendingClutch = false
+        }
         isAwaitingResult = true
         pendingInput = input
         pendingHitPipe = false
@@ -255,7 +347,7 @@ final class GameSession {
         selectedShotType = type
     }
 
-    func registerGoal(style: GoalStyle) -> Bool {
+    func registerGoal(style: GoalStyle, hitHotZone: Bool) -> Bool {
         guard isAwaitingResult else { return false }
         combo += 1
 
@@ -276,10 +368,19 @@ final class GameSession {
         }
         let dodgeBonus = abs(pendingInput?.dodgeDirection ?? 0) > 0.5 ? 100 : 0
         let heatBonus = pendingInput?.wasOnFire == true ? 200 : 0
-        let points = 100 * combo + pipeBonus + bounceBonus + placementBonus + releaseBonus + dodgeBonus + heatBonus
+        let perfectBonus = pendingInput?.isPerfectRelease == true ? 125 : 0
+        let hotZoneBonus = hitHotZone ? 200 : 0
+        let earnedPoints = 100 * combo + pipeBonus + bounceBonus + placementBonus + releaseBonus + dodgeBonus + heatBonus + perfectBonus + hotZoneBonus
+        let points = pendingClutch ? earnedPoints * 2 : earnedPoints
 
         score += points
-        if pendingInput?.wasOnFire == true {
+        if pendingClutch {
+            feedback = .clutchGoal
+        } else if hitHotZone {
+            feedback = .calledShot
+        } else if pendingInput?.isPerfectRelease == true {
+            feedback = .perfectRelease
+        } else if pendingInput?.wasOnFire == true {
             feedback = .heatGoal
         } else if pendingBounced {
             feedback = .bounceGoal
@@ -299,7 +400,7 @@ final class GameSession {
             feedback = .goal
         }
 
-        finishShot(outcome: .goal, points: points, goalStyle: style)
+        finishShot(outcome: .goal, points: points, goalStyle: style, hitHotZone: hitHotZone)
         return true
     }
 
@@ -307,6 +408,7 @@ final class GameSession {
         guard isAwaitingResult else { return false }
         combo = 0
         feedback = .save
+        registerStop()
         finishShot(outcome: .save, points: 0)
         return true
     }
@@ -326,16 +428,36 @@ final class GameSession {
         guard isAwaitingResult else { return false }
         combo = 0
         feedback = .miss
+        registerStop()
         finishShot(outcome: .miss, points: 0)
         return true
     }
 
-    func startNewRound(shots: Int = 5, seed: Int = 0, preferredShot: ShotType? = nil) {
+    func startNewRound(rule: RunRule = .shotLimit(5), seed: Int = 0, preferredShot: ShotType? = nil) {
         bestScore = max(bestScore, score)
         score = 0
         combo = 0
-        totalShots = max(1, shots)
-        shotsRemaining = totalShots
+        runRule = rule
+        switch rule {
+        case .survival(let maxStops):
+            maximumStops = max(1, maxStops)
+            stopsRemaining = maximumStops
+            totalShots = 0
+            shotsRemaining = 0
+            secondsRemaining = 0
+        case .timed(let seconds):
+            maximumStops = 0
+            stopsRemaining = 0
+            totalShots = 0
+            shotsRemaining = 0
+            secondsRemaining = Double(max(1, seconds))
+        case .shotLimit(let shots):
+            totalShots = max(1, shots)
+            shotsRemaining = totalShots
+            maximumStops = 0
+            stopsRemaining = 0
+            secondsRemaining = 0
+        }
         runSeed = seed
         feedback = .ready
         isAwaitingResult = false
@@ -345,6 +467,8 @@ final class GameSession {
         pendingInput = nil
         pendingHitPipe = false
         pendingBounced = false
+        pendingClutch = false
+        chooseNextHotZone()
     }
 
     func prepareNextShot() {
@@ -353,15 +477,17 @@ final class GameSession {
             return
         }
         feedback = .ready
-        if shotHistory.count == 2, shotsRemaining == 3 {
+        if shotHistory.count > 0, shotHistory.count % 5 == 2 {
             quickStickStartedAt = .now
         }
+        chooseNextHotZone()
     }
 
     private func finishShot(
         outcome: ShotOutcome,
         points: Int,
-        goalStyle: GoalStyle? = nil
+        goalStyle: GoalStyle? = nil,
+        hitHotZone: Bool = false
     ) {
         guard let pendingInput else { return }
 
@@ -373,7 +499,9 @@ final class GameSession {
                 combo: combo,
                 hitPipe: pendingHitPipe,
                 bounced: pendingBounced,
-                goalStyle: goalStyle
+                goalStyle: goalStyle,
+                hitHotZone: hitHotZone,
+                wasClutch: pendingClutch
             )
         )
 
@@ -383,6 +511,27 @@ final class GameSession {
         if isRoundComplete {
             bestScore = max(bestScore, score)
         }
+    }
+
+    private func chooseNextHotZone() {
+        let zones = HotZone.allCases
+        let seed = UInt(bitPattern: runSeed)
+        let sequence = seed &+ UInt(shotHistory.count &* 3)
+        activeHotZone = zones[Int(sequence % UInt(zones.count))]
+    }
+
+    func advanceClock(by interval: Double) {
+        guard case .timed = runRule, !isRoundComplete else { return }
+        secondsRemaining = max(0, secondsRemaining - interval)
+        if secondsRemaining == 0 {
+            quickStickStartedAt = nil
+            bestScore = max(bestScore, score)
+        }
+    }
+
+    private func registerStop() {
+        guard case .survival = runRule else { return }
+        stopsRemaining = max(0, stopsRemaining - 1)
     }
 }
 
@@ -408,6 +557,15 @@ final class GameFeedbackPlayer {
         #if os(iOS)
         guard isHapticsEnabled else { return }
         UINotificationFeedbackGenerator().notificationOccurred(.success)
+        #endif
+    }
+
+    func playPerfectRelease() {
+        #if os(iOS)
+        guard isHapticsEnabled else { return }
+        let generator = UIImpactFeedbackGenerator(style: .rigid)
+        generator.prepare()
+        generator.impactOccurred(intensity: 0.55)
         #endif
     }
 

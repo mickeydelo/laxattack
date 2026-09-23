@@ -18,13 +18,21 @@ private struct BurstParticle {
 @MainActor
 final class PocketLaxScene {
     private static let physicsVersion = 1
+    // The current USDZ has a combined skinned mesh with separated jersey/equipment
+    // bind transforms in RealityKit. Flip this after the corrected Blender export.
+    private static let useProductionShooter = false
     private let ballStart = SIMD3<Float>(0, 0.18, 1.45)
     private let quickStickCatch = SIMD3<Float>(-0.38, 1.16, 1.82)
     private let goalieBaseHeight: Float = 0.625
+    private let goalLineZ: Float = -5.7
+    private let shooterBaseX: Float = -0.25
 
     private var ball: ModelEntity?
     private var arenaRoot: Entity?
+    private var proceduralEnvironment: Entity?
     private var camera: Entity?
+    private var cameraPosition = SIMD3<Float>(-0.3, 4.3, 7)
+    private var cameraTarget = SIMD3<Float>(-0.15, 0.4, -3.5)
     private var goalie: Entity?
     private var shooter: Entity?
     private var shooterStick: Entity?
@@ -33,7 +41,10 @@ final class PocketLaxScene {
     private var shooterEyes: [ModelEntity] = []
     private var shooterArms: [ModelEntity] = []
     private var shooterLegs: [ModelEntity] = []
+    private var shooterPonytail: Entity?
     private var shooterAnimationDriver: CharacterAnimationDriver?
+    private var goalieAnimationDriver: CharacterAnimationDriver?
+    private var goalAnimationDriver: TimelineAnimationDriver?
     private var goalieTorso: ModelEntity?
     private var goalieHead: ModelEntity?
     private var goalieEyes: [ModelEntity] = []
@@ -42,6 +53,7 @@ final class PocketLaxScene {
     private var goalNet: Entity?
     private var aimDots: [ModelEntity] = []
     private var targetMarkers: [ModelEntity] = []
+    private var calledShotTarget: Entity?
     private var ballTrail: [ModelEntity] = []
     private var trailHistory: [SIMD3<Float>] = []
     private var burstParticles: [BurstParticle] = []
@@ -63,13 +75,21 @@ final class PocketLaxScene {
     private var goalieReadTime: Float = 0
     private var goalieReadDirection: Float = 0
     private var goalieReadStrength: Float = 0
+    private var goalieCommitState: CharacterPerformanceState?
+    private var goalieReactionState: CharacterPerformanceState = .goalieReady
+    private var shooterReactionState: CharacterPerformanceState?
+    private var shooterReactionTime: Float = 0
     private var netPulseTime: Float = 0
     private var netImpactOffset = SIMD2<Float>.zero
     private var cameraKickTime: Float = 0
     private var impactShakeTime: Float = 0
+    private var resultCameraTime: Float = 0
+    private var resultCameraFocus = SIMD3<Float>(0, 1, -5.4)
+    private var calledShotHitTime: Float = 0
     private var selectedShotType: ShotType = .overhand
     private var activeShotType: ShotType?
     private var activeCurveDirection: Float = 0
+    private var activePerfectRelease = false
     private var isQuickStickSetup = false
     private var isBallLaunched = false
     private var quickStickPhase: Float = 0
@@ -87,15 +107,20 @@ final class PocketLaxScene {
         root.name = "Lax Attack Arena"
         arenaRoot = root
 
-        addBackdrop(to: root)
+        let environment = Entity()
+        environment.name = "Procedural Environment"
+        proceduralEnvironment = environment
+        root.addChild(environment)
+        addSkyBackdrop(to: root)
+        addBackdrop(to: environment)
         addField(to: root)
-        addArenaDetails(to: root)
+        addArenaDetails(to: environment)
         addGoal(to: root)
         addGoalSensor(to: root)
         addGoalie(to: root)
         addShooter(to: root)
         addAimGuide(to: root)
-        addTargetMarkers(to: root)
+        addCalledShotTarget(to: root)
         addBallTrail(to: root)
         addBurstEffects(to: root)
         addLighting(to: root)
@@ -122,13 +147,29 @@ final class PocketLaxScene {
     }
 
     func installAuthoredShooter() async {
-        guard let arenaRoot, shooterAnimationDriver == nil else { return }
+        await installProductionAssets()
+    }
+
+    private func installProductionAssets() async {
+        guard let arenaRoot else { return }
+
+        await installArena(in: arenaRoot)
+        await installGoal(in: arenaRoot)
+        await installGoalie(in: arenaRoot)
+        await installShooter(in: arenaRoot)
+    }
+
+    private func installShooter(in arenaRoot: Entity) async {
+        guard Self.useProductionShooter, shooterAnimationDriver == nil else { return }
 
         do {
             let importedShooter = try await CharacterAssetContract.load(
                 named: CharacterAssetContract.shooterAssetName
             )
-            let driver = try CharacterAssetContract.prepareShooter(importedShooter)
+            let driver = try CharacterAssetContract.prepareCharacter(
+                importedShooter,
+                manifestName: "lax_shooter_clips"
+            )
             let socketReport = CharacterAssetContract.validate(importedShooter, role: .shooter)
             guard socketReport.missingSockets.isEmpty else {
                 print("Authored shooter missing sockets: \(socketReport.missingSockets.joined(separator: ", "))")
@@ -142,18 +183,111 @@ final class PocketLaxScene {
             shooterArms.removeAll()
             shooterLegs.removeAll()
 
-            importedShooter.position = [-0.72, 0, 1.72]
+            importedShooter.position = [shooterBaseX, 0, 1.72]
             arenaRoot.addChild(importedShooter)
             shooter = importedShooter
             shooterStick = importedShooter.findEntity(named: "stick_socket")
             shooterAnimationDriver = driver
             driver.transition(to: .idle, duration: 0)
 
-            if !socketReport.missingAnimations.isEmpty {
-                print("Graybox shooter intentionally omits clips: \(socketReport.missingAnimations.joined(separator: ", "))")
+            if !socketReport.isValid {
+                print("Shooter contract warning — sockets: \(socketReport.missingSockets), clips: \(socketReport.missingAnimations)")
             }
         } catch {
             print("Using procedural shooter because lax_shooter failed to load: \(error)")
+        }
+    }
+
+    private func installGoalie(in arenaRoot: Entity) async {
+        guard goalieAnimationDriver == nil else { return }
+        do {
+            let importedGoalie = try await CharacterAssetContract.load(named: CharacterAssetContract.goalieAssetName)
+            let driver = try CharacterAssetContract.prepareCharacter(
+                importedGoalie,
+                manifestName: "lax_goalie_clips"
+            )
+            let report = CharacterAssetContract.validate(importedGoalie, role: .goalie)
+            guard report.missingSockets.isEmpty else {
+                print("Authored goalie missing sockets: \(report.missingSockets)")
+                return
+            }
+
+            goalie?.removeFromParent()
+            goalieTorso = nil
+            goalieHead = nil
+            goalieEyes.removeAll()
+            goalieLegs.removeAll()
+            goalieStick = nil
+
+            let controller = Entity()
+            controller.name = "Goalie Controller"
+            controller.position = [0, 0, goalLineZ + 0.5]
+            importedGoalie.name = "Goalie Visual"
+            controller.addChild(importedGoalie)
+
+            let hitbox = Entity()
+            hitbox.name = "Goalie"
+            hitbox.position = [0, 0.625, 0]
+            let shape = ShapeResource.generateBox(size: [0.68, 1.25, 0.3])
+            hitbox.components.set(CollisionComponent(shapes: [shape], mode: .colliding))
+            hitbox.components.set(PhysicsBodyComponent(shapes: [shape], density: 1_000, mode: .kinematic))
+            controller.addChild(hitbox)
+
+            arenaRoot.addChild(controller)
+            goalie = controller
+            goalieAnimationDriver = driver
+            driver.transition(to: .goalieReady, duration: 0)
+        } catch {
+            print("Using procedural goalie because lax_goalie failed to load: \(error)")
+        }
+    }
+
+    private func installGoal(in arenaRoot: Entity) async {
+        guard goalAnimationDriver == nil else { return }
+        do {
+            let importedGoal = try await CharacterAssetContract.load(named: CharacterAssetContract.goalAssetName)
+            let driver = try CharacterAssetContract.prepareTimeline(importedGoal, manifestName: "lax_goal_clips")
+            importedGoal.position = [0, 0, goalLineZ]
+
+            goalNet?.removeFromParent()
+            goalNet = importedGoal
+            hideModels(named: "Goal Pipe", under: arenaRoot)
+            arenaRoot.addChild(importedGoal)
+            goalAnimationDriver = driver
+            driver.transition(to: "net_idle", duration: 0)
+        } catch {
+            print("Using procedural goal because lax_goal failed to load: \(error)")
+        }
+    }
+
+    private func installArena(in arenaRoot: Entity) async {
+        guard proceduralEnvironment?.isEnabled != false else { return }
+        do {
+            let importedArena = try await CharacterAssetContract.load(named: CharacterAssetContract.arenaAssetName)
+            importedArena.name = "Production Arena"
+            quarantineMisplacedArenaMeshes(under: importedArena)
+            arenaRoot.addChild(importedArena)
+            proceduralEnvironment?.isEnabled = false
+            arenaRoot.findEntity(named: "Field")?.components.remove(ModelComponent.self)
+        } catch {
+            print("Using procedural arena because lax_arena_environment failed to load: \(error)")
+        }
+    }
+
+    private func hideModels(named name: String, under entity: Entity) {
+        if entity.name == name { entity.components.remove(ModelComponent.self) }
+        for child in entity.children { hideModels(named: name, under: child) }
+    }
+
+    private func quarantineMisplacedArenaMeshes(under entity: Entity) {
+        let malformedPrefixes = ["tree_", "bush_", "pine_", "cloud_"]
+        let malformedNames = ["sign_slogan", "fg_post", "bottle", "equipment_bag", "rock_4"]
+        if malformedNames.contains(entity.name)
+            || malformedPrefixes.contains(where: { entity.name.hasPrefix($0) }) {
+            entity.isEnabled = false
+        }
+        for child in entity.children {
+            quarantineMisplacedArenaMeshes(under: child)
         }
     }
 
@@ -179,7 +313,7 @@ final class PocketLaxScene {
                 ? SIMD3<Float>(sample.direction * 0.48 * time * time, 0, 0)
                 : .zero
             dot.position = (ball?.position ?? ballStart) + velocity * time + gravity + curve
-            dot.isEnabled = dot.position.y > 0.05 && dot.position.z > -5.4
+            dot.isEnabled = dot.position.y > 0.05 && dot.position.z > goalLineZ + 0.25
         }
     }
 
@@ -216,14 +350,15 @@ final class PocketLaxScene {
         shotTask?.cancel()
         aimPower = sample.power
         aimDirection = sample.direction
-        releaseTime = shooterAnimationDriver != nil && shotType == .overhand ? 1.1 : 0.62
+        releaseTime = shooterAnimationDriver != nil ? 1.1 : 0.62
         selectedShotType = shotType
         activeShotType = shotType
         isBallLaunched = false
         activeCurveDirection = abs(sample.direction) > 0.12 ? sample.direction : 1
         activeDodgeDirection = dodgeDirection
         pendingDodgeDirection = 0
-        setBallAppearance(isOnFire: input.wasOnFire)
+        activePerfectRelease = input.isPerfectRelease
+        setBallAppearance(isOnFire: input.wasOnFire, isPerfectRelease: input.isPerfectRelease)
         goalieReadTime = shotType == .bounce ? 0.48 : 0.72
         goalieReadDirection = abs(dodgeDirection) > 0.5 ? -dodgeDirection : sample.direction
         let timingDeception = 1 - (timingQuality ?? 0)
@@ -235,9 +370,14 @@ final class PocketLaxScene {
         }
 
         let velocity = shotVelocity(sample: sample, type: shotType)
-        let launchDelay = shooterAnimationDriver != nil && shotType == .overhand
-            ? CharacterAssetContract.overhandReleaseDelay
-            : 0
+        let releaseState: CharacterPerformanceState
+        switch shotType {
+        case .overhand: releaseState = .releaseOverhand
+        case .bounce: releaseState = .releaseBounce
+        case .sidearm: releaseState = .releaseSidearm
+        case .quickStick: releaseState = .quickStickRelease
+        }
+        let launchDelay = shooterAnimationDriver?.releaseDelay(for: releaseState) ?? 0
 
         shotTask = Task { @MainActor [weak self, weak session] in
             if launchDelay > 0 {
@@ -251,6 +391,8 @@ final class PocketLaxScene {
 
             if session.registerMiss() {
                 self.disappointmentTime = 0.7
+                self.shooterReactionState = .nearMissReaction
+                self.shooterReactionTime = 0.8
                 self.feedbackPlayer.playMiss()
                 await self.resetAfterResult(session: session, delay: .seconds(0.5))
             }
@@ -265,6 +407,9 @@ final class PocketLaxScene {
         guard let ball else { return }
 
         feedbackPlayer.playRelease(type: shotType)
+        if activePerfectRelease {
+            feedbackPlayer.playPerfectRelease()
+        }
         cameraKickTime = 0.34
 
         var body = ball.components[PhysicsBodyComponent.self] ?? PhysicsBodyComponent()
@@ -332,6 +477,10 @@ final class PocketLaxScene {
         goalieReactionTime = 0
         goalieSlumpTime = 0
         goalieReadTime = 0
+        resultCameraTime = 0
+        goalieCommitState = nil
+        shooterReactionState = nil
+        shooterReactionTime = 0
         selectedShotType = .overhand
         resetBall()
     }
@@ -376,11 +525,15 @@ final class PocketLaxScene {
 
         if names.contains("Goal Sensor") {
             let style = goalStyle(for: ball?.position ?? .zero)
-            if session.registerGoal(style: style) {
+            let hitHotZone = session.activeHotZone.contains(ball?.position ?? .zero)
+            if session.registerGoal(style: style, hitHotZone: hitHotZone) {
+                calledShotHitTime = hitHotZone ? 0.72 : 0
                 celebrationTime = 1
                 goalieSlumpTime = 0.8
                 netPulseTime = 0.45
                 netImpactOffset = [ball?.position.x ?? 0, (ball?.position.y ?? 1) - 1]
+                playNetImpact(at: ball?.position ?? .zero)
+                beginImpactMoment(at: ball?.position ?? [0, 1, goalLineZ])
                 impactShakeTime = 0.42
                 emitBurst(.goal, at: ball?.position ?? [0, 1, -4.7])
                 feedbackPlayer.playGoal()
@@ -391,8 +544,12 @@ final class PocketLaxScene {
             let goalieX = goalie?.position.x ?? 0
             goalieReactionDirection = ballX >= goalieX ? 1 : -1
             goalieReactionTime = 0.75
+            goalieReactionState = goalieSaveState(for: ball?.position ?? .zero)
+            beginImpactMoment(at: ball?.position ?? [0, 0.8, goalLineZ + 0.5])
             impactShakeTime = 0.25
             disappointmentTime = 0.65
+            shooterReactionState = .saveReaction
+            shooterReactionTime = 0.72
             emitBurst(.save, at: ball?.position ?? [0, 0.8, -4.3])
             feedbackPlayer.playSave()
             scheduleReset(session: session)
@@ -401,6 +558,8 @@ final class PocketLaxScene {
             impactShakeTime = 0.32
             emitBurst(.pipe, at: ball?.position ?? [0, 1, -4.5])
             feedbackPlayer.playPipe()
+            shooterReactionState = .pipeReaction
+            shooterReactionTime = 0.64
         } else if names.contains("Field") {
             session.registerBounce()
         }
@@ -445,14 +604,20 @@ final class PocketLaxScene {
         activeShotType = nil
         isBallLaunched = false
         activeCurveDirection = 0
+        activePerfectRelease = false
         activeDodgeDirection = 0
         pendingDodgeDirection = 0
         isQuickStickSetup = false
+        goalieCommitState = nil
+        shooterReactionState = nil
+        shooterReactionTime = 0
+        resultCameraTime = 0
+        calledShotHitTime = 0
         trailHistory.removeAll(keepingCapacity: true)
         for trail in ballTrail {
             trail.isEnabled = false
         }
-        setBallAppearance(isOnFire: false)
+        setBallAppearance(isOnFire: false, isPerfectRelease: false)
     }
 
     private func update(deltaTime: TimeInterval, session: GameSession) {
@@ -470,7 +635,7 @@ final class PocketLaxScene {
         updateBallTrail(isActive: session.isAwaitingResult)
         updateBurstEffects(deltaTime: Float(deltaTime))
         updateGoalNet(deltaTime: Float(deltaTime))
-        updateTargetMarkers()
+        updateCalledShotTarget(deltaTime: Float(deltaTime), session: session)
         updateShotPhysics(deltaTime: Float(deltaTime), isActive: session.isAwaitingResult)
         updateCamera(deltaTime: Float(deltaTime))
     }
@@ -525,7 +690,7 @@ final class PocketLaxScene {
         }
 
         goalie.position.x = x
-        goalie.position.y = goalieBaseHeight + rootY
+        goalie.position.y = goalieAnimationDriver == nil ? goalieBaseHeight + rootY : rootY
         goalie.orientation = simd_quatf(angle: roll, axis: [0, 0, 1])
         goalieTorso?.scale = squash
         goalieHead?.orientation = simd_quatf(
@@ -544,7 +709,9 @@ final class PocketLaxScene {
     }
 
     private func updatePerformanceStates() {
-        if celebrationTime > 0 {
+        if shooterReactionTime > 0, let shooterReactionState {
+            shooterPerformanceState = shooterReactionState
+        } else if celebrationTime > 0 {
             shooterPerformanceState = .celebrate
         } else if disappointmentTime > 0 {
             shooterPerformanceState = .disappointed
@@ -575,9 +742,9 @@ final class PocketLaxScene {
         if goalieSlumpTime > 0 {
             goaliePerformanceState = .goalieGoalAgainst
         } else if goalieReactionTime > 0 {
-            goaliePerformanceState = goalieReactionDirection < 0
-                ? .goalieSaveLeft
-                : .goalieSaveRight
+            goaliePerformanceState = goalieReactionState
+        } else if let goalieCommitState {
+            goaliePerformanceState = goalieCommitState
         } else if goalieReadTime > 0 {
             goaliePerformanceState = goalieReadDirection < 0
                 ? .goalieReadLeft
@@ -590,10 +757,15 @@ final class PocketLaxScene {
         }
 
         shooterAnimationDriver?.transition(to: shooterPerformanceState)
+        goalieAnimationDriver?.transition(to: goaliePerformanceState)
     }
 
     private func updateShooter(deltaTime: Float) {
         guard let shooter else { return }
+        shooterReactionTime = max(0, shooterReactionTime - deltaTime)
+        if shooterReactionTime == 0 {
+            shooterReactionState = nil
+        }
         if shooterAnimationDriver != nil {
             if releaseTime > 0 {
                 releaseTime = max(0, releaseTime - deltaTime)
@@ -602,7 +774,10 @@ final class PocketLaxScene {
             } else if disappointmentTime > 0 {
                 disappointmentTime = max(0, disappointmentTime - deltaTime)
             }
-            shooter.position = [-0.72, 0, 1.72]
+            let dodge = abs(pendingDodgeDirection) > 0.5
+                ? pendingDodgeDirection * 0.32
+                : activeDodgeDirection * min(releaseTime / 1.1, 1) * 0.32
+            shooter.position = [shooterBaseX + dodge, 0, 1.72]
             shooter.orientation = simd_quatf(angle: 0, axis: [0, 1, 0])
             return
         }
@@ -610,7 +785,7 @@ final class PocketLaxScene {
 
         let idleBob = sin(Float(elapsedTime) * 2.4) * 0.012
         var rootY = idleBob
-        var rootX: Float = -0.72
+        var rootX = shooterBaseX
         var rootZ: Float = 1.72
         var rootRoll: Float = 0
         var stickAngle: Float = -0.28 + sin(Float(elapsedTime) * 3.6) * 0.055
@@ -702,6 +877,10 @@ final class PocketLaxScene {
         shooterStick.orientation = simd_quatf(angle: stickAngle, axis: [0, 0, 1])
         shooterTorso?.scale = torsoScale
         shooterHead?.orientation = simd_quatf(angle: headTilt, axis: [0, 1, 0])
+        shooterPonytail?.orientation = simd_quatf(
+            angle: -rootRoll * 1.5 + sin(Float(elapsedTime) * 3.2) * 0.035,
+            axis: [0, 0, 1]
+        )
         let dodgeStride = pendingDodgeDirection * 0.32 + activeDodgeDirection * 0.2
         for (index, leg) in shooterLegs.enumerated() {
             let side: Float = index == 0 ? -1 : 1
@@ -763,7 +942,13 @@ final class PocketLaxScene {
     }
 
     private func updateShotPhysics(deltaTime _: Float, isActive: Bool) {
-        guard isActive, activeShotType == .sidearm, let ball else { return }
+        guard isActive, let ball else { return }
+
+        if goalieCommitState == nil, ball.position.z < goalLineZ + 2.6 {
+            goalieCommitState = goalieSaveState(for: ball.position)
+        }
+
+        guard activeShotType == .sidearm else { return }
 
         let progress = max(0, min(1, (-ball.position.z - 0.5) / 5.2))
         let lateCurve = progress * progress
@@ -771,26 +956,85 @@ final class PocketLaxScene {
         ball.addForce(curveForce, relativeTo: nil)
     }
 
+    private func goalieSaveState(for position: SIMD3<Float>) -> CharacterPerformanceState {
+        let goalieX = goalie?.position.x ?? 0
+        let isLeft = position.x < goalieX
+        if position.y > 1.28 {
+            return isLeft ? .goalieSaveHighLeft : .goalieSaveHighRight
+        }
+        if position.y < 0.5, abs(position.x) < 0.3 {
+            return .goalieFiveHoleClose
+        }
+        if position.y < 0.62 {
+            return isLeft ? .goalieSaveLowLeft : .goalieSaveLowRight
+        }
+        if abs(position.x - goalieX) < 0.25 {
+            return .goalieBodySave
+        }
+        return isLeft ? .goalieSaveLeft : .goalieSaveRight
+    }
+
     private func updateCamera(deltaTime: Float) {
         guard let camera else { return }
 
         cameraKickTime = max(0, cameraKickTime - deltaTime)
         impactShakeTime = max(0, impactShakeTime - deltaTime)
+        resultCameraTime = max(0, resultCameraTime - deltaTime)
 
         let kickProgress = cameraKickTime / 0.34
         let kick = sin((1 - kickProgress) * .pi) * kickProgress
         let shakeProgress = impactShakeTime / 0.42
         let shake = sin(Float(elapsedTime) * 54) * shakeProgress * 0.035
-        let from = SIMD3<Float>(
-            shake,
-            2.9 + abs(shake) * 0.5,
-            6.1 - kick * 0.16
+        // A restrained orbit keeps the diorama visibly three-dimensional without
+        // moving the target out from under the player's thumb.
+        let idleOrbit = sin(Float(elapsedTime) * 0.22) * 0.11
+        let baseFrom = SIMD3<Float>(
+            -0.3 + idleOrbit + shake,
+            4.3 + abs(shake) * 0.5,
+            7 - kick * 0.16
         )
+        let resultProgress = 1 - resultCameraTime / 0.8
+        let resultBlend = resultCameraTime > 0 ? sin(resultProgress * .pi) : 0
+        let resultFrom = SIMD3<Float>(
+            resultCameraFocus.x * 0.16,
+            3.15,
+            3.75
+        )
+        let desiredPosition = simd_mix(baseFrom, resultFrom, SIMD3<Float>(repeating: resultBlend * 0.72))
+        let baseTarget = SIMD3<Float>(-0.15 + shake * 0.25, 0.4, -3.5)
+        let resultTarget = SIMD3<Float>(
+            resultCameraFocus.x * 0.35,
+            max(0.55, resultCameraFocus.y * 0.72),
+            goalLineZ - 0.05
+        )
+        var desiredTarget = simd_mix(baseTarget, resultTarget, SIMD3<Float>(repeating: resultBlend))
+        if isBallLaunched, let ball {
+            let trackedBall = ball.position(relativeTo: camera.parent)
+            desiredTarget.x += trackedBall.x * 0.12
+            desiredTarget.y += max(0, trackedBall.y - 0.8) * 0.055
+        }
+
+        // Frame-rate-independent exponential damping avoids a robotic camera snap.
+        let positionBlend = 1 - exp(-deltaTime * 5.2)
+        let targetBlend = 1 - exp(-deltaTime * 7.5)
+        cameraPosition = simd_mix(cameraPosition, desiredPosition, SIMD3<Float>(repeating: positionBlend))
+        cameraTarget = simd_mix(cameraTarget, desiredTarget, SIMD3<Float>(repeating: targetBlend))
         camera.look(
-            at: [shake * 0.25, 0.95, -3.85],
-            from: from,
+            at: cameraTarget,
+            from: cameraPosition,
             relativeTo: camera.parent
         )
+    }
+
+    private func beginImpactMoment(at position: SIMD3<Float>) {
+        resultCameraFocus = position
+        resultCameraTime = 0.8
+
+        guard let ball else { return }
+        var body = ball.components[PhysicsBodyComponent.self] ?? PhysicsBodyComponent()
+        body.mode = .kinematic
+        ball.components.set(body)
+        ball.components.set(PhysicsMotionComponent())
     }
 
     private func addBallTrail(to root: Entity) {
@@ -810,14 +1054,18 @@ final class PocketLaxScene {
         }
     }
 
-    private func setBallAppearance(isOnFire: Bool) {
-        let ballColor: UIColor = isOnFire ? .systemYellow : .white
-        let trailColor: UIColor = isOnFire ? .systemOrange : UIColor(
-            red: 0.82,
-            green: 0.95,
-            blue: 1,
-            alpha: 1
-        )
+    private func setBallAppearance(isOnFire: Bool, isPerfectRelease: Bool) {
+        let ballColor: UIColor = isOnFire
+            ? .systemYellow
+            : (isPerfectRelease ? .systemCyan : .white)
+        let trailColor: UIColor = isOnFire
+            ? .systemOrange
+            : (isPerfectRelease ? .systemCyan : UIColor(
+                red: 0.82,
+                green: 0.95,
+                blue: 1,
+                alpha: 1
+            ))
         if let ball, var model = ball.components[ModelComponent.self] {
             model.materials = [SimpleMaterial(color: ballColor, isMetallic: isOnFire)]
             ball.components.set(model)
@@ -915,6 +1163,14 @@ final class PocketLaxScene {
     private func updateGoalNet(deltaTime: Float) {
         guard let goalNet else { return }
 
+        if goalAnimationDriver != nil {
+            netPulseTime = max(0, netPulseTime - deltaTime)
+            if netPulseTime == 0 {
+                goalAnimationDriver?.transition(to: "net_idle", duration: 0.2)
+            }
+            return
+        }
+
         if netPulseTime > 0 {
             netPulseTime = max(0, netPulseTime - deltaTime)
             let progress = 1 - netPulseTime / 0.45
@@ -933,12 +1189,62 @@ final class PocketLaxScene {
         }
     }
 
+    private func playNetImpact(at position: SIMD3<Float>) {
+        guard let driver = goalAnimationDriver else { return }
+        let motion: PhysicsMotionComponent? = ball?.components[PhysicsMotionComponent.self]
+        let speed = simd_length(motion?.linearVelocity ?? .zero)
+        let clip: String
+        if speed > 11.8 {
+            clip = "net_impact_heavy"
+        } else if position.y > 1.15 {
+            clip = position.x < 0 ? "net_impact_high_left" : "net_impact_high_right"
+        } else if abs(position.x) > 0.32 {
+            clip = position.x < 0 ? "net_impact_low_left" : "net_impact_low_right"
+        } else {
+            clip = "net_impact_center"
+        }
+        driver.transition(to: clip, duration: 0.04, restart: true)
+    }
+
     private func updateTargetMarkers() {
         for (index, marker) in targetMarkers.enumerated() {
             let phase = Float(elapsedTime) * 2.2 + Float(index) * 0.8
             let pulse = 0.9 + sin(phase) * 0.1
             marker.scale = [pulse, pulse, 0.18]
         }
+    }
+
+    private func addCalledShotTarget(to root: Entity) {
+        let target = Entity()
+        target.name = "Called Shot Target"
+
+        let cyan = SimpleMaterial(color: .systemCyan, isMetallic: false)
+        let white = SimpleMaterial(color: .white, isMetallic: false)
+        for index in 0..<12 {
+            let angle = Float(index) / 12 * .pi * 2
+            let dot = ModelEntity(
+                mesh: .generateSphere(radius: index.isMultiple(of: 3) ? 0.036 : 0.026),
+                materials: [index.isMultiple(of: 2) ? cyan : white]
+            )
+            dot.position = [cos(angle) * 0.2, sin(angle) * 0.2, 0]
+            target.addChild(dot)
+        }
+
+        calledShotTarget = target
+        root.addChild(target)
+    }
+
+    private func updateCalledShotTarget(deltaTime: Float, session: GameSession) {
+        guard let target = calledShotTarget else { return }
+        calledShotHitTime = max(0, calledShotHitTime - deltaTime)
+        target.position = session.activeHotZone.targetPosition
+        let pulse = 1 + sin(Float(elapsedTime) * 4.4) * 0.09
+        target.scale = .one * pulse
+        target.orientation = simd_quatf(
+            angle: Float(elapsedTime) * 0.28,
+            axis: [0, 0, 1]
+        )
+        target.isEnabled = !session.isRoundComplete && calledShotHitTime == 0
     }
 
     private func addBackdrop(to root: Entity) {
@@ -981,6 +1287,19 @@ final class PocketLaxScene {
             }
             root.addChild(cloud)
         }
+    }
+
+    private func addSkyBackdrop(to root: Entity) {
+        let sky = SimpleMaterial(
+            color: .init(red: 0.38, green: 0.7, blue: 0.96, alpha: 1),
+            isMetallic: false
+        )
+        addDecorativeBox(
+            size: [400, 120, 0.2],
+            position: [0, 28, -171],
+            material: sky,
+            to: root
+        )
     }
 
     private func addField(to root: Entity) {
@@ -1091,15 +1410,15 @@ final class PocketLaxScene {
         )
         let netMaterial = SimpleMaterial(color: .white, isMetallic: false)
 
-        addGoalBar(size: [0.1, 2, 0.1], position: [-1, 1, -4.5], material: pipeMaterial, to: root)
-        addGoalBar(size: [0.1, 2, 0.1], position: [1, 1, -4.5], material: pipeMaterial, to: root)
-        addGoalBar(size: [2.1, 0.1, 0.1], position: [0, 2, -4.5], material: pipeMaterial, to: root)
-        addGoalBar(size: [0.06, 0.06, 1.2], position: [-1, 0.03, -5.1], material: pipeMaterial, to: root)
-        addGoalBar(size: [0.06, 0.06, 1.2], position: [1, 0.03, -5.1], material: pipeMaterial, to: root)
-        addGoalBar(size: [2.1, 0.06, 0.06], position: [0, 0.03, -5.7], material: pipeMaterial, to: root)
+        addGoalBar(size: [0.1, 2, 0.1], position: [-1, 1, goalLineZ], material: pipeMaterial, to: root)
+        addGoalBar(size: [0.1, 2, 0.1], position: [1, 1, goalLineZ], material: pipeMaterial, to: root)
+        addGoalBar(size: [2.1, 0.1, 0.1], position: [0, 2, goalLineZ], material: pipeMaterial, to: root)
+        addGoalBar(size: [0.06, 0.06, 1.2], position: [-1, 0.03, goalLineZ - 0.6], material: pipeMaterial, to: root)
+        addGoalBar(size: [0.06, 0.06, 1.2], position: [1, 0.03, goalLineZ - 0.6], material: pipeMaterial, to: root)
+        addGoalBar(size: [2.1, 0.06, 0.06], position: [0, 0.03, goalLineZ - 1.2], material: pipeMaterial, to: root)
 
         let net = Entity()
-        net.position = [0, 1, -5.67]
+        net.position = [0, 1, goalLineZ - 1.17]
 
         for x: Float in [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75] {
             let line = ModelEntity(
@@ -1145,7 +1464,7 @@ final class PocketLaxScene {
     private func addGoalSensor(to root: Entity) {
         let sensor = Entity()
         sensor.name = "Goal Sensor"
-        sensor.position = [0, 1, -4.72]
+        sensor.position = [0, 1, goalLineZ - 0.12]
         let shape = ShapeResource.generateBox(size: [1.78, 1.75, 0.2])
         sensor.components.set(
             CollisionComponent(shapes: [shape], mode: .trigger)
@@ -1156,7 +1475,7 @@ final class PocketLaxScene {
     private func addGoalie(to root: Entity) {
         let goalie = Entity()
         goalie.name = "Goalie"
-        goalie.position = [0, 0.625, -4.25]
+        goalie.position = [0, 0.625, goalLineZ + 0.5]
 
         let navy = SimpleMaterial(
             color: .init(red: 0.05, green: 0.2, blue: 0.55, alpha: 1),
@@ -1246,11 +1565,14 @@ final class PocketLaxScene {
     private func addShooter(to root: Entity) {
         let shooter = Entity()
         shooter.name = "shooter_root"
-        shooter.position = [-0.72, 0, 1.72]
+        shooter.position = [shooterBaseX, 0, 1.72]
 
-        let jersey = SimpleMaterial(color: .white, isMetallic: false)
-        let navy = SimpleMaterial(
-            color: .init(red: 0.04, green: 0.18, blue: 0.5, alpha: 1),
+        let jersey = SimpleMaterial(
+            color: .init(red: 0.96, green: 0.91, blue: 0.78, alpha: 1),
+            isMetallic: false
+        )
+        let homeRed = SimpleMaterial(
+            color: .init(red: 0.78, green: 0.12, blue: 0.1, alpha: 1),
             isMetallic: false
         )
         let skin = SimpleMaterial(
@@ -1274,12 +1596,13 @@ final class PocketLaxScene {
         shooterTorso = torso
         shooter.addChild(torso)
 
-        let shorts = ModelEntity(
-            mesh: .generateBox(size: [0.46, 0.22, 0.25], cornerRadius: 0.06),
-            materials: [navy]
+        let skirt = ModelEntity(
+            mesh: .generateBox(size: [0.5, 0.24, 0.28], cornerRadius: 0.075),
+            materials: [homeRed]
         )
-        shorts.position = [0, 0.35, 0]
-        shooter.addChild(shorts)
+        skirt.position = [0, 0.36, 0]
+        skirt.scale.x = 1.08
+        shooter.addChild(skirt)
 
         for x: Float in [-0.14, 0.14] {
             let leg = ModelEntity(
@@ -1326,8 +1649,29 @@ final class PocketLaxScene {
         hairCap.scale.y = 0.65
         shooter.addChild(hairCap)
 
+        let headband = ModelEntity(
+            mesh: .generateBox(size: [0.43, 0.055, 0.08], cornerRadius: 0.025),
+            materials: [homeRed]
+        )
+        headband.position = [0, 1.15, 0.18]
+        shooter.addChild(headband)
+
+        let ponytail = Entity()
+        ponytail.position = [0, 1.05, 0.22]
+        for (index, radius): (Int, Float) in [(0, 0.15), (1, 0.13), (2, 0.1)] {
+            let segment = ModelEntity(
+                mesh: .generateSphere(radius: radius),
+                materials: [hair]
+            )
+            segment.position = [0, -Float(index) * 0.16, Float(index) * 0.045]
+            segment.scale = [0.82, 1, 0.82]
+            ponytail.addChild(segment)
+        }
+        shooterPonytail = ponytail
+        shooter.addChild(ponytail)
+
         let stick = makeStick(
-            shaftMaterial: navy,
+            shaftMaterial: homeRed,
             headMaterial: jersey,
             scale: 1
         )
@@ -1406,11 +1750,11 @@ final class PocketLaxScene {
             isMetallic: false
         )
         let positions: [SIMD3<Float>] = [
-            [-0.72, 1.67, -4.82],
-            [0.72, 1.67, -4.82],
-            [-0.72, 0.38, -4.82],
-            [0, 0.38, -4.82],
-            [0.72, 0.38, -4.82]
+            [-0.72, 1.67, goalLineZ - 0.12],
+            [0.72, 1.67, goalLineZ - 0.12],
+            [-0.72, 0.38, goalLineZ - 0.12],
+            [0, 0.38, goalLineZ - 0.12],
+            [0.72, 0.38, goalLineZ - 0.12]
         ]
 
         for position in positions {
@@ -1426,10 +1770,11 @@ final class PocketLaxScene {
     }
 
     private func makeBall() -> ModelEntity {
-        let radius: Float = 0.12
-        let shape = ShapeResource.generateSphere(radius: radius)
+        let visibleRadius: Float = 0.08
+        let collisionRadius: Float = 0.12
+        let shape = ShapeResource.generateSphere(radius: collisionRadius)
         let ball = ModelEntity(
-            mesh: .generateSphere(radius: radius),
+            mesh: .generateSphere(radius: visibleRadius),
             materials: [SimpleMaterial(color: .white, isMetallic: false)]
         )
         ball.name = "Ball"
@@ -1456,11 +1801,13 @@ final class PocketLaxScene {
     private func addCamera(to root: Entity) {
         let camera = Entity()
         var component = PerspectiveCameraComponent()
-        component.fieldOfViewInDegrees = 52
+        component.fieldOfViewInDegrees = 50
         camera.components.set(component)
+        cameraPosition = [-0.3, 4.3, 7]
+        cameraTarget = [-0.15, 0.4, -3.5]
         camera.look(
-            at: [0, 0.95, -3.85],
-            from: [0, 2.9, 6.1],
+            at: cameraTarget,
+            from: cameraPosition,
             relativeTo: root
         )
         self.camera = camera

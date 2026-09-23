@@ -15,6 +15,7 @@ struct ContentView: View {
                     bestScore: progress.bestScore,
                     dailyBest: progress.dailyBest,
                     onQuickShoot: { flow.start(.quickShoot()) },
+                    onTimeAttack: { flow.start(.timeAttack()) },
                     onDailyShot: { flow.start(.dailyShot()) },
                     onChallenges: { flow.isShowingChallenges = true },
                     onSettings: { flow.isShowingSettings = true }
@@ -88,10 +89,15 @@ struct GameplayScreen: View {
                 bestScore: max(progress.bestScore, session.bestScore),
                 combo: session.combo,
                 shotsRemaining: session.shotsRemaining,
+                stopsRemaining: session.stopsRemaining,
+                maximumStops: session.maximumStops,
+                secondsRemaining: session.secondsRemaining,
                 goals: session.goals,
                 accuracy: session.accuracy,
                 feedback: session.feedback,
                 goalieLevel: session.difficultyLevel,
+                hotZone: session.activeHotZone,
+                isClutchShot: session.isClutchShot,
                 isOnFire: session.isOnFire,
                 aimPower: aimSample?.normalizedPower ?? 0,
                 dodgeDirection: dodgeDirection,
@@ -144,6 +150,12 @@ struct GameplayScreen: View {
         .gesture(shotGesture, isEnabled: !isPaused && hasCompletedOnboarding)
         .task(id: run.id) {
             startRun()
+            while !Task.isCancelled && !session.isRoundComplete {
+                try? await Task.sleep(for: .milliseconds(100))
+                if !isPaused && hasCompletedOnboarding {
+                    session.advanceClock(by: 0.1)
+                }
+            }
         }
         .onChange(of: session.isRoundComplete) { _, isComplete in
             if isComplete {
@@ -157,7 +169,7 @@ struct GameplayScreen: View {
 
     private func startRun() {
         session.startNewRound(
-            shots: run.shots,
+            rule: run.rule,
             seed: run.seed,
             preferredShot: run.challenge?.recommendedShot
         )
@@ -174,20 +186,22 @@ struct GameplayScreen: View {
                     dodgeDirection = value.translation.width < 0 ? -1 : 1
                     gameScene.updateDodge(direction: dodgeDirection)
                 }
-                let sample = ShotControlModel.sample(
+                let sample = shotSample(
                     translation: value.translation,
-                    velocity: value.velocity
+                    velocity: value.velocity,
+                    dodgeDirection: dodgeDirection
                 )
                 aimSample = sample
                 gameScene.updateAim(using: sample, shotType: session.selectedShotType)
             }
             .onEnded { value in
-                let sample = ShotControlModel.sample(
+                let committedDodge = dodgeDirection
+                let sample = shotSample(
                     translation: value.translation,
-                    velocity: value.velocity
+                    velocity: value.velocity,
+                    dodgeDirection: committedDodge
                 )
                 gameScene.hideAimGuide()
-                let committedDodge = dodgeDirection
                 aimSample = nil
                 dodgeDirection = 0
                 guard value.translation.height < -24 else { return }
@@ -199,6 +213,20 @@ struct GameplayScreen: View {
                 )
             }
     }
+
+    private func shotSample(
+        translation: CGSize,
+        velocity: CGSize,
+        dodgeDirection: Float
+    ) -> ShotControlSample {
+        var shotTranslation = translation
+        if abs(dodgeDirection) > 0.5 {
+            // The first lateral movement sells the split dodge; only movement beyond
+            // that plant should steer the shot itself.
+            shotTranslation.width -= CGFloat(dodgeDirection) * 55
+        }
+        return ShotControlModel.sample(translation: shotTranslation, velocity: velocity)
+    }
 }
 
 struct GameHUD: View {
@@ -206,10 +234,15 @@ struct GameHUD: View {
     let bestScore: Int
     let combo: Int
     let shotsRemaining: Int
+    let stopsRemaining: Int
+    let maximumStops: Int
+    let secondsRemaining: Double
     let goals: Int
     let accuracy: Double
     let feedback: ShotFeedback
     let goalieLevel: Int
+    let hotZone: HotZone
+    let isClutchShot: Bool
     let isOnFire: Bool
     let aimPower: Double
     let dodgeDirection: Float
@@ -237,9 +270,23 @@ struct GameHUD: View {
             )
 
             HStack {
-                ShotCounter(shotsRemaining: shotsRemaining, totalShots: totalShots)
+                RunStatusBadge(
+                    rule: run.rule,
+                    shotsRemaining: shotsRemaining,
+                    totalShots: totalShots,
+                    stopsRemaining: stopsRemaining,
+                    maximumStops: maximumStops,
+                    secondsRemaining: secondsRemaining
+                )
                 Spacer()
-                if isOnFire {
+                if isClutchShot {
+                    Label("CLUTCH ×2", systemImage: "bolt.fill")
+                        .font(.caption.bold())
+                        .foregroundStyle(.yellow)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(.purple.opacity(0.82), in: Capsule())
+                } else if isOnFire {
                     Label("ON FIRE", systemImage: "flame.fill")
                         .font(.caption.bold())
                         .foregroundStyle(.yellow)
@@ -248,16 +295,32 @@ struct GameHUD: View {
                         .background(.orange.opacity(0.82), in: Capsule())
                 }
                 if goalieLevel > 0 {
-                    Text("GOALIE +(goalieLevel)")
+                    Label("PRESSURE \(goalieLevel)", systemImage: "gauge.with.dots.needle.67percent")
                         .font(.caption.bold())
-                        .foregroundStyle(.white)
+                        .foregroundStyle(goalieLevel >= 3 ? .yellow : .white)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 7)
-                        .background(.blue.opacity(0.75), in: Capsule())
+                        .background(
+                            (goalieLevel >= 3 ? Color.red : Color.blue).opacity(0.78),
+                            in: Capsule()
+                        )
                 }
             }
 
             ShotCallout(feedback: feedback, combo: combo)
+
+            HStack(spacing: 4) {
+                Image(systemName: "scope")
+                Text("CALL:")
+                Text(hotZone.title)
+                Text("+200")
+                    .foregroundStyle(.yellow)
+            }
+            .font(.caption.bold())
+            .foregroundStyle(.white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(.black.opacity(0.58), in: Capsule())
 
             if let challenge = run.challenge, let challengeProgress {
                 ChallengeProgressCard(
@@ -467,6 +530,46 @@ struct ShotCounter: View {
     }
 }
 
+struct RunStatusBadge: View {
+    let rule: RunRule
+    let shotsRemaining: Int
+    let totalShots: Int
+    let stopsRemaining: Int
+    let maximumStops: Int
+    let secondsRemaining: Double
+
+    var body: some View {
+        switch rule {
+        case .survival:
+            HStack(spacing: 6) {
+                ForEach(0..<maximumStops, id: \.self) { index in
+                    Image(systemName: index < stopsRemaining ? "shield.fill" : "shield")
+                        .foregroundStyle(index < stopsRemaining ? .cyan : .white.opacity(0.28))
+                }
+            }
+            .font(.subheadline.bold())
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(.black.opacity(0.5), in: Capsule())
+        case .timed:
+            Label {
+                Text(Int(ceil(secondsRemaining)), format: .number)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+            } icon: {
+                Image(systemName: "timer")
+            }
+            .font(.headline.bold())
+            .foregroundStyle(secondsRemaining <= 10 ? .yellow : .white)
+            .padding(.horizontal, 13)
+            .padding(.vertical, 8)
+            .background(.black.opacity(0.56), in: Capsule())
+        case .shotLimit:
+            ShotCounter(shotsRemaining: shotsRemaining, totalShots: totalShots)
+        }
+    }
+}
+
 struct ShotCallout: View {
     let feedback: ShotFeedback
     let combo: Int
@@ -481,7 +584,7 @@ struct ShotCallout: View {
                 .transition(.scale.combined(with: .opacity))
 
             if combo > 1 {
-                Text("×(combo) COMBO")
+                Text("×\(combo) COMBO")
                     .font(.headline.bold())
                     .foregroundStyle(.orange)
                     .shadow(color: .black.opacity(0.7), radius: 3, y: 2)
@@ -521,12 +624,6 @@ struct AimPrompt: View {
                 .padding(.vertical, 10)
                 .background(.black.opacity(0.58), in: Capsule())
 
-            if power == 0 {
-                Text("SIDEWAYS, THEN UP: SPLIT DODGE +100")
-                    .font(.caption2.bold())
-                    .foregroundStyle(.white.opacity(0.82))
-                    .shadow(color: .black, radius: 2)
-            }
         }
     }
 }
@@ -595,6 +692,7 @@ struct HomeScreen: View {
     let bestScore: Int
     let dailyBest: Int
     let onQuickShoot: () -> Void
+    let onTimeAttack: () -> Void
     let onDailyShot: () -> Void
     let onChallenges: () -> Void
     let onSettings: () -> Void
@@ -612,20 +710,28 @@ struct HomeScreen: View {
 
                     HStack(spacing: 12) {
                         HomeModeButton(
+                            title: "60 SECOND RUSH",
+                            subtitle: "Beat the clock.",
+                            symbolName: "timer",
+                            color: .purple,
+                            action: onTimeAttack
+                        )
+                        HomeModeButton(
                             title: "DAILY SHOT",
                             subtitle: "Same setup. One score.",
                             symbolName: "calendar",
                             color: .blue,
                             action: onDailyShot
                         )
-                        HomeModeButton(
-                            title: "CHALLENGES",
-                            subtitle: "Master your stick.",
-                            symbolName: "trophy.fill",
-                            color: .orange,
-                            action: onChallenges
-                        )
                     }
+
+                    HomeModeButton(
+                        title: "CHALLENGES",
+                        subtitle: "Master your stick.",
+                        symbolName: "trophy.fill",
+                        color: .orange,
+                        action: onChallenges
+                    )
 
                     VStack(spacing: 3) {
                         Text(dailyRun.objective)
@@ -737,7 +843,7 @@ struct HomeHeroCard: View {
                 Text("SMALL SHOTS. BIG PLAYS.")
                     .font(.title2.bold())
                     .foregroundStyle(.white)
-                Text("Five shots. One goalie. Your move.")
+                Text("Keep scoring. Three stops end the run.")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white.opacity(0.78))
             }
@@ -1028,6 +1134,7 @@ struct MedalRow: View {
 }
 
 #Preview("Gameplay") {
+    let _ = UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
     GameplayScreen(
         run: .quickShoot(),
         progress: PlayerProgress(),

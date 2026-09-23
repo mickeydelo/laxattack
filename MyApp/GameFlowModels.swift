@@ -8,8 +8,15 @@ enum AppDestination: Equatable {
 
 enum PlayMode: String, Equatable, Sendable {
     case quickShoot
+    case timeAttack
     case dailyShot
     case challenge
+}
+
+enum RunRule: Equatable, Sendable {
+    case survival(maxStops: Int)
+    case timed(seconds: Int)
+    case shotLimit(Int)
 }
 
 enum ChallengeTarget: Equatable, Sendable {
@@ -150,17 +157,29 @@ struct GameRun: Identifiable, Equatable, Sendable {
     let title: LocalizedStringResource
     let objective: LocalizedStringResource
     let seed: Int
-    let shots: Int
+    let rule: RunRule
     let challenge: ChallengeDefinition?
 
     static func quickShoot() -> GameRun {
         GameRun(
             id: "quick",
             mode: .quickShoot,
-            title: "QUICK SHOOT",
-            objective: "Five shots. Score big and build your streak.",
+            title: "SURVIVAL",
+            objective: "Keep scoring. Three stops end the run.",
             seed: 0,
-            shots: 5,
+            rule: .survival(maxStops: 3),
+            challenge: nil
+        )
+    }
+
+    static func timeAttack() -> GameRun {
+        GameRun(
+            id: "time-attack",
+            mode: .timeAttack,
+            title: "60 SECOND RUSH",
+            objective: "Score as many as you can before time expires.",
+            seed: 60,
+            rule: .timed(seconds: 60),
             challenge: nil
         )
     }
@@ -176,7 +195,7 @@ struct GameRun: Identifiable, Equatable, Sendable {
             title: "DAILY SHOT",
             objective: "Everyone gets the same five-shot goalie pattern.",
             seed: seed,
-            shots: 5,
+            rule: .shotLimit(5),
             challenge: nil
         )
     }
@@ -188,7 +207,7 @@ struct GameRun: Identifiable, Equatable, Sendable {
             title: challenge.title,
             objective: challenge.objective,
             seed: stableSeed(for: challenge.id),
-            shots: 5,
+            rule: .shotLimit(5),
             challenge: challenge
         )
     }
