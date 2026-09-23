@@ -203,3 +203,10 @@ Everything is appended after the previous ranges; the earlier ranges and events 
 | goalie_helmet_nod | 1246 | 1270 | no | — |
 | goalie_small_dance | 1280 | 1328 | no | — |
 | goalie_big_clutch_save | 1338 | 1398 | no | contact 1345 |
+
+
+## Playblasts (timing / transition review)
+Workbench renders of every clip in sequence, with the frame number and clip marker burned in: `3D/Production/Previews/Playblasts/`
+- `lax_shooter_all_clips.mp4` (frames 0–1558)
+- `lax_goalie_all_clips.mp4` (frames 0–1398)
+- `lax_goal_net_clips.mp4` (frames 0–295), shot from the shooter side

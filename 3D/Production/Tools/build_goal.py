@@ -66,7 +66,10 @@ def build_goal_asset(export=True):
             env = (1 - math.exp(-tt / 0.025)) * math.exp(-tt * (3.2 if heavy else 4.2))
             osc = math.cos(2 * math.pi * (2.6 if heavy else 3.2) * tt)
             k = amp * reach * env * osc
-            return (0.0, -k, -0.35 * abs(k) * min(1.0, q.z / 0.9))   # pocket back (away from shooter); sag only up high
+            shake = 0.10 * amp * env * math.sin(2 * math.pi * 5.5 * tt + q.x * 3.0)           # whole-net tremor, reads from the front
+            side = (q.x - c0.x) * 0.9 * k                                                     # billow away from the impact point
+            down = -0.55 * abs(k) * min(1.0, q.z / 0.9)                                       # sag (upper net only: never crosses the turf)
+            return (side + shake * 0.5, -k, max(down + shake, -0.25 * q.z))   # low net may not dip toward the turf
         return fn
     def idle_fn(bone, t):
         q = bones[bone]; ph = 2 * math.pi * t / 60.0
@@ -76,12 +79,12 @@ def build_goal_asset(export=True):
         k = 0.18 * math.exp(-tt * 4.0) * math.cos(2 * math.pi * 2.4 * tt + q.x)
         return (0.0, -k, -0.3 * abs(k) * min(1.0, q.z / 0.9))
     specs = [("net_idle", 0, 60, True, idle_fn, None, "gentle breeze sway (loop)"),
-             ("net_impact_center", 70, 24, False, impact_fn(0.5, 0.55, 0.55), 0, "shot into the middle"),
-             ("net_impact_high_left", 100, 24, False, impact_fn(0.8, 0.85, 0.55), 0, "shooter-left top corner"),
-             ("net_impact_high_right", 130, 24, False, impact_fn(0.2, 0.85, 0.55), 0, "shooter-right top corner"),
-             ("net_impact_low_left", 160, 24, False, impact_fn(0.8, 0.25, 0.50), 0, "shooter-left bottom corner"),
-             ("net_impact_low_right", 190, 24, False, impact_fn(0.2, 0.25, 0.50), 0, "shooter-right bottom corner"),
-             ("net_impact_heavy", 220, 36, False, impact_fn(0.5, 0.55, 0.80, True), 0, "hard shot: deeper pocketing, wider ripple"),
+             ("net_impact_center", 70, 24, False, impact_fn(0.5, 0.55, 0.75), 0, "shot into the middle"),
+             ("net_impact_high_left", 100, 24, False, impact_fn(0.8, 0.85, 0.75), 0, "shooter-left top corner"),
+             ("net_impact_high_right", 130, 24, False, impact_fn(0.2, 0.85, 0.75), 0, "shooter-right top corner"),
+             ("net_impact_low_left", 160, 24, False, impact_fn(0.8, 0.25, 0.70), 0, "shooter-left bottom corner"),
+             ("net_impact_low_right", 190, 24, False, impact_fn(0.2, 0.25, 0.70), 0, "shooter-right bottom corner"),
+             ("net_impact_heavy", 220, 36, False, impact_fn(0.5, 0.55, 1.05, True), 0, "hard shot: deeper pocketing, wider ripple"),
              ("net_settle", 265, 30, False, settle_fn, None, "generic damped settle from a displaced state")]
     prefs = bpy.context.preferences.edit; old = prefs.keyframe_new_interpolation_type; prefs.keyframe_new_interpolation_type = "LINEAR"
     anim = arm.animation_data_create(); clips = []

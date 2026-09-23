@@ -375,6 +375,7 @@ def reset_scene(name):
         bpy.data.collections.remove(c)
     sc = bpy.context.scene
     sc.name = name
+    sc.timeline_markers.clear()
     us = sc.unit_settings; us.system = "METRIC"; us.scale_length = 1.0; us.length_unit = "METERS"
     sc.render.fps = FPS; sc.render.fps_base = 1.0
     return sc
