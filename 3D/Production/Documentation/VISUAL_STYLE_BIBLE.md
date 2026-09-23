@@ -1,6 +1,6 @@
 # Lax Attack — Visual Style Bible (art-direction checkpoint)
 
-Status: **accepted baseline for production** (checkpoint rendered 2026-09-23, Blender 5.2.2 LTS, EEVEE).
+Status: **v1 — superseded.** Mickey supplied reference key art on 2026-09-23 (vinyl-toy figures, ~45% head+helmet, dark glossy toy eyes, helmets on all field players, red/cream home vs navy/teal away, golden-hour light, lush textured turf, stronger miniature DOF, broadleaf woods + fence + lakeside). A reference-aligned v2 revision of this bible follows in the next commit. (v1 rendered 2026-09-23, Blender 5.2.2 LTS, EEVEE.)
 Source scene: `3D/Production/StyleValidation/LaxAttackStyleValidation.blend` (rebuild: `3D/Production/Tools/style_validation.py`).
 Renders: `3D/Production/Previews/StyleValidation/`.
 

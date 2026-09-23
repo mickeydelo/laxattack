@@ -1,4 +1,2 @@
-# Blender autosave backups
 *.blend1
 *.blend2
-__pycache__/
