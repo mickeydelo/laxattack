@@ -73,6 +73,7 @@ struct GameplayScreen: View {
     @State private var dodgeDirection: Float = 0
     @State private var isPaused = false
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @AppStorage("careerShots") private var careerShots = 0
 
     var body: some View {
         ZStack {
@@ -93,6 +94,7 @@ struct GameplayScreen: View {
                 maximumStops: session.maximumStops,
                 secondsRemaining: session.secondsRemaining,
                 goals: session.goals,
+                bestCombo: session.bestCombo,
                 accuracy: session.accuracy,
                 feedback: session.feedback,
                 goalieLevel: session.difficultyLevel,
@@ -104,6 +106,7 @@ struct GameplayScreen: View {
                 run: run,
                 challengeProgress: run.challenge?.progress(for: session),
                 selectedShotType: session.selectedShotType,
+                availableShotTypes: availableShotTypes,
                 canSelectShot: !session.isAwaitingResult,
                 isQuickStickChallenge: session.isQuickStickChallenge,
                 isRoundComplete: session.isRoundComplete,
@@ -160,6 +163,11 @@ struct GameplayScreen: View {
         .onChange(of: session.isRoundComplete) { _, isComplete in
             if isComplete {
                 progress.record(run: run, session: session)
+            }
+        }
+        .onChange(of: session.shotHistory.count) { oldValue, newValue in
+            if newValue > oldValue {
+                careerShots += newValue - oldValue
             }
         }
         .onDisappear {
@@ -227,6 +235,12 @@ struct GameplayScreen: View {
         }
         return ShotControlModel.sample(translation: shotTranslation, velocity: velocity)
     }
+
+    private var availableShotTypes: [ShotType] {
+        if careerShots < 3 { return [.overhand] }
+        if careerShots < 8 { return [.overhand, .bounce] }
+        return ShotType.selectableCases
+    }
 }
 
 struct GameHUD: View {
@@ -238,6 +252,7 @@ struct GameHUD: View {
     let maximumStops: Int
     let secondsRemaining: Double
     let goals: Int
+    let bestCombo: Int
     let accuracy: Double
     let feedback: ShotFeedback
     let goalieLevel: Int
@@ -249,6 +264,7 @@ struct GameHUD: View {
     let run: GameRun
     let challengeProgress: ChallengeProgress?
     let selectedShotType: ShotType
+    let availableShotTypes: [ShotType]
     let canSelectShot: Bool
     let isQuickStickChallenge: Bool
     let isRoundComplete: Bool
@@ -337,6 +353,7 @@ struct GameHUD: View {
                 RoundCompleteCard(
                     score: score,
                     goals: goals,
+                    bestCombo: bestCombo,
                     accuracy: accuracy,
                     run: run,
                     challengeProgress: challengeProgress,
@@ -351,6 +368,7 @@ struct GameHUD: View {
             } else {
                 ShotTypePicker(
                     selection: selectedShotType,
+                    availableTypes: availableShotTypes,
                     isEnabled: canSelectShot,
                     onSelect: onSelectShotType
                 )
@@ -369,12 +387,13 @@ struct GameHUD: View {
 
 struct ShotTypePicker: View {
     let selection: ShotType
+    let availableTypes: [ShotType]
     let isEnabled: Bool
     let onSelect: (ShotType) -> Void
 
     var body: some View {
         HStack(spacing: 8) {
-            ForEach(ShotType.selectableCases) { type in
+            ForEach(availableTypes) { type in
                 Button {
                     onSelect(type)
                 } label: {
@@ -631,6 +650,7 @@ struct AimPrompt: View {
 struct RoundCompleteCard: View {
     let score: Int
     let goals: Int
+    let bestCombo: Int
     let accuracy: Double
     let run: GameRun
     let challengeProgress: ChallengeProgress?
@@ -664,6 +684,14 @@ struct RoundCompleteCard: View {
                 }
 
                 VStack {
+                    Text(bestCombo, format: .number)
+                        .font(.title2.bold())
+                    Text("BEST COMBO")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+
+                VStack {
                     Text(accuracy, format: .percent.precision(.fractionLength(0)))
                         .font(.title2.bold())
                     Text("ACCURACY")
@@ -676,6 +704,13 @@ struct RoundCompleteCard: View {
             HStack {
                 Button("HOME", action: onHome)
                     .buttonStyle(.bordered)
+                ShareLink(
+                    item: "I scored \(score) points with \(goals) goals in Lax Attack!",
+                    subject: Text("Lax Attack score")
+                ) {
+                    Label("SHARE", systemImage: "square.and.arrow.up")
+                }
+                .buttonStyle(.bordered)
                 Button("PLAY AGAIN", action: onPlayAgain)
                     .buttonStyle(.borderedProminent)
             }
@@ -984,46 +1019,24 @@ struct SettingsScreen: View {
 
 struct OnboardingOverlay: View {
     let onComplete: () -> Void
-    @State private var step = 0
-
-    private let lessons: [(symbol: String, title: LocalizedStringResource, detail: LocalizedStringResource)] = [
-        ("hand.draw.fill", "FLICK TO SHOOT", "Swipe upward. Direction aims; speed adds power."),
-        ("arrow.left.and.right", "SELL THE DODGE", "Move sideways first, then flick up to wrong-foot the goalie."),
-        ("figure.lacrosse", "MIX YOUR RELEASE", "Overhand, bounce, and sidearm shots attack different openings.")
-    ]
 
     var body: some View {
         Color.black.opacity(0.58)
             .ignoresSafeArea()
             .overlay {
-                let lesson = lessons[step]
                 VStack(spacing: 16) {
-                    Image(systemName: lesson.symbol)
+                    Image(systemName: "hand.draw.fill")
                         .font(.system(size: 48, weight: .bold))
                         .foregroundStyle(.yellow)
-                    Text(lesson.title)
+                    Text("FLICK TO SHOOT")
                         .font(.title.bold())
                         .foregroundStyle(.white)
-                    Text(lesson.detail)
+                    Text("Swipe up toward the spot you want to hit.")
                         .font(.body.weight(.semibold))
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.white.opacity(0.78))
 
-                    HStack(spacing: 7) {
-                        ForEach(lessons.indices, id: \.self) { index in
-                            Capsule()
-                                .fill(index == step ? .cyan : .white.opacity(0.25))
-                                .frame(width: index == step ? 24 : 8, height: 8)
-                        }
-                    }
-
-                    Button(step == lessons.count - 1 ? "LET'S PLAY" : "NEXT") {
-                        if step == lessons.count - 1 {
-                            onComplete()
-                        } else {
-                            step += 1
-                        }
-                    }
+                    Button("LET'S PLAY", action: onComplete)
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                 }

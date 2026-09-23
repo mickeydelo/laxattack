@@ -138,7 +138,8 @@ enum CharacterAssetContract {
     static let shooterAssetName = "lax_shooter"
     static let goalieAssetName = "lax_goalie"
     static let goalAssetName = "lax_goal"
-    static let arenaAssetName = "lax_arena_pinebrook"
+    static let arenaAssetName = "lax_arena_pinebrook_mobile"
+    static let arenaAmbientAssetName = "lax_arena_ambient"
     static let homeTeammateAssetName = "lax_team_home_7"
     static let awayTeammateAssetName = "lax_team_away_5"
     static let fanAssetNames = ["lax_fan_a", "lax_fan_b", "lax_fan_c"]

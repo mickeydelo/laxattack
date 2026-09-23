@@ -201,3 +201,16 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - Added the expanded shooter celebration states and rotates goal celebrations, with the clutch clip reserved for clutch goals.
 - Clean Xcode build and launch. Runtime console contained no asset fallback, missing socket, optional asset skip, failure, error, or warning messages.
 - Screenshot automation remains blocked by the simulator service/runtime mismatch; visual placement still requires a human/device screenshot pass.
+# 2026-09-23 — Screenshot-driven gameplay/presentation pass and `057d9d1`
+
+- Reviewed the supplied iPhone screenshot: corrected top-heavy/cropped framing by adopting arena `camera_gameplay` markers with a pulled-back fallback; removed the center spectator from the goal sightline.
+- Mirrored Blender `057d9d1` exports and switched iPhone runtime to `lax_arena_pinebrook_mobile`.
+- Integrated animated arena ambient life, static `midground_trees` replacement, and big-moment gusts.
+- Added memory-based performance tiers: ambient layer + LOD1 support cast on capable devices; no ambient, LOD2 support cast, and two fans below 5 GB.
+- Refined shot input: wider aim travel, stronger center dead zone, reduced release-velocity noise, and narrower power extremes.
+- Added crowd goal/save/pipe reactions and automatic return to idle.
+- Added warm shadow-casting key light. Replaced failing `GroundingShadowComponent` with cheap hero contact-shadow meshes after simulator pipeline errors.
+- Simplified first-run onboarding to one swipe lesson. Overhand is initially available; bounce unlocks after three career shots and sidearm after eight.
+- Results now show best combo and offer native system sharing.
+- Build and launch are clean with no asset/fallback/render-pipeline log matches after the shadow fallback.
+- Environment map and LUT mentioned by Blender are not present in the repository, so IBL and custom color-grade post-processing remain blocked on those resources. Pre-softened arena groups remain the safe DOF solution.

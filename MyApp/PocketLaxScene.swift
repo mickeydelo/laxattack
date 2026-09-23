@@ -15,6 +15,28 @@ private struct BurstParticle {
     var maximumLife: Float = 0.7
 }
 
+private struct ScenePerformanceProfile {
+    let ambientEnvironmentEnabled: Bool
+    let supportLOD: String
+    let fanCount: Int
+
+    static var current: ScenePerformanceProfile {
+        let memory = ProcessInfo.processInfo.physicalMemory
+        if memory < 5_000_000_000 {
+            return ScenePerformanceProfile(
+                ambientEnvironmentEnabled: false,
+                supportLOD: "_lod2",
+                fanCount: 2
+            )
+        }
+        return ScenePerformanceProfile(
+            ambientEnvironmentEnabled: true,
+            supportLOD: "_lod1",
+            fanCount: 3
+        )
+    }
+}
+
 @MainActor
 final class PocketLaxScene {
     private static let physicsVersion = 1
@@ -24,13 +46,16 @@ final class PocketLaxScene {
     private let goalieBaseHeight: Float = 0.625
     private let goalLineZ: Float = -5.7
     private let shooterBaseX: Float = -0.25
+    private let performanceProfile = ScenePerformanceProfile.current
 
     private var ball: ModelEntity?
     private var arenaRoot: Entity?
     private var proceduralEnvironment: Entity?
     private var camera: Entity?
-    private var cameraPosition = SIMD3<Float>(-0.3, 4.3, 7)
-    private var cameraTarget = SIMD3<Float>(-0.15, 0.4, -3.5)
+    private var cameraRestPosition = SIMD3<Float>(-0.25, 4.8, 8.55)
+    private var cameraRestTarget = SIMD3<Float>(-0.1, 0.58, -3.3)
+    private var cameraPosition = SIMD3<Float>(-0.25, 4.8, 8.55)
+    private var cameraTarget = SIMD3<Float>(-0.1, 0.58, -3.3)
     private var goalie: Entity?
     private var shooter: Entity?
     private var shooterStick: Entity?
@@ -43,7 +68,9 @@ final class PocketLaxScene {
     private var shooterAnimationDriver: CharacterAnimationDriver?
     private var goalieAnimationDriver: CharacterAnimationDriver?
     private var goalAnimationDriver: TimelineAnimationDriver?
+    private var ambientArenaDriver: TimelineAnimationDriver?
     private var ambientAnimationDrivers: [TimelineAnimationDriver] = []
+    private var crowdAnimationDrivers: [TimelineAnimationDriver] = []
     private var goalieTorso: ModelEntity?
     private var goalieHead: ModelEntity?
     private var goalieEyes: [ModelEntity] = []
@@ -85,6 +112,8 @@ final class PocketLaxScene {
     private var resultCameraTime: Float = 0
     private var resultCameraFocus = SIMD3<Float>(0, 1, -5.4)
     private var calledShotHitTime: Float = 0
+    private var ambientGustTime: Float = 0
+    private var crowdReactionTime: Float = 0
     private var selectedShotType: ShotType = .overhand
     private var activeShotType: ShotType?
     private var activeCurveDirection: Float = 0
@@ -153,6 +182,7 @@ final class PocketLaxScene {
         guard let arenaRoot else { return }
 
         await installArena(in: arenaRoot)
+        await installArenaAmbient(in: arenaRoot)
         await installSupportCast(in: arenaRoot)
         await installGoal(in: arenaRoot)
         await installGoalie(in: arenaRoot)
@@ -184,6 +214,7 @@ final class PocketLaxScene {
             shooterLegs.removeAll()
 
             importedShooter.position = [shooterBaseX, 0, 1.72]
+            addToyContactShadow(size: [0.78, 0.42], to: importedShooter)
             arenaRoot.addChild(importedShooter)
             shooter = importedShooter
             shooterStick = importedShooter.findEntity(named: "stick_socket")
@@ -223,6 +254,7 @@ final class PocketLaxScene {
             controller.name = "Goalie Controller"
             controller.position = [0, 0, goalLineZ + 0.5]
             importedGoalie.name = "Goalie Visual"
+            addToyContactShadow(size: [0.86, 0.46], to: importedGoalie)
             controller.addChild(importedGoalie)
 
             let hitbox = Entity()
@@ -248,6 +280,7 @@ final class PocketLaxScene {
             let importedGoal = try await CharacterAssetContract.load(named: CharacterAssetContract.goalAssetName)
             let driver = try CharacterAssetContract.prepareTimeline(importedGoal, manifestName: "lax_goal_clips")
             importedGoal.position = [0, 0, goalLineZ]
+            addToyContactShadow(size: [2.15, 1.05], to: importedGoal)
 
             goalNet?.removeFromParent()
             goalNet = importedGoal
@@ -271,10 +304,31 @@ final class PocketLaxScene {
             setGroup(named: "foreground_framing_soft", enabled: true, under: importedArena)
             setGroup(named: "collision_only", enabled: false, under: importedArena)
             arenaRoot.addChild(importedArena)
+            adoptAuthoredCameraMarkers(from: importedArena, relativeTo: arenaRoot)
             proceduralEnvironment?.isEnabled = false
             arenaRoot.findEntity(named: "Field")?.components.remove(ModelComponent.self)
         } catch {
             print("Using procedural arena because lax_arena_pinebrook failed to load: \(error)")
+        }
+    }
+
+    private func installArenaAmbient(in arenaRoot: Entity) async {
+        guard performanceProfile.ambientEnvironmentEnabled, ambientArenaDriver == nil else { return }
+        do {
+            let ambient = try await CharacterAssetContract.load(named: CharacterAssetContract.arenaAmbientAssetName)
+            let driver = try CharacterAssetContract.prepareTimeline(
+                ambient,
+                manifestName: "lax_arena_ambient_clips"
+            )
+            ambient.name = "Arena Ambient Life"
+            arenaRoot.addChild(ambient)
+            arenaRoot.findEntity(named: "Production Arena")
+                .flatMap { $0.findEntity(named: "midground_trees") }?
+                .isEnabled = false
+            driver.transition(to: "ambient_loop", duration: 0)
+            ambientArenaDriver = driver
+        } catch {
+            print("Skipping optional arena ambient animation: \(error)")
         }
     }
 
@@ -287,17 +341,46 @@ final class PocketLaxScene {
         entity.findEntity(named: name)?.isEnabled = enabled
     }
 
+    private func adoptAuthoredCameraMarkers(from arena: Entity, relativeTo root: Entity) {
+        guard let marker = arena.findEntity(named: "camera_gameplay") else { return }
+        cameraRestPosition = marker.position(relativeTo: root)
+        if let target = arena.findEntity(named: "camera_gameplay_target") {
+            cameraRestTarget = target.position(relativeTo: root)
+        }
+        cameraPosition = cameraRestPosition
+        cameraTarget = cameraRestTarget
+    }
+
+    private func addToyContactShadow(size: SIMD2<Float>, to entity: Entity) {
+        let material = SimpleMaterial(
+            color: UIColor(white: 0.08, alpha: 0.2),
+            roughness: 1,
+            isMetallic: false
+        )
+        let shadow = ModelEntity(
+            mesh: .generateCylinder(height: 0.006, radius: 0.5),
+            materials: [material]
+        )
+        shadow.name = "Contact Shadow"
+        shadow.scale = [size.x, 1, size.y]
+        shadow.position.y = 0.006
+        entity.addChild(shadow)
+    }
+
     private func installSupportCast(in arenaRoot: Entity) async {
         guard ambientAnimationDrivers.isEmpty else { return }
 
         let fanPositions: [SIMD3<Float>] = [
-            [-2.25, 0.48, -7.15],
-            [0, 0.48, -7.45],
-            [2.25, 0.48, -7.15]
+            [-3.1, 0.55, -6.85],
+            [3.15, 0.55, -6.9],
+            [3.85, 0.55, -6.65]
         ]
-        for (assetName, position) in zip(CharacterAssetContract.fanAssetNames, fanPositions) {
+        for (assetName, position) in zip(
+            CharacterAssetContract.fanAssetNames.prefix(performanceProfile.fanCount),
+            fanPositions
+        ) {
             await installAmbientCharacter(
-                named: assetName,
+                named: "\(assetName)\(performanceProfile.supportLOD)",
                 manifestName: "\(assetName)_clips",
                 clipName: "crowd_idle",
                 position: position,
@@ -307,7 +390,7 @@ final class PocketLaxScene {
         }
 
         await installAmbientCharacter(
-            named: CharacterAssetContract.homeTeammateAssetName,
+            named: "\(CharacterAssetContract.homeTeammateAssetName)\(performanceProfile.supportLOD)",
             manifestName: "lax_team_home_7_clips",
             clipName: "idle_relaxed",
             position: [-2.8, 0, -1.7],
@@ -315,7 +398,7 @@ final class PocketLaxScene {
             in: arenaRoot
         )
         await installAmbientCharacter(
-            named: CharacterAssetContract.awayTeammateAssetName,
+            named: "\(CharacterAssetContract.awayTeammateAssetName)\(performanceProfile.supportLOD)",
             manifestName: "lax_team_away_5_clips",
             clipName: "idle_competitive",
             position: [2.8, 0, -3.3],
@@ -340,6 +423,9 @@ final class PocketLaxScene {
             arenaRoot.addChild(entity)
             driver.transition(to: clipName, duration: 0)
             ambientAnimationDrivers.append(driver)
+            if clipName == "crowd_idle" {
+                crowdAnimationDrivers.append(driver)
+            }
         } catch {
             print("Skipping optional ambient asset \(assetName): \(error)")
         }
@@ -603,6 +689,10 @@ final class PocketLaxScene {
                 impactShakeTime = 0.42
                 emitBurst(.goal, at: ball?.position ?? [0, 1, -4.7])
                 feedbackPlayer.playGoal()
+                playCrowdReaction("crowd_goal_cheer", duration: 1.6)
+                if session.combo >= 3 || hitHotZone {
+                    playAmbientGust()
+                }
                 scheduleReset(session: session)
             }
         } else if names.contains("Goalie"), session.registerSave() {
@@ -618,12 +708,14 @@ final class PocketLaxScene {
             shooterReactionTime = 0.72
             emitBurst(.save, at: ball?.position ?? [0, 0.8, -4.3])
             feedbackPlayer.playSave()
+            playCrowdReaction("crowd_save_cheer", duration: 1.3)
             scheduleReset(session: session)
         } else if names.contains("Goal Pipe") {
             session.registerPipe()
             impactShakeTime = 0.32
             emitBurst(.pipe, at: ball?.position ?? [0, 1, -4.5])
             feedbackPlayer.playPipe()
+            playCrowdReaction("crowd_pipe_groan", duration: 1.1)
             shooterReactionState = .pipeReaction
             shooterReactionTime = 0.64
         } else if names.contains("Field") {
@@ -688,6 +780,20 @@ final class PocketLaxScene {
 
     private func update(deltaTime: TimeInterval, session: GameSession) {
         elapsedTime += deltaTime
+        if ambientGustTime > 0 {
+            ambientGustTime = max(0, ambientGustTime - Float(deltaTime))
+            if ambientGustTime == 0 {
+                ambientArenaDriver?.transition(to: "ambient_loop", duration: 0.3)
+            }
+        }
+        if crowdReactionTime > 0 {
+            crowdReactionTime = max(0, crowdReactionTime - Float(deltaTime))
+            if crowdReactionTime == 0 {
+                for driver in crowdAnimationDrivers {
+                    driver.transition(to: "crowd_idle", duration: 0.2)
+                }
+            }
+        }
         updateQuickStickSetup(session: session)
         updatePerformanceStates()
         updateGoalie(
@@ -1054,10 +1160,10 @@ final class PocketLaxScene {
         // A restrained orbit keeps the diorama visibly three-dimensional without
         // moving the target out from under the player's thumb.
         let idleOrbit = sin(Float(elapsedTime) * 0.22) * 0.11
-        let baseFrom = SIMD3<Float>(
-            -0.3 + idleOrbit + shake,
-            4.3 + abs(shake) * 0.5,
-            7 - kick * 0.16
+        let baseFrom = cameraRestPosition + SIMD3<Float>(
+            idleOrbit + shake,
+            abs(shake) * 0.5,
+            -kick * 0.16
         )
         let resultProgress = 1 - resultCameraTime / 0.8
         let resultBlend = resultCameraTime > 0 ? sin(resultProgress * .pi) : 0
@@ -1067,7 +1173,7 @@ final class PocketLaxScene {
             3.75
         )
         let desiredPosition = simd_mix(baseFrom, resultFrom, SIMD3<Float>(repeating: resultBlend * 0.72))
-        let baseTarget = SIMD3<Float>(-0.15 + shake * 0.25, 0.4, -3.5)
+        let baseTarget = cameraRestTarget + SIMD3<Float>(shake * 0.25, 0, 0)
         let resultTarget = SIMD3<Float>(
             resultCameraFocus.x * 0.35,
             max(0.55, resultCameraFocus.y * 0.72),
@@ -1869,8 +1975,8 @@ final class PocketLaxScene {
         var component = PerspectiveCameraComponent()
         component.fieldOfViewInDegrees = 50
         camera.components.set(component)
-        cameraPosition = [-0.3, 4.3, 7]
-        cameraTarget = [-0.15, 0.4, -3.5]
+        cameraPosition = cameraRestPosition
+        cameraTarget = cameraRestTarget
         camera.look(
             at: cameraTarget,
             from: cameraPosition,
@@ -1880,11 +1986,27 @@ final class PocketLaxScene {
         root.addChild(camera)
     }
 
+    private func playAmbientGust() {
+        ambientGustTime = 3
+        ambientArenaDriver?.transition(to: "ambient_gust", duration: 0.18, restart: true)
+    }
+
+    private func playCrowdReaction(_ clipName: String, duration: Float) {
+        crowdReactionTime = duration
+        for driver in crowdAnimationDrivers {
+            driver.transition(to: clipName, duration: 0.08, restart: true)
+        }
+    }
+
     private func addLighting(to root: Entity) {
         let light = Entity()
         light.components.set(
-            DirectionalLightComponent(color: .white, intensity: 3_200)
+            DirectionalLightComponent(
+                color: UIColor(red: 1, green: 0.82, blue: 0.66, alpha: 1),
+                intensity: 4_800
+            )
         )
+        light.components.set(DirectionalLightComponent.Shadow())
         light.look(at: [0, 0, -2], from: [-3, 7, 4], relativeTo: root)
         root.addChild(light)
     }

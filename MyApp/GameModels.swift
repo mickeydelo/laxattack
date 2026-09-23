@@ -25,16 +25,18 @@ enum ShotControlModel {
         let lateralTravel = Float(translation.width)
         let lateralSpeed = Float(velocity.width)
 
-        let travelPower = smoothStep(min(upwardTravel / 220, 1))
-        let speedPower = smoothStep(min(upwardSpeed / 1_800, 1))
-        let power = clamp(0.65 + travelPower * 1.1 + speedPower * 0.45, 0.65, 2.2)
+        let travelPower = smoothStep(min(upwardTravel / 240, 1))
+        let speedPower = smoothStep(min(upwardSpeed / 2_000, 1))
+        let power = clamp(0.72 + travelPower * 1.02 + speedPower * 0.38, 0.72, 2.08)
 
-        let travelAim = lateralTravel / 135
-        let speedAim = lateralSpeed / 3_600
-        let rawDirection = clamp(travelAim + speedAim * 0.16, -1, 1)
-        let direction = abs(rawDirection) < 0.035
+        // End-position carries most of the aim. Velocity adds only a small amount,
+        // preventing a tiny wrist hook at release from throwing the shot wide.
+        let travelAim = lateralTravel / 178
+        let speedAim = lateralSpeed / 4_800
+        let rawDirection = clamp(travelAim + speedAim * 0.08, -1, 1)
+        let direction = abs(rawDirection) < 0.055
             ? 0
-            : rawDirection * (0.82 + abs(rawDirection) * 0.18)
+            : rawDirection * (0.76 + abs(rawDirection) * 0.24)
 
         return ShotControlSample(
             direction: direction,
@@ -257,6 +259,7 @@ final class GameSession {
     private(set) var score = 0
     private(set) var bestScore = 0
     private(set) var combo = 0
+    private(set) var bestCombo = 0
     private(set) var shotsRemaining = 5
     private(set) var totalShots = 5
     private(set) var stopsRemaining = 3
@@ -350,6 +353,7 @@ final class GameSession {
     func registerGoal(style: GoalStyle, hitHotZone: Bool) -> Bool {
         guard isAwaitingResult else { return false }
         combo += 1
+        bestCombo = max(bestCombo, combo)
 
         let pipeBonus = pendingHitPipe ? 75 : 0
         let bounceBonus = pendingBounced ? 75 : 0
@@ -407,6 +411,7 @@ final class GameSession {
     func registerSave() -> Bool {
         guard isAwaitingResult else { return false }
         combo = 0
+        bestCombo = 0
         feedback = .save
         registerStop()
         finishShot(outcome: .save, points: 0)

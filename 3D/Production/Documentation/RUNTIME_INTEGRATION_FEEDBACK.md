@@ -131,3 +131,27 @@ The complete forward-looking asset, animation, environment, grass, lighting, LOD
 - Fan A/B/C and both teammate assets load through their manifests and begin ambient idle clips.
 - All exported USDZ/JSON files and LOD variants are mirrored into the application resources.
 - Project builds and launches cleanly. A visual placement/device screenshot pass is still required because automated simulator capture is unavailable in the current environment.
+# Screenshot review and `057d9d1` integration
+
+Observed in the supplied iPhone 17 Pro screenshot before this pass:
+
+- Shooter was too large/cropped at the bottom and the composition was top-heavy.
+- A center spectator sat directly behind the goalie/net, reducing goal readability; fans appeared on field level instead of convincingly seated.
+- Shooter, goalie, and all three fans appeared to have closed eyes simultaneously. This persists despite the no-joint-scale export and needs an authored rest/clip validation in RealityKit.
+- Contact shadows and material separation were too weak, and the top/bottom HUD competed with the play space.
+
+Runtime changes made:
+
+- Uses `lax_arena_pinebrook_mobile.usdz` and the lighter LOD1 support characters, with LOD2/fewer fans below 5 GB physical memory.
+- Loads `lax_arena_ambient.usdz`, loops `ambient_loop`, hides `midground_trees`, and triggers `ambient_gust` for called shots and streak moments. Low-memory tier disables it.
+- Reads `camera_gameplay` and `camera_gameplay_target` when present; retains a pulled-back portrait fallback.
+- Fans moved out of the center goal sightline and use crowd goal/save/pipe reactions.
+- Warm directional key now casts shadows. RealityKit's `GroundingShadowComponent` caused a simulator render-pipeline compile failure, so lightweight soft contact-shadow meshes are used for hero subjects instead.
+- A full clean build and launch produced no asset fallback, missing socket, manifest, optional asset, or render-pipeline errors.
+
+Still needed from Blender:
+
+1. Validate open eyes in every loop's first/rest frame after USDZ round trip, specifically `idle`, `goalie_ready`, and `crowd_idle`; the supplied screenshot shows all eyes closed.
+2. Deliver the referenced environment map in a RealityKit-loadable bundle format and provide its exact resource name. No `.hdr`, `.exr`, or RealityKit environment resource currently exists in `3D/Production`.
+3. Deliver the referenced color-grading LUT and exact format/name. No LUT file is currently present.
+4. Provide named bleacher seat sockets/transforms for fan placement. `CROWD_NOTES.md` says to place roots on seat tops but does not provide runtime coordinates.
