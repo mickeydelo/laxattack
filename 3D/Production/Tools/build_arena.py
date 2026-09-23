@@ -152,14 +152,15 @@ def build_arena(export=True):
     bpy.context.view_layer.update()
     root = bpy.data.objects.new("lax_arena_content", None); Dio.objects.link(root)
     groups = {}
-    for g in ("gameplay", "near_field", "midground", "far_background", "far_background_soft", "foreground_framing",
+    for g in ("gameplay", "near_field", "midground", "midground_trees", "far_background", "far_background_soft", "foreground_framing",
               "foreground_framing_soft", "shadow_only", "collision_only", "camera_markers"):
         e = bpy.data.objects.new(g, None); Dio.objects.link(e); e.parent = root; groups[g] = e
     fg = {o.name for o in bpy.data.collections["Foreground"].objects}
     def group_of(n):
         if n in fg: return "foreground_framing"
         if n.startswith(("field_platform", "field_markings", "field_turf", "hero_tufts")): return "gameplay"
-        if n.startswith(("field_fence", "bench", "bleacher", "sign_", "bush_6", "banner")): return "near_field"
+        if n.startswith(("tree_", "pine_", "bush_6")): return "midground_trees"   # static twins of lax_arena_ambient: hide when ambient is on
+        if n.startswith(("field_fence", "bench", "bleacher", "sign_", "banner")): return "near_field"
         if n.startswith(("far_shore", "mountains", "cloud_", "sky_backdrop")): return "far_background"
         return "midground"
     meshes = [o for o in bpy.data.objects if o.type == "MESH"]
@@ -198,6 +199,14 @@ def build_arena(export=True):
                          ["camera_gameplay"], animated=False)
         rep["lod0"] = {"meshes": e["meshes"], "materials": e["materials"], "kb": e["usdz_bytes"] // 1024, "textures": e["textures"], "root": e["root_identity"]}
         rep["check"] = arena_origin_check(path)
+        for im in list(bpy.data.images):          # mobile variant: 1024 textures
+            fp = bpy.path.abspath(im.filepath)
+            if "Arena" in fp and "Textures" in fp and im.size[0] > 1024:
+                root_, ext = os.path.splitext(fp); new = root_ + "_1k" + ext
+                im.scale(1024, 1024); im.filepath_raw = new; im.save(); im.filepath = new
+        em = export_asset(objs, "lax_arena_pinebrook", "lax_arena_content", path.replace(".usdz", "_mobile.usdz"), 30, 0, False,
+                          {"asset": "lax_arena_pinebrook", "variant": "mobile 1024 textures"}, ["camera_gameplay"], False, bake=False)
+        rep["mobile_kb"] = em["usdz_bytes"] // 1024; rep["mobile_textures"] = em["textures"]
         e["objects"] = [o.name for o in objs if o.name in bpy.data.objects]
         rep["lods"] = export_lods(e, "lax_arena_pinebrook", "lax_arena_content", path, (0.5, 0.2), animated=False)
         rep["check_lod2"] = arena_origin_check(path.replace(".usdz", "_lod2.usdz"))

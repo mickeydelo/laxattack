@@ -41,8 +41,26 @@ Toggle one of each pair at runtime.
 - A painted `sky_backdrop` gradient cylinder sits behind everything, so no black void can show.
 - Gameplay groups (turf, goal, players, ball) stay sharp.
 
+## Ambient life (`lax_arena_ambient.usdz`, 2026-09-23)
+A separate animated asset so it can be toggled per performance tier. Source: `Arena/LaxAttack_Ambient.blend`
+(`Tools/build_ambient.py`). One skinned mesh, about 55k tris, 2.5 MB.
+
+**Contents:** 7 broadleaf trees and 2 pines (height-weighted sway: trunks planted, canopies lead), 9 hedges behind the goal,
+4 pennant flags on fence poles (3-bone flutter chains), 2 sailboats (bob, roll, slow drift), 5 clouds (glide).
+
+**Clips:**
+- `ambient_loop` 0–240: seamless 8 s breeze.
+- `ambient_gust` 250–340: stronger gust, blended from the loop.
+
+**Usage:** place it at the origin with the arena. While it is shown, **hide the static arena group `midground_trees`**; those
+are the static twins of the same trees and hedges.
+
+## Mobile variant
+`lax_arena_pinebrook_mobile.usdz` is identical but uses 1024 field textures (about 8 MB vs 16 MB). The LOD1/LOD2 files also
+use the 1024 set.
+
 ## Groups
-Under `/lax_arena_pinebrook/lax_arena_content`: gameplay, near_field, midground, far_background, far_background_soft,
+Under `/lax_arena_pinebrook/lax_arena_content`: gameplay, near_field, midground, midground_trees (static twins of the ambient trees/hedges), far_background, far_background_soft,
 foreground_framing, foreground_framing_soft, shadow_only (reserved), collision_only (`collision_ground`; hide it),
 camera_markers.
 

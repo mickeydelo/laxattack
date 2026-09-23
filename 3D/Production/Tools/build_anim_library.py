@@ -33,7 +33,7 @@ def roll_dodge(sign):
         dip = math.sin(math.pi * min(1.0, u / 0.85)) * 0.07
         return dict(pelvis_off=(0.05 * sign * math.sin(math.pi * u), -0.02, -0.04 - dip), pelvis_rot=(8 * math.sin(math.pi * u), turn * 0.34, 0),
                     spine_rot=(10 * math.sin(math.pi * u), turn * 0.33, 0), chest_rot=(6, turn * 0.33, 0), head_rot=(-8, 0, 0), feet_yaw=turn,
-                    G=(-0.10 if sign > 0 else -0.30, -0.10, 0.96), D=(0.0, 0.25, 0.97), F=(0.2, -0.98, 0), face="determined", pocket=0.012)
+                    G=(-0.10 if sign > 0 else -0.25, -0.12, 0.94), D=(0.0, 0.25, 0.97), F=(0.2, -0.98, 0), face="determined", pocket=0.012)
     return fn
 
 def face_dodge(sign):
@@ -72,9 +72,9 @@ SHOOTER_LIB = [
          notes="big tuck jump (pelvis motion only)"),
     Clip("celebrate_knee_slide", 1210, 40, False, keys_fn([(0, K(), "io"), (6, K(pelvis_off=(0, -0.04, -0.12), chest_rot=(12, 0, 0), face="big_smile"), "in"),
          (14, K(pelvis_off=(0, 0.02, -0.26), pelvis_rot=(-14, 0, 0), spine_rot=(-10, 0, 0), chest_rot=(-10, 0, 0), head_rot=(-16, 0, 0), footL=(0, 0.10, 0), footR=(0, 0.14, 0),
-               G=(-0.30, -0.10, 1.12), D=(-0.2, 0.2, 0.96), face="big_smile"), "out"),
+               G=(-0.24, -0.06, 1.02), D=(-0.2, 0.2, 0.96), face="big_smile"), "out"),
          (28, K(pelvis_off=(0, 0.02, -0.25), pelvis_rot=(-12, 0, 0), spine_rot=(-8, 0, 0), chest_rot=(-8, 0, 0), head_rot=(-14, 0, 0), footL=(0, 0.10, 0), footR=(0, 0.14, 0),
-               G=(-0.30, -0.10, 1.12), D=(-0.2, 0.2, 0.96), face="big_smile"), "io"), (40, K(face="smile"), "io")]),
+               G=(-0.24, -0.06, 1.02), D=(-0.2, 0.2, 0.96), face="big_smile"), "io"), (40, K(face="smile"), "io")]),
          notes="in-place knee drop + lean back, stick skyward; runtime may add a short forward slide"),
     Clip("celebrate_point", 1260, 24, False, keys_fn([(0, K(), "io"), (6, K(pelvis_rot=(0, 16, 0), chest_rot=(0, 14, 0), head_rot=(-6, 14, 0), G=(0.05, -0.32, 0.98), D=(0.95, -0.2, 0.2), F=(0, -0.3, 0.95), face="big_smile", eye=(-10, 0)), "out"),
          (16, K(pelvis_rot=(0, 16, 0), chest_rot=(0, 14, 0), head_rot=(-8, 16, 0), G=(0.06, -0.33, 0.99), D=(0.95, -0.2, 0.2), F=(0, -0.3, 0.95), face="smirk", eye=(-10, 0)), "io"), (24, K(face="smile"), "io")]),

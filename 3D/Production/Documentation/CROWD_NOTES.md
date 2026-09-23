@@ -21,3 +21,5 @@ Seated spectator modules on the shared field skeleton. Source: `3D/Production/To
 
 **Palette:** each module is one palette. Recolour at runtime by material name (`M_accent_gold`, `M_kit_white`, `M_accent_coral`,
 `M_kit_navy`, `M_accent_teal`) for more variants.
+
+**Update:** hero tiers are decimated into the brief's 8–15k range (fan_a 12,173 / fan_b 10,125 / fan_c 10,924 tris). Midground `_lod1` is about 4.5–5.5k and distant `_lod2` about 1.8–2.2k.

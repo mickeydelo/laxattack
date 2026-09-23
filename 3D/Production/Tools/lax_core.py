@@ -461,6 +461,8 @@ def setup_eevee(samples=64, res=(720, 1560)):
         except Exception:
             pass
     vs.exposure = 0.35; vs.gamma = 1.0
+    if hasattr(r.image_settings, "media_type"):
+        r.image_settings.media_type = "IMAGE"      # playblasts switch scenes to video output
     r.image_settings.file_format = "PNG"; r.image_settings.color_mode = "RGB"
 
 def make_camera(name, loc, target, collection, vfov_deg=None, lens=None, portrait=True):

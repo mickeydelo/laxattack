@@ -53,10 +53,16 @@ def build_fan(spec, asset):
     man = manifest(asset, FAN_CLIPS, perspective="none", extra={
         "usage": "seated spectator; place the root on the bleacher seat top; offset clip start times per instance for asynchronous motion",
         "tiers": {"hero": asset + ".usdz", "midground": asset + "_lod1.usdz", "distant": asset + "_lod2.usdz"}})
+    for o in meshes:                        # hero tier inside the brief's 8-15k spectator target
+        m = o.modifiers.new("hero_lod", "DECIMATE"); m.ratio = 0.55
+        bpy.context.view_layer.objects.active = o
+        while o.modifiers.find("hero_lod") > 0:
+            bpy.ops.object.modifier_move_up(modifier="hero_lod")
+        bpy.ops.object.modifier_apply(modifier="hero_lod")
     tris = sum(tri_count(o) for o in meshes)
     path = os.path.join(EXP, asset + ".usdz")
     e = export_asset([arm] + meshes, asset, asset + "_rig", path, 30, FAN_CLIPS[-1].end, False, man, ())
-    lods = export_lods(e, asset, asset + "_rig", path, (0.25, 0.1), 30, FAN_CLIPS[-1].end, man)
+    lods = export_lods(e, asset, asset + "_rig", path, (0.45, 0.18), 30, FAN_CLIPS[-1].end, man)
     with open(os.path.join(EXP, asset + "_clips.json"), "w") as fh:
         json.dump(man, fh, indent=2)
     return {"tris": tris, "y": e["baked_y_range"], "lods": {k: v["tris"] for k, v in lods.items()}}

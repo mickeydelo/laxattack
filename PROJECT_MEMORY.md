@@ -151,6 +151,8 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 
 - 2026-09-23: H.264 playblasts for shooter, goalie and net (Previews/Playblasts). Net impacts strengthened so all five regions read from the shooter-facing camera (sideways/down billow + travelling tremor), low cords clamped off the turf, exact rest return kept.
 
+- 2026-09-23: Ambient life asset `lax_arena_ambient.usdz` (swaying trees/hedges, fluttering pennants, bobbing/drifting sailboats, gliding clouds; ambient_loop 0-240 seamless, ambient_gust 250-340); static arena gains group midground_trees (hide when ambient shown); `lax_arena_pinebrook_mobile.usdz` 1024 textures (~8 MB); fan hero tiers 10-12k tris; knee-slide reach fixed, roll_dodge_right ~2.5 cm.
+
 # 2026-09-22: Competitive feel and art direction
 
 - Product name is **Lax Attack**. The runtime remains SwiftUI + RealityKit in portrait orientation.

@@ -1,0 +1,33 @@
+{
+  "asset": "lax_arena_ambient",
+  "fps": 30,
+  "timeline_end": 340,
+  "left_right_convention": "n/a",
+  "clips": [
+    {
+      "name": "ambient_loop",
+      "start": 0,
+      "end": 240,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "seamless 8 s breeze: trees/hedges sway, pennants flutter, boats bob and drift, clouds glide"
+    },
+    {
+      "name": "ambient_gust",
+      "start": 250,
+      "end": 340,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "stronger gust (blend in/out from ambient_loop; returns to the loop's frame-0 pose)"
+    }
+  ],
+  "usage": "place at the scene origin with lax_arena_pinebrook; hide the static arena group 'midground_trees' while this asset is shown",
+  "contents": [
+    "7 broadleaf trees + 2 pines (sway)",
+    "9 hedges behind the goal (sway)",
+    "4 pennant flags on the fence (flutter)",
+    "2 sailboats (bob, roll, drift)",
+    "5 clouds (glide)"
+  ],
+  "tris": 54946
+}
