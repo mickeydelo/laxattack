@@ -78,3 +78,19 @@ Away team, #3.
 - **Export:** `face_plus_z=True`. The rig prim gets `rotateY(180)` before the axis conversion; the `/lax_goalie` root stays
   identity at field level.
 - **Runtime note:** the procedural goalie was lifted to a 0.625 m base height. This asset's origin is at field level (y = 0).
+
+
+## Phase 7 heroes
+Both heroes are built by `Tools/build_phase7_heroes.py` from the shared rigs and clip libraries. An additive personality layer
+changes how they move, not when, so all frame ranges match the family hero.
+
+- **lax_boy_field** (home #22): brown skin, short dark hair under the red helmet, black gloves, attack stick. 34,192 tris.
+  - Personality: confident swagger (chest up, head bob, side sway, smirks).
+  - Clips: same names and ranges as `lax_shooter` (see ANIMATION_NOTES).
+  - Faces −Z.
+- **lax_girl_goalie** (away #30): deep skin tone, ponytail and hair below the navy helmet, goalie stick. 38,088 tris.
+  - Personality: springier knee bounce, head sway, big-smile celebrations.
+  - Clips: same names and ranges as `lax_goalie`, with shooter-perspective left/right.
+  - Faces +Z.
+
+**Validation:** 0 errors; reach errors ≤1.8 cm; loop seams ≤4e-5; baked Y 0.000…1.630 (boy) and −0.017…1.656 (girl goalie).

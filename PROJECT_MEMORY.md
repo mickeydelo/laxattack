@@ -137,6 +137,8 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 
 - 2026-09-23: Phase 4 goal committed: `3D/Production/Exports/lax_goal.usdz` (mouth 2.0x2.0 m facing +Z, net depth 2.1 m, identity root on the goal line), static frame + net skinned to a 3x3 bone grid with a pinned mouth rim, sockets goal_sensor_socket, net_collision_reference (scale = box half-extents), net_impact_center/high_left/high_right/low_left/low_right (shooter perspective). Clips: net_idle 0-60, impacts center 70-94, high_left 100-124, high_right 130-154, low_left 160-184, low_right 190-214, heavy 220-256, settle 265-295. See GOAL_NET_NOTES.md.
 
+- 2026-09-23: Phase 7 committed: `lax_boy_field.usdz` (shares lax_shooter clip ranges, swagger personality layer) and `lax_girl_goalie.usdz` (faces +Z, shares lax_goalie clip ranges, bouncy personality layer), manifests beside each.
+
 # 2026-09-22: Competitive feel and art direction
 
 - Product name is **Lax Attack**. The runtime remains SwiftUI + RealityKit in portrait orientation.
