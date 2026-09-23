@@ -29,6 +29,7 @@ def build_goal_asset(export=True):
     def net_w(p):
         w = min(1.0, max(0.0, -p.y / gmeta["depth"]))
         pin = smoothstep(0.05, 0.35, w) * (1 - 0.35 * smoothstep(0.85, 1.0, w))   # rim and rear bar stay firmer
+        pin *= smoothstep(0.03, 0.35, p.z)                                          # turf-level cords stay on the static root
         ws = {}
         for n, q in bones.items():
             d = (p - q).length

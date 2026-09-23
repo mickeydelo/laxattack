@@ -84,6 +84,6 @@ Each impact has five parts:
 - Each impact region now billows **sideways and down** as well as back, plus a travelling whole-net tremor. Center,
   high-left/right and low-left/right are distinguishable from the shooter-facing view.
 - Amplitudes: 0.70–0.75 regional, 1.05 heavy (bone push).
-- Downward travel is clamped by bone height, so low cords stay off the turf (baked Y min -0.103 m, which is the rear ground bar).
+- Downward travel is clamped by bone height, and turf-level cords are pinned to the static root, so no cord crosses the turf (baked Y min -0.035 m).
 - The mouth rim stays pinned. Every clip ends exactly at rest; `net_idle` is enveloped to rest at its loop boundary.
 - Playblast: `Previews/Playblasts/lax_goal_net_clips.mp4`.
