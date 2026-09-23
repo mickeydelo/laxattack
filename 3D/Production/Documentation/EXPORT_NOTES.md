@@ -1,0 +1,47 @@
+# Export Notes
+
+Blender 5.2.2 LTS. Tool: `3D/Production/Tools/lax_export.py` (`export_asset`), generalized from the graybox exporter.
+
+## Settings
+Blender USD export options:
+- `convert_orientation=True`, forward Z, up Y, `root_prim_path=/<asset>`.
+- Selected objects only, `only_deform_bones=True`, UsdPreviewSurface materials, UVs and normals.
+- No shape keys, lights or cameras.
+- `evaluation_mode=RENDER`, so IK is baked into joint transforms.
+
+pxr post-process:
+- The asset root (`/lax_shooter`) keeps an **identity** transform at field level.
+- The axis conversion `rotateXYZ(90, 0, 180)` sits on the rig child prim (`/lax_shooter/lax_shooter_rig`).
+- Assets that must face +Z (goalie) get an extra `rotateY(180)` on the same child, so the root stays identity.
+- `defaultPrim`, kind=component, upAxis Y, metersPerUnit 1, timeCodesPerSecond 30.
+- The clip manifest is stored in root customData (`laxattack.clipManifest`) and as JSON beside the USDZ.
+
+Packaging: `UsdUtils.CreateNewARKitUsdzPackage`.
+
+## Verification (run on every export)
+Re-opens the stage and checks:
+- defaultPrim, up axis and units, and root identity.
+- Socket presence and world positions.
+- UsdSkel animation count and time range.
+- Texture references.
+- A `UsdSkel.BakeSkinning` pass over the whole timeline to measure the skinned mesh Y range (field-level check).
+
+## Runtime exports (3D/Production/Exports/)
+| File | Result |
+|---|---|
+| lax_shooter.usdz (2.03 MB) | root identity ✓, Y-up ✓, m ✓, 7/7 sockets ✓, 1 SkelAnimation ✓, time 0–705 @30 ✓, baked Y −0.002…1.606 ✓, 9 meshes, 17 materials, no textures |
+| lax_shooter_clips.json | 18 clips with release/contact frames |
+| lax_stick_attack.usdz (176 KB) | root identity ✓, 4/4 sockets ✓ (grip (0,0,0), pocket (0,0.025,0.431), ball_contact (0,−0.061,0.431), effect (0,0,0.66)), time 0–214 ✓, 3,744 tris, 5 materials |
+| lax_stick_attack_clips.json | 9 pocket clips |
+
+## Validation tool
+`lax_validate.validate_character` checks:
+- Metric units and fps.
+- Identity object transforms.
+- Required clips and sockets.
+- Triangle budget and material count.
+- Mesh/armature binding and weights.
+- Missing textures.
+
+It also checks, per clip: hand-IK error, foot-IK error, ankle height, a glove/helmet sphere-clearance estimate, a shaft/helmet
+clearance estimate, root motion, loop seams, and static ball/pocket clearance.

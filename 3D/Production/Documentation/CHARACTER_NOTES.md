@@ -1,0 +1,64 @@
+# Character Notes
+
+Blender 5.2.2 LTS. Builders: `3D/Production/Tools/lax_figure.py` (skeleton, meshes, face, sticks), `lax_pose.py` (pose model),
+`lax_anim.py` (clips, baking, secondary), `build_girl_field.py` (girl hero). Look: `VISUAL_STYLE_BIBLE.md` v2.
+
+## Skeleton families
+Both families share one bone layout so clips transfer; the goalie family adds `chest_pad` and `throat_guard`.
+
+| Group | Bones |
+|---|---|
+| Body | root, pelvis, spine, chest, neck, head |
+| Face | jaw, mouth_L/R (children of jaw), eye_L/R, lid_L/R, brow_L/R |
+| Arms | clavicle, upperarm, forearm, hand, fingers, thumb (_L/_R) |
+| Legs | thigh, shin, foot, toe (_L/_R) |
+| Secondary | hair_01–03 (ponytail chain), hem_F, hem_B |
+| Stick | stick (top-hand grip, +Y shaft, +Z pocket face), pocket_01 (bag belly), pocket_02 (upper channel) |
+| Controls (not exported) | ik_hand_L/R (children of stick), ik_foot_L/R, pole_elbow_L/R, pole_knee_L/R |
+
+`root` never moves. Jumps, dodges and saves use pelvis motion only.
+
+## Proportions
+Figures are designed in a 1.5 m design space and transformed at build time. Body segments scale by `body_scale` about the
+ground. Head-driven parts scale by `head_k` about the neck top. Sticks are unscaled. Pose data is authored in design space and
+`apply_pose` scales it by the rig's `body_scale` custom property.
+
+| Hero | body_scale | head_k | Height | Tris (incl. stick) | Materials |
+|---|---|---|---|---|---|
+| Girl field (`lax_shooter`) | 0.82 | 1.15 | ≈1.46 m (1.61 m with raised stick) | 34,972 | 17 |
+| Boy goalie (lookdev only; Phase 3) | 0.84 | 1.15 | ≈1.48 m | ≈36k | — |
+
+## Facial system
+Bone-driven, chosen because joint transforms export reliably to USD/RealityKit. Blend shapes were not used.
+
+- **Lids:** skin shells authored closed and collapsed by lid-bone Y scale (0.1 open, 1.0 closed).
+- **Mouth:** a decal authored open and collapsed by jaw Y scale (0.14 closed line, 1.0 open); mouth corners translate.
+- **Brows and eyes:** brows translate and tilt; eyes rotate for aim.
+- **Presets** (`lax_figure.FACE`): neutral, blink, focused, determined, smile, big_smile, strain, surprise, disappointed, smirk.
+- **Eye aim:** `eye` pose parameter, in degrees.
+- **Export check:** these face channels are baked into every clip and exported through UsdSkel. Blender-side renders confirm
+  them. Runtime confirmation of joint *scale* playback is still pending (see KNOWN_ISSUES).
+
+## Sockets (lax_shooter)
+
+| Socket | Parent bone | Purpose |
+|---|---|---|
+| stick_socket | stick | Top-hand grip; stick frame (+Y shaft, +Z pocket face in Blender) |
+| pocket_socket | pocket_01 | **Resting ball centre** for a 0.08 m ball; rides pocket compression |
+| ball_contact_socket | pocket_01 | Bottom of the bag (extra) |
+| helmet_socket | head | Helmet centre, identity orientation in asset space |
+| effect_socket | chest | Chest front, identity orientation |
+| left_hand_socket / right_hand_socket | hand_L / hand_R | Glove centres |
+
+Rest positions in USD asset space are recorded in `3D/Production/Exports/lax_shooter_clips.json`.
+
+## Girl field hero
+Home team, #10.
+- **Kit:** red helmet with cream stripe and light cage; hair below the helmet rim plus a ponytail with a red scrunchie; cream
+  jersey with red numbers; red shorts; brown gloves; white socks and shoes.
+- **Face:** dark toy eyes with two highlights, thin brows, lash line, blush.
+- **Mesh parts** (separable for customization): head, face, hair, headgear, kit, limbs, gloves, shoes, stick.
+- **Personality:** head-tilted focused idle with blink, bouncy celebrate jump, smirk on dodge recovery.
+
+## Collision
+Keep RealityKit's simple character collider. Do not use skinned meshes for collision.

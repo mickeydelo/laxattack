@@ -129,6 +129,8 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 
 - 2026-09-23: Art direction v2 committed, aligned to Mickey's reference key art (vinyl-toy figures with ~45% head+helmet, glossy striped helmets on every player, dark glossy toy eyes, home red/cream vs away navy/teal, orange goal, white ball, golden-hour light, textured turf, broadleaf woods, post-and-rail fence, lakeside with sailboats, stronger but gameplay-safe DOF). Figures now use a build-time proportion transform (body_scale ~0.82, head_k 1.15) so pose data and sticks stay compatible. Recommended gameplay camera to match the key art: from (-0.3, 4.3, 7.0) to (-0.15, 0.4, -3.5), vFOV 50 (Swift decision). The key art shows 5v5 players; the game is 1v1, so extra players remain a gameplay decision. See VISUAL_STYLE_BIBLE.md v2.
 
+- 2026-09-23: Phase 1 production foundations committed: shared skeleton families and bone-driven face (`lax_figure.py`), pose model (`lax_pose.py`), clip/bake/secondary-spring system (`lax_anim.py`), generalized USD/USDZ exporter with goalie +Z option and pxr verification (`lax_export.py`), and Blender-side validator (`lax_validate.py`). Docs: CHARACTER_NOTES.md, EXPORT_NOTES.md.
+
 # 2026-09-22: Competitive feel and art direction
 
 - Product name is **Lax Attack**. The runtime remains SwiftUI + RealityKit in portrait orientation.

@@ -34,7 +34,7 @@ SH_X, SH_Z = 0.19, 0.875
 UPPER, FORE = 0.23, 0.26
 ARM_A = math.radians(52)
 HIP_X = 0.085
-GRIP_SPREAD = 0.26
+GRIP_SPREAD = 0.22
 
 # ------------------------------------------------------------------ proportions (v2)
 # Figures are designed in a 1.5 m "design space" and transformed at build time: body segments scale uniformly about the
