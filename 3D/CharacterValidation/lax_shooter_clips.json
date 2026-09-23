@@ -1,0 +1,26 @@
+{
+  "fps": 30,
+  "release_overhand_ball_release_frame": 114,
+  "clips": {
+    "idle": {
+      "start": 0,
+      "end": 48,
+      "loop": true
+    },
+    "cradle": {
+      "start": 60,
+      "end": 88,
+      "loop": true
+    },
+    "release_overhand": {
+      "start": 100,
+      "end": 133,
+      "loop": false
+    },
+    "celebrate": {
+      "start": 150,
+      "end": 186,
+      "loop": false
+    }
+  }
+}

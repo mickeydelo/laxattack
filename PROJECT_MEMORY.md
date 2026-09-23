@@ -100,7 +100,7 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - Add authored audio assets for pocket movement, release snap, bounce, pipe, save, net impact, crowd, and UI.
 - Add a first quick-stick challenge that uses timing rather than free aiming.
 - Tune the three release profiles through hands-on device play, especially bounce restitution and sidearm late curve.
-- Import the first graybox `lax_shooter.usdz` and `lax_goalie.usdz`, pass `CharacterAssetContract` validation, and align authored release/contact frames with the existing gameplay state transitions.
+- Import the graybox `3D/CharacterValidation/lax_shooter.usdz` (delivered; see its `ASSET_NOTES.md`): slice its single timeline into `idle`/`cradle`/`release_overhand`/`celebrate` in `AnimationLibraryComponent`, pass `CharacterAssetContract` socket validation, and align the authored ball-release frame (timeline 114, 0.467 s into `release_overhand`) with `shoot()`. `lax_goalie.usdz` is not built yet.
 
 ## Guardrails
 
@@ -122,6 +122,8 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - 2026-09-23: Added a synchronized Quick Stick timing challenge on the third shot, an incoming pass that reaches the procedural pocket, timing-dependent velocity/placement, a 150-point quick-stick bonus, persisted timing quality, quick-stick animation staging, and direction-aware goalie anticipation. Expanded the art pipeline and memory with the supplied concept's diorama/material/feedback quality principles. The project built and launched successfully with no crash/fatal/assertion output.
 - 2026-09-23: Added split-dodge gesture recognition and wrong-footed goalie reads, a 100-point dodge finish, release-specific restitution/friction/spin, force-driven sidearm curve, localized net deformation, and additional procedural limb articulation. Added an `On Fire` three-goal streak state with gold/orange visual treatment and a 200-point conversion bonus. The project built and launched successfully with no crash/fatal/assertion output.
 - 2026-09-23: Fixed the goalie body being buried below the turf by preserving its 0.625-meter world-space base height during procedural animation. Added explicit shooter/goalie performance states, production socket names, USDZ loading and validation, versioned release snapshots with goalie position, and an in-game split-dodge hint. Documented the exact Blender-to-RealityKit acceptance contract; the project built successfully after these changes.
+- 2026-09-23: Delivered the first graybox character-validation asset in `3D/CharacterValidation/`: `LaxAttackCharacters.blend` (Blender 5.2.2 LTS), `lax_shooter.usdz`, `lax_shooter_clips.json`, `ASSET_NOTES.md`, rebuild/export scripts, and a contact sheet. The 1.52 m right-handed shooter faces -Z with +X right, origin at field level, identity root, `stick_socket`/`helmet_socket`/`effect_socket` (plus optional `pocket_socket`), and 4 clips on one 30 fps timeline: idle 0-48, cradle 60-88 (both loop), release_overhand 100-133 with ball release at frame 114, celebrate 150-186. USDZ has no AnimationLibraryComponent, so the runtime must slice clips by frame range. No Swift code was changed.
+
 # 2026-09-22: Competitive feel and art direction
 
 - Product name is **Lax Attack**. The runtime remains SwiftUI + RealityKit in portrait orientation.
