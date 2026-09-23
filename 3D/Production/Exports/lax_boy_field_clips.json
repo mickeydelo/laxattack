@@ -1,7 +1,7 @@
 {
   "asset": "lax_boy_field",
   "fps": 30,
-  "timeline_end": 705,
+  "timeline_end": 1558,
   "left_right_convention": "left/right are the shooter's own left/right (shooter faces -Z; shooter-left = -X in game space)",
   "clips": [
     {
@@ -161,6 +161,158 @@
       "loop": true,
       "transition_seconds": 0.12,
       "notes": "extra; in place"
+    },
+    {
+      "name": "idle_relaxed",
+      "start": 720,
+      "end": 792,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "loose, happy look-around"
+    },
+    {
+      "name": "idle_competitive",
+      "start": 800,
+      "end": 848,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "toe bounce, eyes locked on goal"
+    },
+    {
+      "name": "idle_nervous",
+      "start": 860,
+      "end": 920,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "weight shifts, darting eyes, stick fidget"
+    },
+    {
+      "name": "roll_dodge_left",
+      "start": 930,
+      "end": 960,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "in place; 360 pivot with planted-foot turn; root may slide toward shooter-left"
+    },
+    {
+      "name": "roll_dodge_right",
+      "start": 970,
+      "end": 1000,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "in place; mirror"
+    },
+    {
+      "name": "face_dodge_left",
+      "start": 1010,
+      "end": 1034,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "stick swept across the face to shooter-left and back"
+    },
+    {
+      "name": "face_dodge_right",
+      "start": 1045,
+      "end": 1069,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "mirror"
+    },
+    {
+      "name": "celebrate_fist_pump",
+      "start": 1080,
+      "end": 1110,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "double pump; short"
+    },
+    {
+      "name": "celebrate_stick_twirl",
+      "start": 1120,
+      "end": 1160,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "two stick twirls overhead"
+    },
+    {
+      "name": "celebrate_jump_tuck",
+      "start": 1170,
+      "end": 1200,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "big tuck jump (pelvis motion only)"
+    },
+    {
+      "name": "celebrate_knee_slide",
+      "start": 1210,
+      "end": 1250,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "in-place knee drop + lean back, stick skyward; runtime may add a short forward slide"
+    },
+    {
+      "name": "celebrate_point",
+      "start": 1260,
+      "end": 1284,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "stick points to a teammate (toward shooter-left)"
+    },
+    {
+      "name": "celebrate_restrained",
+      "start": 1295,
+      "end": 1325,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cool nod and smile"
+    },
+    {
+      "name": "celebrate_clutch",
+      "start": 1335,
+      "end": 1389,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "huge win: jump celebration flowing into a stick twirl"
+    },
+    {
+      "name": "weak_miss",
+      "start": 1400,
+      "end": 1424,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "little shoulder shrug, never a tantrum"
+    },
+    {
+      "name": "goal_glance_back",
+      "start": 1435,
+      "end": 1465,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "grin back over the shoulder"
+    },
+    {
+      "name": "run_start",
+      "start": 1475,
+      "end": 1491,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "blend into run_loop"
+    },
+    {
+      "name": "run_stop",
+      "start": 1500,
+      "end": 1518,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "plant and settle"
+    },
+    {
+      "name": "stumble_recover",
+      "start": 1528,
+      "end": 1558,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "trip, windmill, laugh it off"
     }
   ],
   "shares_timeline_with": "lax_shooter",

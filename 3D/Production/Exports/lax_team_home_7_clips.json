@@ -1,0 +1,320 @@
+{
+  "asset": "lax_team_home_7",
+  "fps": 30,
+  "timeline_end": 1558,
+  "left_right_convention": "left/right are the shooter's own left/right (shooter faces -Z; shooter-left = -X in game space)",
+  "clips": [
+    {
+      "name": "idle",
+      "start": 0,
+      "end": 48,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "breathing/look loop; blink at local 30"
+    },
+    {
+      "name": "cradle",
+      "start": 60,
+      "end": 88,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "continuous cradle; pocket lags the sweep"
+    },
+    {
+      "name": "release_overhand",
+      "start": 100,
+      "end": 133,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "release_frame": 114,
+      "release_local_frame": 14,
+      "release_seconds_after_start": 0.4667,
+      "notes": "graybox timing preserved: ball leaves pocket_socket at 14/30 s"
+    },
+    {
+      "name": "celebrate",
+      "start": 150,
+      "end": 186,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "jump with stick skyward (pelvis motion only)"
+    },
+    {
+      "name": "aim_overhand",
+      "start": 200,
+      "end": 230,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "loaded overhand hold for aiming; blends into release_overhand"
+    },
+    {
+      "name": "aim_bounce",
+      "start": 240,
+      "end": 270,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "bounce-shot aim; first frame of release_bounce"
+    },
+    {
+      "name": "aim_sidearm",
+      "start": 280,
+      "end": 310,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "sidearm aim; first frame of release_sidearm"
+    },
+    {
+      "name": "split_dodge_left",
+      "start": 320,
+      "end": 344,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "in place; runtime moves root toward shooter-left (game -X) between local 6 and 16"
+    },
+    {
+      "name": "split_dodge_right",
+      "start": 350,
+      "end": 374,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "in place; runtime moves root toward shooter-right (game +X) between local 6 and 16"
+    },
+    {
+      "name": "release_bounce",
+      "start": 380,
+      "end": 413,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "release_frame": 394,
+      "release_local_frame": 14,
+      "release_seconds_after_start": 0.4667,
+      "notes": "starts from aim_bounce; downward release"
+    },
+    {
+      "name": "release_sidearm",
+      "start": 420,
+      "end": 453,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "release_frame": 433,
+      "release_local_frame": 13,
+      "release_seconds_after_start": 0.4333,
+      "notes": "starts from aim_sidearm; horizontal whip"
+    },
+    {
+      "name": "quick_stick_catch",
+      "start": 460,
+      "end": 478,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 466,
+      "contact_local_frame": 6,
+      "notes": "ball meets pocket at local 6; ends in quick-stick ready pose"
+    },
+    {
+      "name": "quick_stick_release",
+      "start": 490,
+      "end": 506,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "release_frame": 495,
+      "release_local_frame": 5,
+      "release_seconds_after_start": 0.1667,
+      "notes": "starts from quick-stick ready pose; redirect release at local 5"
+    },
+    {
+      "name": "disappointed",
+      "start": 520,
+      "end": 560,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "ends slumped (stick head resting on turf); blend to idle"
+    },
+    {
+      "name": "near_miss_reaction",
+      "start": 570,
+      "end": 600,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "extra"
+    },
+    {
+      "name": "pipe_reaction",
+      "start": 610,
+      "end": 634,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "extra"
+    },
+    {
+      "name": "save_reaction",
+      "start": 645,
+      "end": 675,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "extra"
+    },
+    {
+      "name": "run_loop",
+      "start": 685,
+      "end": 705,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "extra; in place"
+    },
+    {
+      "name": "idle_relaxed",
+      "start": 720,
+      "end": 792,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "loose, happy look-around"
+    },
+    {
+      "name": "idle_competitive",
+      "start": 800,
+      "end": 848,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "toe bounce, eyes locked on goal"
+    },
+    {
+      "name": "idle_nervous",
+      "start": 860,
+      "end": 920,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "weight shifts, darting eyes, stick fidget"
+    },
+    {
+      "name": "roll_dodge_left",
+      "start": 930,
+      "end": 960,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "in place; 360 pivot with planted-foot turn; root may slide toward shooter-left"
+    },
+    {
+      "name": "roll_dodge_right",
+      "start": 970,
+      "end": 1000,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "in place; mirror"
+    },
+    {
+      "name": "face_dodge_left",
+      "start": 1010,
+      "end": 1034,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "stick swept across the face to shooter-left and back"
+    },
+    {
+      "name": "face_dodge_right",
+      "start": 1045,
+      "end": 1069,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "mirror"
+    },
+    {
+      "name": "celebrate_fist_pump",
+      "start": 1080,
+      "end": 1110,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "double pump; short"
+    },
+    {
+      "name": "celebrate_stick_twirl",
+      "start": 1120,
+      "end": 1160,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "two stick twirls overhead"
+    },
+    {
+      "name": "celebrate_jump_tuck",
+      "start": 1170,
+      "end": 1200,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "big tuck jump (pelvis motion only)"
+    },
+    {
+      "name": "celebrate_knee_slide",
+      "start": 1210,
+      "end": 1250,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "in-place knee drop + lean back, stick skyward; runtime may add a short forward slide"
+    },
+    {
+      "name": "celebrate_point",
+      "start": 1260,
+      "end": 1284,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "stick points to a teammate (toward shooter-left)"
+    },
+    {
+      "name": "celebrate_restrained",
+      "start": 1295,
+      "end": 1325,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cool nod and smile"
+    },
+    {
+      "name": "celebrate_clutch",
+      "start": 1335,
+      "end": 1389,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "huge win: jump celebration flowing into a stick twirl"
+    },
+    {
+      "name": "weak_miss",
+      "start": 1400,
+      "end": 1424,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "little shoulder shrug, never a tantrum"
+    },
+    {
+      "name": "goal_glance_back",
+      "start": 1435,
+      "end": 1465,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "grin back over the shoulder"
+    },
+    {
+      "name": "run_start",
+      "start": 1475,
+      "end": 1491,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "blend into run_loop"
+    },
+    {
+      "name": "run_stop",
+      "start": 1500,
+      "end": 1518,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "plant and settle"
+    },
+    {
+      "name": "stumble_recover",
+      "start": 1528,
+      "end": 1558,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "trip, windmill, laugh it off"
+    }
+  ],
+  "shares_timeline_with": "lax_shooter",
+  "note": "same clip names and frame ranges as the shared-family hero; personality layer changes the motion, not the timing"
+}

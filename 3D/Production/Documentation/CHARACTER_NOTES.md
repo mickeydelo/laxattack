@@ -117,3 +117,15 @@ Women's field lacrosse uses a different kit from the men's game, per Mickey's re
 - **New sockets on every character:** `eyes_socket`, `camera_focus_socket`, `chest_socket`, in addition to the previous
   seven.
 - **Women's field kit** now has thin white/red gloves, per the brief.
+
+
+## Teammates (2026-09-23)
+| Asset | Side | Kit | Facing |
+|---|---|---|---|
+| `lax_team_home_7` | home | women's field kit (goggles, headband + ponytail, jersey, kilt, gloves), deep skin, #7 | −Z |
+| `lax_team_away_5` | away | navy helmet with teal stripe, navy kit, blond, #5 | +Z (faces the shooter) |
+
+- Both use the full shooter-timeline library.
+- **Behaviour mapping:** track ball = `idle_competitive`/`watch`; cut = `split_dodge_*`/`roll_dodge_*`; catch = `quick_stick_catch`;
+  pass = `release_sidearm`; check = `face_dodge_*`; celebrate/react = the celebration and reaction clips.
+- Add more variants by copying a spec line in `build_phase7_heroes.py`.

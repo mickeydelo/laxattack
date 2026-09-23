@@ -44,13 +44,14 @@ def build_variant(spec, asset, clips_src, family, kind, required, stick_kind, fr
     bake_clips(arm, clips, family, GOALIE_EXTRA if family == "goalie" else ())
     meshes = list(parts.values()) + [stick]
     rep = {"validation": validate_character(arm, clips, meshes, meta, REQUIRED_SOCKETS, required)}
-    d = os.path.join(PROD, "Characters", "BoyField" if kind == "boy" else "GirlGoalie"); os.makedirs(d, exist_ok=True)
+    d = os.path.join(PROD, "Characters", spec.get("folder", "BoyField" if kind == "boy" else "GirlGoalie")); os.makedirs(d, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(d, "LaxAttack_" + spec["name"] + ".blend"), compress=True)
     man = manifest(asset, clips, perspective="goalie" if family == "goalie" else "shooter", extra={
         "shares_timeline_with": "lax_goalie" if family == "goalie" else "lax_shooter",
         "note": "same clip names and frame ranges as the shared-family hero; personality layer changes the motion, not the timing"})
     rep["export"] = export_asset([arm] + meshes + list(socks.values()), asset, asset + "_rig", os.path.join(EXP, asset + ".usdz"),
                                  30, clips[-1].end, face_plus_z, man, REQUIRED_SOCKETS + ["ball_contact_socket"])
+    rep["lods"] = export_lods(rep["export"], asset, asset + "_rig", os.path.join(EXP, asset + ".usdz"), (0.6, 0.3), 30, clips[-1].end, man)
     with open(os.path.join(EXP, asset + "_clips.json"), "w") as fh:
         json.dump(man, fh, indent=2)
     return rep
@@ -61,3 +62,18 @@ def build_phase7():
     r2 = build_variant(GIRL_GOALIE, "lax_girl_goalie", BG_CLIPS, "goalie", "girl_goalie", GOALIE_CLIPS, "goalie", "helmet_teal", "cord_white", True,
                        [GK, READ_L, SAVE_L, SAVE_HL, mirror(SAVE_L)])
     return r1, r2
+
+
+# ---- teammates (Codex brief: start with one silhouette/readability variant per side; add more by copying a spec line)
+TEAM_HOME_7 = dict(GIRL_FIELD, name="team_home_7", skin="skin_deep", hair="hair_dark", number="7", jaw_taper=0.12, eye_az=21.0,
+                   folder="Teammates")
+TEAM_AWAY_5 = dict(BOY_FIELD, name="team_away_5", skin="skin_light", hair="hair_blond", number="5", helmet_mat="helmet_navy",
+                   stripe_mat="helmet_teal", kit="kit_navy", kit_trim="accent_teal", number_mat="kit_white", bottom_mat="kit_navy",
+                   bottom_trim="accent_teal", glove="glove_dark", glove_cuff="glove_dark", folder="Teammates")
+
+def build_teammates():
+    a = build_variant(TEAM_HOME_7, "lax_team_home_7", CLIPS, "field", "girl_goalie", REQUIRED_CLIPS, "attack", "helmet_cream", "cord_navy", False,
+                      [GB, AIM_O, AIM_S, QS])
+    b = build_variant(TEAM_AWAY_5, "lax_team_away_5", CLIPS, "field", "boy", REQUIRED_CLIPS, "attack", "helmet_teal", "cord_white", True,
+                      [GB, AIM_O, AIM_S, QS])
+    return a, b

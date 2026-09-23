@@ -259,6 +259,7 @@ def build_girl(export=True):
         objs = [arm] + meshes + list(socks.values())
         rep["export"] = export_asset(objs, "lax_shooter", "lax_shooter_rig", os.path.join(EXP, "lax_shooter.usdz"), 30, CLIPS[-1].end,
                                      False, man, REQUIRED_SOCKETS + ["ball_contact_socket"])
+        rep["lods"] = export_lods(rep["export"], "lax_shooter", "lax_shooter_rig", os.path.join(EXP, "lax_shooter.usdz"), (0.6, 0.3), 30, CLIPS[-1].end, man)
         with open(os.path.join(EXP, "lax_shooter_clips.json"), "w") as fh:
             json.dump(man, fh, indent=2)
     return rep, arm, meta

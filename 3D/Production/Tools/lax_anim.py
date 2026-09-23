@@ -1,7 +1,7 @@
 # Lax Attack animation system: clip timeline, baking (body + face + pocket + fingers), baked secondary springs.
 # Poses are authored in the 1.5 m design space (see lax_pose); apply_pose scales them by the rig's body_scale.
 KEYED = [("pelvis", "location"), ("pelvis", "rotation_euler"), ("spine", "rotation_euler"), ("chest", "rotation_euler"),
-         ("neck", "rotation_euler"), ("head", "rotation_euler"), ("ik_foot_L", "location"), ("ik_foot_R", "location"),
+         ("neck", "rotation_euler"), ("head", "rotation_euler"), ("ik_foot_L", "location"), ("ik_foot_R", "location"), ("ik_foot_L", "rotation_euler"), ("ik_foot_R", "rotation_euler"),
          ("stick", "location"), ("stick", "rotation_quaternion"),
          ("hair_01", "rotation_euler"), ("hair_02", "rotation_euler"), ("hair_03", "rotation_euler"),
          ("hem_F", "rotation_euler"), ("hem_B", "rotation_euler"), ("pocket_01", "location"), ("pocket_02", "location"),

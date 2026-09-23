@@ -119,3 +119,87 @@ Same 9 pocket clips, frame ranges, sockets and axes as `lax_stick_attack`.
 - Deeper pocket (0.10 m); the resting ball centre sits at the rim plane.
 - Sockets in USD: grip (0,0,0), pocket (0,−0.002,0.547), ball_contact (0,−0.088,0.547), effect (0,0,0.88).
 - 3,744 tris.
+
+
+## Expanded library (2026-09-23)
+Everything is appended after the previous ranges; the earlier ranges and events are unchanged. The boy field player and the teammates share the shooter timeline; the girl goalie shares the goalie timeline. Roll dodges rotate the feet with the body (`feet_yaw`); all motion stays in place.
+
+### lax_shooter (37 clips)
+| Clip | Start | End | Loop | Event |
+|---|---|---|---|---|
+| idle | 0 | 48 | yes | — |
+| cradle | 60 | 88 | yes | — |
+| release_overhand | 100 | 133 | no | release 114 |
+| celebrate | 150 | 186 | no | — |
+| aim_overhand | 200 | 230 | yes | — |
+| aim_bounce | 240 | 270 | yes | — |
+| aim_sidearm | 280 | 310 | yes | — |
+| split_dodge_left | 320 | 344 | no | — |
+| split_dodge_right | 350 | 374 | no | — |
+| release_bounce | 380 | 413 | no | release 394 |
+| release_sidearm | 420 | 453 | no | release 433 |
+| quick_stick_catch | 460 | 478 | no | contact 466 |
+| quick_stick_release | 490 | 506 | no | release 495 |
+| disappointed | 520 | 560 | no | — |
+| near_miss_reaction | 570 | 600 | no | — |
+| pipe_reaction | 610 | 634 | no | — |
+| save_reaction | 645 | 675 | no | — |
+| run_loop | 685 | 705 | yes | — |
+| idle_relaxed | 720 | 792 | yes | — |
+| idle_competitive | 800 | 848 | yes | — |
+| idle_nervous | 860 | 920 | yes | — |
+| roll_dodge_left | 930 | 960 | no | — |
+| roll_dodge_right | 970 | 1000 | no | — |
+| face_dodge_left | 1010 | 1034 | no | — |
+| face_dodge_right | 1045 | 1069 | no | — |
+| celebrate_fist_pump | 1080 | 1110 | no | — |
+| celebrate_stick_twirl | 1120 | 1160 | no | — |
+| celebrate_jump_tuck | 1170 | 1200 | no | — |
+| celebrate_knee_slide | 1210 | 1250 | no | — |
+| celebrate_point | 1260 | 1284 | no | — |
+| celebrate_restrained | 1295 | 1325 | no | — |
+| celebrate_clutch | 1335 | 1389 | no | — |
+| weak_miss | 1400 | 1424 | no | — |
+| goal_glance_back | 1435 | 1465 | no | — |
+| run_start | 1475 | 1491 | no | — |
+| run_stop | 1500 | 1518 | no | — |
+| stumble_recover | 1528 | 1558 | no | — |
+
+### lax_goalie (35 clips)
+| Clip | Start | End | Loop | Event |
+|---|---|---|---|---|
+| goalie_ready | 0 | 40 | yes | — |
+| goalie_shuffle_left | 50 | 70 | yes | — |
+| goalie_shuffle_right | 80 | 100 | yes | — |
+| goalie_read_left | 110 | 128 | no | — |
+| goalie_read_right | 135 | 153 | no | — |
+| goalie_save_left | 160 | 190 | no | contact 167 |
+| goalie_save_right | 200 | 230 | no | contact 207 |
+| goalie_goal_against | 240 | 285 | no | — |
+| goalie_save_high_left | 295 | 325 | no | contact 302 |
+| goalie_save_high_right | 335 | 365 | no | contact 342 |
+| goalie_save_low_left | 375 | 405 | no | contact 382 |
+| goalie_save_low_right | 415 | 445 | no | contact 422 |
+| goalie_five_hole_close | 455 | 475 | no | contact 460 |
+| goalie_body_save | 485 | 509 | no | contact 490 |
+| goalie_celebrate | 520 | 556 | no | — |
+| goalie_scan | 570 | 618 | yes | — |
+| goalie_tap_pipes | 628 | 668 | no | contact 639 |
+| goalie_reset_gloves | 678 | 714 | no | — |
+| goalie_crossover_left | 724 | 744 | yes | — |
+| goalie_crossover_right | 754 | 774 | yes | — |
+| goalie_read_high | 784 | 802 | no | — |
+| goalie_read_low | 812 | 830 | no | — |
+| goalie_kick_save_left | 840 | 870 | no | contact 847 |
+| goalie_kick_save_right | 880 | 910 | no | contact 887 |
+| goalie_doorstep_stuff | 920 | 950 | no | contact 926 |
+| goalie_desperation_dive_left | 960 | 996 | no | contact 969 |
+| goalie_desperation_dive_right | 1006 | 1042 | no | contact 1015 |
+| goalie_trail_stick_recovery | 1052 | 1082 | no | — |
+| goalie_frustrated_tap | 1092 | 1122 | no | — |
+| goalie_shrug | 1132 | 1156 | no | — |
+| goalie_reset | 1166 | 1196 | no | — |
+| goalie_stick_raise | 1206 | 1236 | no | — |
+| goalie_helmet_nod | 1246 | 1270 | no | — |
+| goalie_small_dance | 1280 | 1328 | no | — |
+| goalie_big_clutch_save | 1338 | 1398 | no | contact 1345 |

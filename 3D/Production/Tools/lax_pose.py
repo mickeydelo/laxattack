@@ -6,11 +6,11 @@ STANCE = {"field": {"L": V((0.035, -0.03, 0)), "R": V((-0.035, 0.045, 0))},
 BASE_FIELD = dict(pelvis_off=(0, 0, -0.035), pelvis_rot=(0, -6, 0), spine_rot=(6, -4, 0), chest_rot=(4, -4, 0),
                   neck_rot=(-4, 4, 0), head_rot=(-6, 8, 0), footL=(0, 0, 0), footR=(0, 0, 0),
                   G=(-0.24, -0.25, 0.86), D=(-0.60, 0.05, 0.80), F=(0.55, -0.83, 0.10),
-                  hair=(0, 0, 0), hem=(0, 0), face="neutral", eye=(0, 0), pocket=0.0, fingers=0.0)
+                  hair=(0, 0, 0), hem=(0, 0), face="neutral", eye=(0, 0), pocket=0.0, fingers=0.0, feet_yaw=0.0)
 BASE_GOALIE = dict(pelvis_off=(0, 0, -0.085), pelvis_rot=(8, 0, 0), spine_rot=(6, 0, 0), chest_rot=(2, 0, 0),
                    neck_rot=(-6, 0, 0), head_rot=(-8, 0, 0), footL=(0, 0, 0), footR=(0, 0, 0),
                    G=(-0.21, -0.30, 0.98), D=(-0.10, -0.12, 0.99), F=(0.0, -1.0, 0.1),
-                   hair=(0, 0, 0), hem=(0, 0), face="focused", eye=(0, 0), pocket=0.0, fingers=0.0)
+                   hair=(0, 0, 0), hem=(0, 0), face="focused", eye=(0, 0), pocket=0.0, fingers=0.0, feet_yaw=0.0)
 
 def P(base, **kw):
     p = {k: (tuple(v) if isinstance(v, (tuple, list)) else v) for k, v in base.items()}
@@ -89,8 +89,12 @@ def apply_pose(arm, p, family="field", blink=None):
     base_z = BASE_GOALIE["pelvis_off"][2] if family == "goalie" else BASE_FIELD["pelvis_off"][2]
     lift = max(0.0, p["pelvis_off"][2] - base_z - 0.05) if family == "field" else max(0.0, p["pelvis_off"][2] - base_z - 0.10)
     st = STANCE[family]
-    set_loc_world(pbs["ik_foot_L"], (st["L"] + V(p["footL"]) + V((0, 0, lift))) * bs)
-    set_loc_world(pbs["ik_foot_R"], (st["R"] + V(p["footR"]) + V((0, 0, lift))) * bs)
+    fy = math.radians(p.get("feet_yaw", 0.0)); Rf = Matrix.Rotation(fy, 3, "Z")   # feet follow body turns (roll dodges)
+    for sd in ("L", "R"):
+        rest = pbs["ik_foot_" + sd].bone.head_local.copy(); rest.z = 0.0
+        tgt = Rf @ (rest + (st[sd] + V(p["foot" + sd]) + V((0, 0, lift))) * bs) - rest
+        set_loc_world(pbs["ik_foot_" + sd], tgt)
+        pbs["ik_foot_" + sd].rotation_euler = (0, 0, fy)
     yaw = p["pelvis_rot"][1] + p["spine_rot"][1] + p["chest_rot"][1]   # bone-local Y of the up-pointing spine = world yaw
     Rz = Matrix.Rotation(math.radians(yaw), 3, "Z")
     G = (V(p["pelvis_off"]) + Rz @ V(p["G"])) * bs

@@ -147,6 +147,8 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 
 - 2026-09-23: Blender round-trip fixes for Codex feedback (branch gameplay-shell-daily-challenges): single merged skinned mesh per character, uniform 4 influences, open-eyes/closed-mouth rest frame, arena origin-stacking fixed (stale matrix_world) with automated 4 m origin test. Arena v3: unique 2048 PBR field (mow bands, macro variation, worn crease/goal-mouth/shooting spot), hero tufts, foreground frame, pre-softened far_background_soft/foreground_framing_soft DOF fallback groups, sky backdrop, LOD1/LOD2 arena exports.
 
+- 2026-09-23: Expanded animation library (shooter 37 clips: idle_relaxed/competitive/nervous, roll/face dodges, 7 celebrations, weak_miss, glance-back, run start/stop, stumble; goalie 35 clips: scan, pipe taps, glove reset, crossovers, read high/low, kick saves, doorstep stuff, desperation dives, trail-stick recovery, frustrated tap, shrug, reset, stick raise, helmet nod, dance, clutch save) on all heroes; LOD1/LOD2 for every character; crowd modules lax_fan_a/b/c (12 seated clips, hero/midground/distant tiers); teammates lax_team_home_7 and lax_team_away_5; thumbnail + wireframe deliverables and DELIVERABLES.md.
+
 # 2026-09-22: Competitive feel and art direction
 
 - Product name is **Lax Attack**. The runtime remains SwiftUI + RealityKit in portrait orientation.

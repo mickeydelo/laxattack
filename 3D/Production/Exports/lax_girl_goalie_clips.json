@@ -1,7 +1,7 @@
 {
   "asset": "lax_girl_goalie",
   "fps": 30,
-  "timeline_end": 556,
+  "timeline_end": 1398,
   "left_right_convention": "left/right are from the SHOOTER's perspective (goalie faces +Z); goalie_save_left = shooter's left = game -X",
   "clips": [
     {
@@ -139,6 +139,180 @@
       "loop": false,
       "transition_seconds": 0.12,
       "notes": "extra; stick pumps"
+    },
+    {
+      "name": "goalie_scan",
+      "start": 570,
+      "end": 618,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "watchful sweep"
+    },
+    {
+      "name": "goalie_tap_pipes",
+      "start": 628,
+      "end": 668,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 639,
+      "contact_local_frame": 11,
+      "notes": "taps both pipes (contacts local 11 and 25): ritual"
+    },
+    {
+      "name": "goalie_reset_gloves",
+      "start": 678,
+      "end": 714,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "adjusts gloves, re-sets"
+    },
+    {
+      "name": "goalie_crossover_left",
+      "start": 724,
+      "end": 744,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "crossover rhythm toward shooter-left (in place)"
+    },
+    {
+      "name": "goalie_crossover_right",
+      "start": 754,
+      "end": 774,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "mirror"
+    },
+    {
+      "name": "goalie_read_high",
+      "start": 784,
+      "end": 802,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "chains into high saves"
+    },
+    {
+      "name": "goalie_read_low",
+      "start": 812,
+      "end": 830,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "chains into low saves / five-hole"
+    },
+    {
+      "name": "goalie_kick_save_left",
+      "start": 840,
+      "end": 870,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 847,
+      "contact_local_frame": 7,
+      "notes": "leg kick save low"
+    },
+    {
+      "name": "goalie_kick_save_right",
+      "start": 880,
+      "end": 910,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 887,
+      "contact_local_frame": 7,
+      "notes": "mirror"
+    },
+    {
+      "name": "goalie_doorstep_stuff",
+      "start": 920,
+      "end": 950,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 926,
+      "contact_local_frame": 6,
+      "notes": "point-blank stuff"
+    },
+    {
+      "name": "goalie_desperation_dive_left",
+      "start": 960,
+      "end": 996,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 969,
+      "contact_local_frame": 9,
+      "notes": "full stretch, slower recovery"
+    },
+    {
+      "name": "goalie_desperation_dive_right",
+      "start": 1006,
+      "end": 1042,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 1015,
+      "contact_local_frame": 9,
+      "notes": "mirror"
+    },
+    {
+      "name": "goalie_trail_stick_recovery",
+      "start": 1052,
+      "end": 1082,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "stick sweeps back through, reset to ready"
+    },
+    {
+      "name": "goalie_frustrated_tap",
+      "start": 1092,
+      "end": 1122,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "two stick taps on the turf, head shake (never mean)"
+    },
+    {
+      "name": "goalie_shrug",
+      "start": 1132,
+      "end": 1156,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "good-natured shrug"
+    },
+    {
+      "name": "goalie_reset",
+      "start": 1166,
+      "end": 1196,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "deep breath, bounce back into set"
+    },
+    {
+      "name": "goalie_stick_raise",
+      "start": 1206,
+      "end": 1236,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "save celebration"
+    },
+    {
+      "name": "goalie_helmet_nod",
+      "start": 1246,
+      "end": 1270,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cool nod"
+    },
+    {
+      "name": "goalie_small_dance",
+      "start": 1280,
+      "end": 1328,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "happy sway"
+    },
+    {
+      "name": "goalie_big_clutch_save",
+      "start": 1338,
+      "end": 1398,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 1345,
+      "contact_local_frame": 7,
+      "notes": "high save flowing into celebration"
     }
   ],
   "shares_timeline_with": "lax_goalie",

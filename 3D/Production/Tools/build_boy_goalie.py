@@ -140,6 +140,7 @@ def build_goalie(export=True):
         objs = [arm] + meshes + list(socks.values())
         rep["export"] = export_asset(objs, "lax_goalie", "lax_goalie_rig", os.path.join(EXP, "lax_goalie.usdz"), 30, BG_CLIPS[-1].end,
                                      True, man, REQUIRED_SOCKETS + ["ball_contact_socket"])
+        rep["lods"] = export_lods(rep["export"], "lax_goalie", "lax_goalie_rig", os.path.join(EXP, "lax_goalie.usdz"), (0.6, 0.3), 30, BG_CLIPS[-1].end, man)
         with open(os.path.join(EXP, "lax_goalie_clips.json"), "w") as fh:
             json.dump(man, fh, indent=2)
     return rep, arm, meta

@@ -27,3 +27,9 @@ Phase 1 commit: `3ef396d58503f5e7844da3cee169684900893c22`.
 - **Crowd not built:** crowd figures and reaction clips (Phase 6) are not built yet; the arena has bleachers but no crowd.
 - **Heavy arena:** the arena is about 90k tris and 30 materials. Optimize before shipping.
 - **Brief items still to do:** grass PBR/tufts/masks, DOF fallback layers, LODs, the expanded animation library (idle variants, roll/face dodges, celebrations, goalie extras), crowd, teammates, and RealityKit round-trip screenshots.
+- **Reach misses:** hand IK misses by up to 4.9 cm in `roll_dodge_right` and `celebrate_knee_slide` (boy field, teammates).
+  Tune these key poses after on-device review.
+- **Arena file size:** the arena USDZ is about 16 MB (2048 PBR field set). A 1024 mobile variant can be produced if needed; the
+  4K source set is not generated yet.
+- **Crowd LOD0** is heavier than the brief's hero-spectator target (18–22k vs 8–15k); use `_lod1` for heroes if needed.
+- **RealityKit screenshots:** still required from the Xcode side (Blender round-trip renders are provided).
