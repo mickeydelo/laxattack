@@ -190,6 +190,8 @@ final class GameSession {
     private(set) var bestScore = 0
     private(set) var combo = 0
     private(set) var shotsRemaining = 5
+    private(set) var totalShots = 5
+    private(set) var runSeed = 0
     private(set) var feedback: ShotFeedback = .ready
     private(set) var isAwaitingResult = false
     private(set) var shotHistory: [ShotResult] = []
@@ -328,15 +330,17 @@ final class GameSession {
         return true
     }
 
-    func startNewRound() {
+    func startNewRound(shots: Int = 5, seed: Int = 0, preferredShot: ShotType? = nil) {
         bestScore = max(bestScore, score)
         score = 0
         combo = 0
-        shotsRemaining = 5
+        totalShots = max(1, shots)
+        shotsRemaining = totalShots
+        runSeed = seed
         feedback = .ready
         isAwaitingResult = false
         shotHistory = []
-        selectedShotType = .overhand
+        selectedShotType = preferredShot ?? .overhand
         quickStickStartedAt = nil
         pendingInput = nil
         pendingHitPipe = false
@@ -386,6 +390,7 @@ final class GameSession {
 final class GameFeedbackPlayer {
     func playRelease(type: ShotType) {
         #if os(iOS)
+        guard isHapticsEnabled else { return }
         switch type {
         case .overhand:
             UIImpactFeedbackGenerator(style: .medium).impactOccurred(intensity: 0.78)
@@ -401,25 +406,35 @@ final class GameFeedbackPlayer {
 
     func playGoal() {
         #if os(iOS)
+        guard isHapticsEnabled else { return }
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         #endif
     }
 
     func playSave() {
         #if os(iOS)
+        guard isHapticsEnabled else { return }
         UINotificationFeedbackGenerator().notificationOccurred(.warning)
         #endif
     }
 
     func playPipe() {
         #if os(iOS)
+        guard isHapticsEnabled else { return }
         UIImpactFeedbackGenerator(style: .rigid).impactOccurred(intensity: 1)
         #endif
     }
 
     func playMiss() {
         #if os(iOS)
+        guard isHapticsEnabled else { return }
         UIImpactFeedbackGenerator(style: .light).impactOccurred(intensity: 0.45)
         #endif
+    }
+
+    private var isHapticsEnabled: Bool {
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: "hapticsEnabled") != nil else { return true }
+        return defaults.bool(forKey: "hapticsEnabled")
     }
 }

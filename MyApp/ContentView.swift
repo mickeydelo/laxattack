@@ -2,10 +2,76 @@ import SwiftUI
 import RealityKit
 
 struct ContentView: View {
+    @State private var flow = AppFlow()
+    @State private var progress = PlayerProgress()
+    @AppStorage("reducedMotion") private var reducedMotion = false
+
+    var body: some View {
+        ZStack {
+            switch flow.destination {
+            case .home:
+                HomeScreen(
+                    dailyRun: .dailyShot(),
+                    bestScore: progress.bestScore,
+                    dailyBest: progress.dailyBest,
+                    onQuickShoot: { flow.start(.quickShoot()) },
+                    onDailyShot: { flow.start(.dailyShot()) },
+                    onChallenges: { flow.isShowingChallenges = true },
+                    onSettings: { flow.isShowingSettings = true }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            case .gameplay:
+                if let run = flow.currentRun {
+                    GameplayScreen(
+                        run: run,
+                        progress: progress,
+                        onHome: { flow.returnHome() },
+                        onSettings: { flow.isShowingSettings = true }
+                    )
+                    .transition(.opacity)
+                }
+            }
+        }
+        .animation(reducedMotion ? nil : .smooth(duration: 0.28), value: flow.destination)
+        .sheet(isPresented: settingsBinding) {
+            SettingsScreen()
+                .presentationDetents([.medium])
+        }
+        .sheet(isPresented: challengesBinding) {
+            ChallengeSelectionScreen(completedIDs: progress.completedChallengeIDs) { challenge in
+                flow.start(.challenge(challenge))
+            }
+            .presentationDetents([.large])
+        }
+    }
+
+    private var settingsBinding: Binding<Bool> {
+        Binding(
+            get: { flow.isShowingSettings },
+            set: { flow.isShowingSettings = $0 }
+        )
+    }
+
+    private var challengesBinding: Binding<Bool> {
+        Binding(
+            get: { flow.isShowingChallenges },
+            set: { flow.isShowingChallenges = $0 }
+        )
+    }
+}
+
+struct GameplayScreen: View {
+    let run: GameRun
+    let progress: PlayerProgress
+    let onHome: () -> Void
+    let onSettings: () -> Void
+
     @State private var session = GameSession()
     @State private var gameScene = PocketLaxScene()
     @State private var aimSample: ShotControlSample?
     @State private var dodgeDirection: Float = 0
+    @State private var isPaused = false
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     var body: some View {
         ZStack {
@@ -19,7 +85,7 @@ struct ContentView: View {
 
             GameHUD(
                 score: session.score,
-                bestScore: session.bestScore,
+                bestScore: max(progress.bestScore, session.bestScore),
                 combo: session.combo,
                 shotsRemaining: session.shotsRemaining,
                 goals: session.goals,
@@ -29,10 +95,14 @@ struct ContentView: View {
                 isOnFire: session.isOnFire,
                 aimPower: aimSample?.normalizedPower ?? 0,
                 dodgeDirection: dodgeDirection,
+                run: run,
+                challengeProgress: run.challenge?.progress(for: session),
                 selectedShotType: session.selectedShotType,
                 canSelectShot: !session.isAwaitingResult,
                 isQuickStickChallenge: session.isQuickStickChallenge,
                 isRoundComplete: session.isRoundComplete,
+                totalShots: session.totalShots,
+                onPause: { isPaused = true },
                 onSelectShotType: { type in
                     session.selectShotType(type)
                     gameScene.setShotType(type)
@@ -47,16 +117,51 @@ struct ContentView: View {
                     )
                 },
                 onPlayAgain: {
-                    session.startNewRound()
+                    startRun()
                     gameScene.prepareForNewRound()
-                }
+                },
+                onHome: onHome
             )
+
+            if isPaused {
+                PauseOverlay(
+                    onResume: { isPaused = false },
+                    onRestart: {
+                        startRun()
+                        gameScene.prepareForNewRound()
+                        isPaused = false
+                    },
+                    onSettings: onSettings,
+                    onHome: onHome
+                )
+            } else if !hasCompletedOnboarding {
+                OnboardingOverlay {
+                    hasCompletedOnboarding = true
+                }
+            }
         }
         .contentShape(Rectangle())
-        .gesture(shotGesture)
+        .gesture(shotGesture, isEnabled: !isPaused && hasCompletedOnboarding)
+        .task(id: run.id) {
+            startRun()
+        }
+        .onChange(of: session.isRoundComplete) { _, isComplete in
+            if isComplete {
+                progress.record(run: run, session: session)
+            }
+        }
         .onDisappear {
             gameScene.stop()
         }
+    }
+
+    private func startRun() {
+        session.startNewRound(
+            shots: run.shots,
+            seed: run.seed,
+            preferredShot: run.challenge?.recommendedShot
+        )
+        gameScene.setShotType(session.selectedShotType)
     }
 
     private var shotGesture: some Gesture {
@@ -108,21 +213,31 @@ struct GameHUD: View {
     let isOnFire: Bool
     let aimPower: Double
     let dodgeDirection: Float
+    let run: GameRun
+    let challengeProgress: ChallengeProgress?
     let selectedShotType: ShotType
     let canSelectShot: Bool
     let isQuickStickChallenge: Bool
     let isRoundComplete: Bool
+    let totalShots: Int
+    let onPause: () -> Void
     let onSelectShotType: (ShotType) -> Void
     let quickStickPhase: (Date) -> Double
     let onQuickStick: (Date) -> Void
     let onPlayAgain: () -> Void
+    let onHome: () -> Void
 
     var body: some View {
         VStack(spacing: 10) {
-            GameHeader(score: score, bestScore: bestScore)
+            GameHeader(
+                score: score,
+                bestScore: bestScore,
+                modeTitle: run.title,
+                onPause: onPause
+            )
 
             HStack {
-                ShotCounter(shotsRemaining: shotsRemaining)
+                ShotCounter(shotsRemaining: shotsRemaining, totalShots: totalShots)
                 Spacer()
                 if isOnFire {
                     Label("ON FIRE", systemImage: "flame.fill")
@@ -144,6 +259,15 @@ struct GameHUD: View {
 
             ShotCallout(feedback: feedback, combo: combo)
 
+            if let challenge = run.challenge, let challengeProgress {
+                ChallengeProgressCard(
+                    objective: challenge.objective,
+                    progress: challengeProgress
+                )
+            } else if run.mode == .dailyShot {
+                ModeObjectiveCard(symbolName: "calendar", text: run.objective)
+            }
+
             Spacer()
 
             if isRoundComplete {
@@ -151,7 +275,10 @@ struct GameHUD: View {
                     score: score,
                     goals: goals,
                     accuracy: accuracy,
-                    onPlayAgain: onPlayAgain
+                    run: run,
+                    challengeProgress: challengeProgress,
+                    onPlayAgain: onPlayAgain,
+                    onHome: onHome
                 )
             } else if isQuickStickChallenge {
                 QuickStickMeter(
@@ -263,20 +390,31 @@ struct QuickStickMeter: View {
 struct GameHeader: View {
     let score: Int
     let bestScore: Int
+    let modeTitle: LocalizedStringResource
+    let onPause: () -> Void
 
     var body: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("LAX")
-                    .foregroundStyle(.white)
-                Text("ATTACK")
-                    .foregroundStyle(.cyan)
+            HStack(spacing: 9) {
+                Button(action: onPause) {
+                    Image(systemName: "pause.fill")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                        .frame(width: 38, height: 38)
+                        .background(.black.opacity(0.62), in: RoundedRectangle(cornerRadius: 13))
+                }
+                .buttonStyle(.plain)
+
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("LAX ATTACK")
+                        .foregroundStyle(.cyan)
+                    Text(modeTitle)
+                        .font(.caption2.bold())
+                        .foregroundStyle(.white.opacity(0.78))
+                }
             }
             .font(.headline.bold())
             .tracking(1.5)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 9)
-            .background(.black.opacity(0.62), in: RoundedRectangle(cornerRadius: 16))
 
             Spacer()
 
@@ -310,10 +448,11 @@ struct HeaderStat: View {
 
 struct ShotCounter: View {
     let shotsRemaining: Int
+    let totalShots: Int
 
     var body: some View {
         HStack(spacing: 6) {
-            ForEach(0..<5, id: \.self) { index in
+            ForEach(0..<totalShots, id: \.self) { index in
                 Circle()
                     .fill(index < shotsRemaining ? .white : .white.opacity(0.2))
                     .frame(width: 12, height: 12)
@@ -396,13 +535,23 @@ struct RoundCompleteCard: View {
     let score: Int
     let goals: Int
     let accuracy: Double
+    let run: GameRun
+    let challengeProgress: ChallengeProgress?
     let onPlayAgain: () -> Void
+    let onHome: () -> Void
 
     var body: some View {
         VStack(spacing: 12) {
-            Text("ROUND COMPLETE")
+            Text(run.mode == .dailyShot ? "DAILY COMPLETE" : "ROUND COMPLETE")
                 .font(.headline.bold())
                 .foregroundStyle(.cyan)
+
+            if let challengeProgress {
+                MedalRow(earned: challengeProgress.medals)
+                Text(challengeProgress.isComplete ? "CHALLENGE CLEARED" : "KEEP FIRING")
+                    .font(.caption.bold())
+                    .foregroundStyle(challengeProgress.isComplete ? .yellow : .white.opacity(0.72))
+            }
 
             Text(score, format: .number)
                 .font(.largeTitle.bold())
@@ -427,9 +576,13 @@ struct RoundCompleteCard: View {
             }
             .foregroundStyle(.white)
 
-            Button("PLAY AGAIN", action: onPlayAgain)
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+            HStack {
+                Button("HOME", action: onHome)
+                    .buttonStyle(.bordered)
+                Button("PLAY AGAIN", action: onPlayAgain)
+                    .buttonStyle(.borderedProminent)
+            }
+            .controlSize(.large)
         }
         .padding(.horizontal, 30)
         .padding(.vertical, 22)
@@ -437,6 +590,452 @@ struct RoundCompleteCard: View {
     }
 }
 
+struct HomeScreen: View {
+    let dailyRun: GameRun
+    let bestScore: Int
+    let dailyBest: Int
+    let onQuickShoot: () -> Void
+    let onDailyShot: () -> Void
+    let onChallenges: () -> Void
+    let onSettings: () -> Void
+
+    var body: some View {
+        ZStack {
+            HomeDioramaBackground()
+
+            ScrollView {
+                VStack(spacing: 18) {
+                    HomeHeader(bestScore: bestScore, onSettings: onSettings)
+                        .padding(.bottom, 118)
+
+                    HomeHeroCard(onPlay: onQuickShoot)
+
+                    HStack(spacing: 12) {
+                        HomeModeButton(
+                            title: "DAILY SHOT",
+                            subtitle: "Same setup. One score.",
+                            symbolName: "calendar",
+                            color: .blue,
+                            action: onDailyShot
+                        )
+                        HomeModeButton(
+                            title: "CHALLENGES",
+                            subtitle: "Master your stick.",
+                            symbolName: "trophy.fill",
+                            color: .orange,
+                            action: onChallenges
+                        )
+                    }
+
+                    VStack(spacing: 3) {
+                        Text(dailyRun.objective)
+                        Text("DAILY BEST: \(dailyBest)")
+                            .monospacedDigit()
+                    }
+                    .font(.caption.bold())
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.white.opacity(0.8))
+                    .padding(.horizontal, 24)
+                }
+                .padding(.horizontal, 18)
+                .padding(.top, 12)
+                .padding(.bottom, 28)
+                .containerRelativeFrame(.horizontal)
+            }
+        }
+    }
+}
+
+struct HomeDioramaBackground: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [Color.cyan.opacity(0.75), Color.blue.opacity(0.48), Color.green.opacity(0.7)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            Circle()
+                .fill(.white.opacity(0.72))
+                .frame(width: 190, height: 74)
+                .blur(radius: 14)
+                .offset(x: 80, y: -290)
+
+            RoundedRectangle(cornerRadius: 80)
+                .fill(Color.green.opacity(0.88))
+                .frame(width: 470, height: 440)
+                .rotationEffect(.degrees(-4))
+                .offset(y: 235)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 80)
+                        .stroke(.white.opacity(0.42), lineWidth: 3)
+                        .frame(width: 330, height: 250)
+                        .offset(y: 240)
+                }
+        }
+        .ignoresSafeArea()
+        .overlay(alignment: .top) {
+            Image(systemName: "mountain.2.fill")
+                .resizable()
+                .scaledToFit()
+                .foregroundStyle(.indigo.opacity(0.36))
+                .frame(width: 390)
+                .offset(y: 95)
+        }
+    }
+}
+
+struct HomeHeader: View {
+    let bestScore: Int
+    let onSettings: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("LAX")
+                    .foregroundStyle(.white)
+                Text("ATTACK")
+                    .foregroundStyle(.cyan)
+            }
+            .font(.largeTitle.bold())
+            .tracking(1.5)
+            .shadow(color: .black.opacity(0.35), radius: 3, y: 2)
+
+            Spacer()
+
+            VStack(spacing: 0) {
+                Text("BEST")
+                    .font(.caption2.bold())
+                    .foregroundStyle(.white.opacity(0.68))
+                Text(bestScore, format: .number)
+                    .font(.headline.bold())
+                    .foregroundStyle(.white)
+            }
+            .padding(.horizontal, 12)
+            .frame(height: 50)
+            .background(.black.opacity(0.52), in: RoundedRectangle(cornerRadius: 17))
+
+            Button(action: onSettings) {
+                Image(systemName: "gearshape.fill")
+                    .font(.title2.bold())
+                    .foregroundStyle(.white)
+                    .frame(width: 50, height: 50)
+                    .background(.black.opacity(0.52), in: RoundedRectangle(cornerRadius: 17))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.top, 44)
+    }
+}
+
+struct HomeHeroCard: View {
+    let onPlay: () -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            VStack(spacing: 3) {
+                Text("SMALL SHOTS. BIG PLAYS.")
+                    .font(.title2.bold())
+                    .foregroundStyle(.white)
+                Text("Five shots. One goalie. Your move.")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.78))
+            }
+
+            Button(action: onPlay) {
+                Label("PLAY", systemImage: "play.fill")
+                    .font(.title.bold())
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                    .background(
+                        LinearGradient(colors: [.green, .mint], startPoint: .top, endPoint: .bottom),
+                        in: RoundedRectangle(cornerRadius: 24)
+                    )
+                    .shadow(color: .green.opacity(0.45), radius: 10, y: 7)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(18)
+        .background(.black.opacity(0.58), in: RoundedRectangle(cornerRadius: 28))
+    }
+}
+
+struct HomeModeButton: View {
+    let title: LocalizedStringResource
+    let subtitle: LocalizedStringResource
+    let symbolName: String
+    let color: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 7) {
+                Image(systemName: symbolName)
+                    .font(.title.bold())
+                Text(title)
+                    .font(.subheadline.bold())
+                Text(subtitle)
+                    .font(.caption2.weight(.semibold))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.white.opacity(0.75))
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity, minHeight: 108)
+            .padding(.horizontal, 10)
+            .background(color.opacity(0.88), in: RoundedRectangle(cornerRadius: 22))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct ChallengeSelectionScreen: View {
+    let completedIDs: Set<String>
+    let onSelect: (ChallengeDefinition) -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(ChallengeDefinition.catalog) { challenge in
+                        ChallengeRow(
+                            title: challenge.title,
+                            objective: challenge.objective,
+                            symbolName: challenge.symbolName,
+                            isComplete: completedIDs.contains(challenge.id),
+                            action: { onSelect(challenge) }
+                        )
+                    }
+                }
+                .padding(18)
+            }
+            .background(Color(red: 0.05, green: 0.12, blue: 0.19))
+            .navigationTitle("CHALLENGES")
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color(red: 0.05, green: 0.12, blue: 0.19), for: .navigationBar)
+        }
+    }
+}
+
+struct ChallengeRow: View {
+    let title: LocalizedStringResource
+    let objective: LocalizedStringResource
+    let symbolName: String
+    let isComplete: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: symbolName)
+                    .font(.title2.bold())
+                    .foregroundStyle(.yellow)
+                    .frame(width: 46, height: 46)
+                    .background(.blue.opacity(0.55), in: RoundedRectangle(cornerRadius: 14))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.headline.bold())
+                    Text(objective)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+
+                Spacer()
+                Image(systemName: isComplete ? "checkmark.seal.fill" : "chevron.right")
+                    .foregroundStyle(isComplete ? .green : .white.opacity(0.55))
+            }
+            .foregroundStyle(.white)
+            .padding(14)
+            .background(.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 20))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct SettingsScreen: View {
+    @AppStorage("hapticsEnabled") private var hapticsEnabled = true
+    @AppStorage("reducedMotion") private var reducedMotion = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("GAME FEEL") {
+                    Toggle("Haptics", isOn: $hapticsEnabled)
+                    Toggle("Reduce Motion", isOn: $reducedMotion)
+                }
+
+                Section("CONTROLS") {
+                    LabeledContent("Aim", value: "Swipe direction")
+                    LabeledContent("Power", value: "Swipe speed")
+                    LabeledContent("Split dodge", value: "Sideways, then up")
+                }
+            }
+            .navigationTitle("SETTINGS")
+        }
+    }
+}
+
+struct OnboardingOverlay: View {
+    let onComplete: () -> Void
+    @State private var step = 0
+
+    private let lessons: [(symbol: String, title: LocalizedStringResource, detail: LocalizedStringResource)] = [
+        ("hand.draw.fill", "FLICK TO SHOOT", "Swipe upward. Direction aims; speed adds power."),
+        ("arrow.left.and.right", "SELL THE DODGE", "Move sideways first, then flick up to wrong-foot the goalie."),
+        ("figure.lacrosse", "MIX YOUR RELEASE", "Overhand, bounce, and sidearm shots attack different openings.")
+    ]
+
+    var body: some View {
+        Color.black.opacity(0.58)
+            .ignoresSafeArea()
+            .overlay {
+                let lesson = lessons[step]
+                VStack(spacing: 16) {
+                    Image(systemName: lesson.symbol)
+                        .font(.system(size: 48, weight: .bold))
+                        .foregroundStyle(.yellow)
+                    Text(lesson.title)
+                        .font(.title.bold())
+                        .foregroundStyle(.white)
+                    Text(lesson.detail)
+                        .font(.body.weight(.semibold))
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.white.opacity(0.78))
+
+                    HStack(spacing: 7) {
+                        ForEach(lessons.indices, id: \.self) { index in
+                            Capsule()
+                                .fill(index == step ? .cyan : .white.opacity(0.25))
+                                .frame(width: index == step ? 24 : 8, height: 8)
+                        }
+                    }
+
+                    Button(step == lessons.count - 1 ? "LET'S PLAY" : "NEXT") {
+                        if step == lessons.count - 1 {
+                            onComplete()
+                        } else {
+                            step += 1
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                }
+                .padding(28)
+                .background(.black.opacity(0.82), in: RoundedRectangle(cornerRadius: 28))
+                .padding(28)
+            }
+    }
+}
+
+struct PauseOverlay: View {
+    let onResume: () -> Void
+    let onRestart: () -> Void
+    let onSettings: () -> Void
+    let onHome: () -> Void
+
+    var body: some View {
+        Color.black.opacity(0.62)
+            .ignoresSafeArea()
+            .overlay {
+                VStack(spacing: 12) {
+                    Text("PAUSED")
+                        .font(.largeTitle.bold())
+                        .foregroundStyle(.white)
+                    PauseButton(title: "RESUME", symbolName: "play.fill", action: onResume)
+                    PauseButton(title: "RESTART", symbolName: "arrow.counterclockwise", action: onRestart)
+                    PauseButton(title: "SETTINGS", symbolName: "gearshape.fill", action: onSettings)
+                    PauseButton(title: "HOME", symbolName: "house.fill", action: onHome)
+                }
+                .padding(24)
+                .background(.black.opacity(0.82), in: RoundedRectangle(cornerRadius: 28))
+                .padding(34)
+            }
+    }
+}
+
+struct PauseButton: View {
+    let title: LocalizedStringResource
+    let symbolName: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: symbolName)
+                .font(.headline.bold())
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+    }
+}
+
+struct ModeObjectiveCard: View {
+    let symbolName: String
+    let text: LocalizedStringResource
+
+    var body: some View {
+        Label(text, systemImage: symbolName)
+            .font(.caption.bold())
+            .foregroundStyle(.white)
+            .padding(.horizontal, 13)
+            .padding(.vertical, 8)
+            .background(.blue.opacity(0.76), in: Capsule())
+    }
+}
+
+struct ChallengeProgressCard: View {
+    let objective: LocalizedStringResource
+    let progress: ChallengeProgress
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack {
+                Text(objective)
+                    .lineLimit(1)
+                Spacer()
+                Text("\(progress.value)/\(progress.target)")
+                    .monospacedDigit()
+            }
+            .font(.caption.bold())
+            .foregroundStyle(.white)
+
+            ProgressView(value: progress.fraction)
+                .tint(progress.isComplete ? .yellow : .cyan)
+        }
+        .padding(.horizontal, 13)
+        .padding(.vertical, 8)
+        .background(.black.opacity(0.58), in: RoundedRectangle(cornerRadius: 13))
+    }
+}
+
+struct MedalRow: View {
+    let earned: Int
+
+    var body: some View {
+        HStack(spacing: 9) {
+            ForEach(0..<3, id: \.self) { index in
+                Image(systemName: index < earned ? "star.circle.fill" : "star.circle")
+                    .font(.title2.bold())
+                    .foregroundStyle(index < earned ? .yellow : .white.opacity(0.28))
+            }
+        }
+    }
+}
+
 #Preview {
     ContentView()
+}
+
+#Preview("Gameplay") {
+    GameplayScreen(
+        run: .quickShoot(),
+        progress: PlayerProgress(),
+        onHome: {},
+        onSettings: {}
+    )
+}
+
+#Preview("Challenges") {
+    ChallengeSelectionScreen(completedIDs: ["score_attack", "top_shelf"]) { _ in }
 }

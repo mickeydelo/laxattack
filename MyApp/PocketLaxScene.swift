@@ -459,7 +459,11 @@ final class PocketLaxScene {
         elapsedTime += deltaTime
         updateQuickStickSetup(session: session)
         updatePerformanceStates()
-        updateGoalie(deltaTime: Float(deltaTime), level: session.difficultyLevel)
+        updateGoalie(
+            deltaTime: Float(deltaTime),
+            level: session.difficultyLevel,
+            seed: session.runSeed
+        )
         updateShooter(deltaTime: Float(deltaTime))
         updateAuthoredBallPocket()
         updateCharacterEyes()
@@ -482,13 +486,14 @@ final class PocketLaxScene {
         ball.setPosition(pocket.position(relativeTo: parent), relativeTo: parent)
     }
 
-    private func updateGoalie(deltaTime: Float, level: Int) {
+    private func updateGoalie(deltaTime: Float, level: Int, seed: Int) {
         guard let goalie else { return }
 
         let speed = 1.15 + Float(level) * 0.2
         let amplitude = 0.45 + Float(level) * 0.06
         let readyBounce = sin(Float(elapsedTime) * 4.6) * 0.018
-        var x = sin(Float(elapsedTime) * speed) * amplitude
+        let seedPhase = Float(seed % 997) / 997 * .pi * 2
+        var x = sin(Float(elapsedTime) * speed + seedPhase) * amplitude
         var rootY = readyBounce
         var roll: Float = 0
         var squash = SIMD3<Float>(1, 1, 1)
