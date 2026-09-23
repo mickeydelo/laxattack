@@ -65,3 +65,16 @@ Keep RealityKit's simple character collider. Do not use skinned meshes for colli
 
 
 Phase 1 commit: `3ef396d58503f5e7844da3cee169684900893c22`.
+
+
+## Boy goalie (Phase 3)
+Away team, #3.
+- **Kit:** navy helmet with teal stripe and throat guard; navy jersey with white numbers; chest protector worn under the
+  jersey colour (skinned to `chest_pad`); black oversized gloves.
+- **Stick and stance:** goalie stick with a teal head and white pocket; goalie stance ±0.13 m wider.
+- **Proportions:** body_scale 0.84, head_k 1.15; 36,164 tris incl. stick; 17 materials.
+- **Sockets:** 6 required + ball_contact_socket. Asset-space positions are in `lax_goalie_clips.json`; they lie on the +Z side,
+  confirming the facing.
+- **Export:** `face_plus_z=True`. The rig prim gets `rotateY(180)` before the axis conversion; the `/lax_goalie` root stays
+  identity at field level.
+- **Runtime note:** the procedural goalie was lifted to a 0.625 m base height. This asset's origin is at field level (y = 0).

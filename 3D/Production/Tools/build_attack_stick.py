@@ -33,18 +33,18 @@ POCKET_CLIPS = [  # name, start, length, loop, fn(t) -> (depth1, depth2, lateral
      "whole-stick buzz after hitting the pipe (rotation about the grip)"),
 ]
 
-def build_attack_stick(export=True):
-    reset_scene("LaxAttack_AttackStick")
-    C = coll("lax_stick_attack")
-    ad = bpy.data.armatures.new("lax_stick_attack_rig"); arm = bpy.data.objects.new("lax_stick_attack_rig", ad); C.objects.link(arm)
+def build_stick_asset(kind="attack", asset="lax_stick_attack", folder="AttackStick", frame_mat="helmet_cream", pocket_mat="cord_navy", export=True):
+    reset_scene("LaxAttack_" + folder)
+    C = coll(asset); sdir = os.path.join(PROD, "Equipment", folder)
+    ad = bpy.data.armatures.new(asset + "_rig"); arm = bpy.data.objects.new(asset + "_rig", ad); C.objects.link(arm)
     bpy.context.view_layer.objects.active = arm; arm.select_set(True)
     bpy.ops.object.mode_set(mode="EDIT")
     b = ad.edit_bones.new("stick"); b.head = (0, 0, 0); b.tail = (0, 0.22, 0); b.roll = 0
-    g = stick_geo("attack"); m = g["meta"]; yb = m["pocket_center"][1]
+    g = stick_geo(kind); m = g["meta"]; yb = m["pocket_center"][1]
     for n, y in (("pocket_01", yb), ("pocket_02", yb + 0.10)):
         c = ad.edit_bones.new(n); c.head = (0, y, 0); c.tail = (0, y + 0.04, 0); c.roll = 0; c.parent = ad.edit_bones["stick"]
     bpy.ops.object.mode_set(mode="OBJECT")
-    stick, meta = build_stick("attack", C, arm, name="lax_stick_attack_mesh", frame_mat="helmet_cream", pocket_mat="cord_navy")
+    stick, meta = build_stick(kind, C, arm, name=asset + "_mesh", frame_mat=frame_mat, pocket_mat=pocket_mat)
     socks = {}
     socks["grip_socket"] = add_socket("grip_socket", arm, "stick", Matrix.Identity(4), C, 0.05)
     socks["pocket_socket"] = add_socket("pocket_socket", arm, "pocket_01", Matrix.Translation(meta["pocket_center"]), C, 0.04)
@@ -77,19 +77,25 @@ def build_attack_stick(export=True):
     for pb in pbs:
         pb.location = (0, 0, 0); pb.rotation_euler = (0, 0, 0)
     bpy.context.scene.frame_end = clips[-1].end
-    os.makedirs(STICK_DIR, exist_ok=True)
-    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(STICK_DIR, "LaxAttack_AttackStick.blend"), compress=True)
-    man = manifest("lax_stick_attack", clips, perspective="none", extra={
+    os.makedirs(sdir, exist_ok=True)
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(sdir, "LaxAttack_" + folder + ".blend"), compress=True)
+    man = manifest(asset, clips, perspective="none", extra={
         "sockets": list(socks.keys()),
         "axes_usd": "origin = top-hand grip; shaft points +Z; pocket open face points +Y; stick-left = +X",
         "axes_blender": "shaft +Y, pocket face +Z",
         "ball_visual_radius_m": BALL_R, "pocket_depth_m": meta["depth"],
-        "ball_clearance_m": round(meta["W"] * 0.93 * (0.30 + 0.70 * 0.42 ** 0.55) - BALL_R, 4),
+        "ball_clearance_m": round(meta["W"] * 0.93 * (0.30 + 0.70 * 0.42 ** 0.55) - BALL_R, 4), "kind": kind,
         "tris": tri_count(stick)})
     rep = {"tris": tri_count(stick), "materials": len(stick.data.materials), "meta": {k: (list(v) if isinstance(v, tuple) else v) for k, v in meta.items()}}
     if export:
-        rep["export"] = export_asset([arm, stick] + list(socks.values()), "lax_stick_attack", "lax_stick_attack_rig",
-                                     os.path.join(EXP, "lax_stick_attack.usdz"), 30, clips[-1].end, False, man, list(socks.keys()))
-        with open(os.path.join(EXP, "lax_stick_attack_clips.json"), "w") as fh:
+        rep["export"] = export_asset([arm, stick] + list(socks.values()), asset, asset + "_rig",
+                                     os.path.join(EXP, asset + ".usdz"), 30, clips[-1].end, False, man, list(socks.keys()))
+        with open(os.path.join(EXP, asset + "_clips.json"), "w") as fh:
             json.dump(man, fh, indent=2)
     return rep, arm, stick
+
+def build_attack_stick(export=True):
+    return build_stick_asset(export=export)
+
+def build_goalie_stick(export=True):
+    return build_stick_asset("goalie", "lax_stick_goalie", "GoalieStick", "helmet_teal", "cord_white", export)

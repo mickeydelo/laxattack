@@ -75,3 +75,47 @@ and equipment previews.
 
 
 Phase 1 commit: `3ef396d58503f5e7844da3cee169684900893c22`.
+
+
+## lax_goalie (boy goalie) — Phase 3
+**LEFT/RIGHT = SHOOTER'S PERSPECTIVE.** `goalie_*_left` moves toward the shooter's left (game −X), which is the goalie's own
+right. This matches the aiming coordinates. The asset faces +Z toward the shooter.
+
+| Clip | Start | End | Loop | Save contact | Notes |
+|---|---|---|---|---|---|
+| goalie_ready | 0 | 40 | yes | — | set position; toe bounce; eyes track |
+| goalie_shuffle_left | 50 | 70 | yes | — | in place; runtime slides root toward shooter-left (game -X) along the crease arc |
+| goalie_shuffle_right | 80 | 100 | yes | — | in place; runtime slides root toward shooter-right (game +X) |
+| goalie_read_left | 110 | 128 | no | — | anticipation toward shooter-left; ends loaded (chain into goalie_save_left) |
+| goalie_read_right | 135 | 153 | no | — | anticipation toward shooter-right |
+| goalie_save_left | 160 | 190 | no | contact 167 (local 7) | stick save at mid height, shooter-left; contact local 7 |
+| goalie_save_right | 200 | 230 | no | contact 207 (local 7) | stick save at mid height, shooter-right; contact local 7 |
+| goalie_goal_against | 240 | 285 | no | — | looks back at the net, slumps; blend to ready |
+| goalie_save_high_left | 295 | 325 | no | contact 302 (local 7) | extra |
+| goalie_save_high_right | 335 | 365 | no | contact 342 (local 7) | extra |
+| goalie_save_low_left | 375 | 405 | no | contact 382 (local 7) | extra; stick head drops to the turf |
+| goalie_save_low_right | 415 | 445 | no | contact 422 (local 7) | extra |
+| goalie_five_hole_close | 455 | 475 | no | contact 460 (local 5) | extra; knees + stick close the gap |
+| goalie_body_save | 485 | 509 | no | contact 490 (local 5) | extra; chest block with recoil |
+| goalie_celebrate | 520 | 556 | no | — | extra; stick pumps |
+
+**Chaining:**
+- Shuffles are in place; the runtime slides the root along the crease arc.
+- `goalie_read_*` ends loaded, and `goalie_save_*` starts from the matching read pose, so read → save chains without a pop.
+- Every save recovers to the `goalie_ready` pose by its last frame.
+
+**Save beats:** read, push-off, explosive reach to the CONTACT frame, overshoot with deepest pocket compression, then
+recovery. Low saves and the five-hole close put the stick head on the turf (lowest point 1–2 cm above field level).
+
+**Validation:**
+- 0 errors.
+- Max hand-IK error 1.1 cm (body save).
+- Loop seams ≤ 4e-5.
+- Root is static.
+- Baked mesh Y range 0.000…1.685 m.
+
+## lax_stick_goalie
+Same 9 pocket clips, frame ranges, sockets and axes as `lax_stick_attack`.
+- Deeper pocket (0.10 m); the resting ball centre sits at the rim plane.
+- Sockets in USD: grip (0,0,0), pocket (0,−0.002,0.547), ball_contact (0,−0.088,0.547), effect (0,0,0.88).
+- 3,744 tris.

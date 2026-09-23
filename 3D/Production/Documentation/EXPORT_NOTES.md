@@ -33,6 +33,9 @@ Re-opens the stage and checks:
 | lax_shooter_clips.json | 18 clips with release/contact frames |
 | lax_stick_attack.usdz (176 KB) | root identity ✓, 4/4 sockets ✓ (grip (0,0,0), pocket (0,0.025,0.431), ball_contact (0,−0.061,0.431), effect (0,0,0.66)), time 0–214 ✓, 3,744 tris, 5 materials |
 | lax_stick_attack_clips.json | 9 pocket clips |
+| lax_goalie.usdz (1.87 MB) | faces +Z ✓, root identity ✓, 7/7 sockets ✓, 1 SkelAnimation ✓, time 0–556 @30 ✓, baked Y 0.000…1.685 ✓, 36,164 tris, 17 materials |
+| lax_goalie_clips.json | 15 clips (8 required + 7 extra), contact frames, shooter-perspective convention |
+| lax_stick_goalie.usdz (176 KB) | root identity ✓, 4/4 sockets ✓, 9 pocket clips, 3,744 tris |
 
 ## Validation tool
 `lax_validate.validate_character` checks:

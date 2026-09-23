@@ -20,3 +20,7 @@
 
 
 Phase 1 commit: `3ef396d58503f5e7844da3cee169684900893c22`.
+
+- **Goalie base height:** `PocketLaxScene` lifts the procedural goalie to a 0.625 m base height. The USDZ goalie must be placed
+  at y = 0 (feet on the turf).
+- **Goalie hands:** the goalie rig is right-hand-top only. Low saves tilt the stick forward instead of flipping hands.
