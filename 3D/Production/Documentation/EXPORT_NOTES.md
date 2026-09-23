@@ -36,6 +36,8 @@ Re-opens the stage and checks:
 | lax_goalie.usdz (1.87 MB) | faces +Z ✓, root identity ✓, 7/7 sockets ✓, 1 SkelAnimation ✓, time 0–556 @30 ✓, baked Y 0.000…1.685 ✓, 36,164 tris, 17 materials |
 | lax_goalie_clips.json | 15 clips (8 required + 7 extra), contact frames, shooter-perspective convention |
 | lax_stick_goalie.usdz (176 KB) | root identity ✓, 4/4 sockets ✓, 9 pocket clips, 3,744 tris |
+| lax_goal.usdz (296 KB) | mouth faces +Z ✓, root identity ✓, frame + skinned net ✓, 7/7 sockets/references ✓, time 0–295 ✓, 5,208 tris |
+| lax_goal_clips.json | 8 net clips, hierarchy, dimensions |
 
 ## Validation tool
 `lax_validate.validate_character` checks:
