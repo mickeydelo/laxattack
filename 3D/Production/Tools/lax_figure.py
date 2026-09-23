@@ -317,7 +317,8 @@ def _build_character(s, collection, arm):
         top = p + tu * (eh + 0.004) + n * 0.004
         # lid: skin patch hugging the head over the eye (authored closed); lid bone rotates it up onto the forehead to open
         dA = math.degrees(ew / H.r.x) * 1.25 + 2; dE = math.degrees(eh / H.r.z) + 2
-        F.add(surface_patch(H, az - dA, az + dA, el - dE, el + dE, 0.0065), skin, "lid_" + side)
+        lo = math.degrees(s["eye_size"][1] / s["head_r"][2]) * 2 + 4   # lids AUTHORED OPEN (parked on the forehead): rest frame = open eyes
+        F.add(surface_patch(H, az - dA, az + dA, el - dE + lo, el + dE + lo, 0.0065), skin, "lid_" + side)
         # upper lash line (painted)
         pts = [H.point(az + dx * sx, el + 14.2 - 5.0 * (dx / 12.0) ** 2) for dx in (-12, -6, 0, 6, 12)]
         pts = [tuple(V(q) + (V(q) - H.c).normalized() * 0.016) for q in pts]
@@ -674,7 +675,7 @@ FACE = {
 
 def lid_rot(arm, lid):     # lid preset value: 0.1 open .. 1.0 closed  ->  hinge rotation (radians), no joint scale
     c = min(1.0, max(0.0, (lid - 0.1) / 0.9))
-    return (math.radians(arm.get("lid_open_deg", 30.0) * (1 - c)), 0, 0)
+    return (-math.radians(arm.get("lid_open_deg", 30.0) * c), 0, 0)   # 0 = authored open; closing rotates down
 
 def jaw_rot(arm, jaw):     # jaw preset value: 0.14 closed line .. 1.0 open  ->  cover rotates down
     o = min(1.0, max(0.0, (jaw - 0.14) / 0.86))

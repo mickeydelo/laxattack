@@ -62,3 +62,17 @@ exactly (parents first, roll preserved) and re-places sockets. Assets that face 
 - Validated: bone positions match the pre-bake poses exactly (0.0 m) on sampled frames; baked skin ranges are unchanged.
 - Weights are capped at **4 joint influences** per vertex (normalized) in `Builder`.
 - `lax_arena_environment.usdz` is replaced by **`lax_arena_pinebrook.usdz`**.
+
+
+## Update: RealityKit round-trip fixes (Codex feedback)
+- **One skinned mesh per rig.** `merge_skinned` joins all character parts into `<asset>_body`, keeping material subsets, so
+  RealityKit never has to merge several skinned meshes into one render component.
+- **Uniform 4 influences** on every skinned mesh (`pad_influences`), weights renormalized.
+- **Rest frame shows open eyes and a closed smile** even if animation playback fails. Lids are authored open and blinks rotate
+  them down; the mouth cover is authored closed.
+- **Round-trip check:** the packaged `lax_shooter.usdz` is re-imported into a clean Blender scene and rendered from the
+  runtime camera (`Previews/RoundTrip/lax_shooter_usdz_roundtrip.png`).
+  - Parts are coherent, the stick is in the hands, eyes are open, and clips play.
+  - This does **not** replace the on-device RealityKit screenshot.
+- **Arena:** depsgraph update before reading world matrices fixes the origin-stacked meshes. `export_lods` writes decimated
+  `_lod1`/`_lod2` files.

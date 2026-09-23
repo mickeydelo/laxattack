@@ -97,7 +97,8 @@ def mat(name):
     if m:
         return m
     if name in TEX_MATS:
-        return mat_tex(name, *TEX_MATS[name][:2])
+        e = TEX_MATS[name]
+        return mat_tex(name, e[0], e[1], *(list(e[2:4]) + [None, None])[:2])
     rgb, rough, metal, coat = MATS[name]
     m = bpy.data.materials.new("M_" + name)
     if m.node_tree is None:
@@ -573,7 +574,7 @@ def make_turf_texture(path, base=(0.13, 0.40, 0.07), size=1024, seed=5):
     os.makedirs(os.path.dirname(path), exist_ok=True); im.save(); bpy.data.images.remove(im)
     return path
 
-def mat_tex(name, path, rough):
+def mat_tex(name, path, rough, normal=None, rough_map=None):
     m = bpy.data.materials.new("M_" + name)
     if m.node_tree is None:
         m.use_nodes = True
@@ -581,6 +582,15 @@ def mat_tex(name, path, rough):
     t = nt.nodes.new("ShaderNodeTexImage"); t.image = bpy.data.images.load(path, check_existing=True)
     nt.links.new(t.outputs["Color"], b.inputs["Base Color"])
     b.inputs["Roughness"].default_value = rough
+    if normal:
+        tn = nt.nodes.new("ShaderNodeTexImage"); tn.image = bpy.data.images.load(normal, check_existing=True)
+        tn.image.colorspace_settings.name = "Non-Color"
+        nm = nt.nodes.new("ShaderNodeNormalMap"); nm.inputs["Strength"].default_value = 1.0
+        nt.links.new(tn.outputs["Color"], nm.inputs["Color"]); nt.links.new(nm.outputs["Normal"], b.inputs["Normal"])
+    if rough_map:
+        tr = nt.nodes.new("ShaderNodeTexImage"); tr.image = bpy.data.images.load(rough_map, check_existing=True)
+        tr.image.colorspace_settings.name = "Non-Color"
+        nt.links.new(tr.outputs["Color"], b.inputs["Roughness"])
     m.diffuse_color = (0.1, 0.35, 0.06, 1)
     return m
 

@@ -1,7 +1,7 @@
 # Lax Attack runtime export: Blender USD export + pxr post-process (identity root at field level, axis conversion on the
 # rig/content child prim), optional 180-degree yaw for assets that must face +Z (goalie), USDZ packaging, verification.
 def export_asset(objects, root_name, content_name, out_usdz, fps=30, end_frame=0, face_plus_z=False, manifest=None,
-                 sockets=(), animated=True, tmp="/tmp/laxattack_export"):
+                 sockets=(), animated=True, tmp="/tmp/laxattack_export", bake=True):
     from pxr import Usd, UsdGeom, UsdSkel, Sdf, Gf, Kind, UsdUtils
     import shutil
     os.makedirs(tmp, exist_ok=True)
@@ -14,7 +14,10 @@ def export_asset(objects, root_name, content_name, out_usdz, fps=30, end_frame=0
     for o in objects:
         o.hide_set(False); o.hide_render = False; o.select_set(True)
     bpy.context.view_layer.objects.active = objects[0]
-    bake_axes(objects, content_name, face_plus_z)
+    bpy.context.view_layer.update()                 # never read stale matrix_world (arena origin-stacking bug)
+    if bake:
+        objects = merge_skinned(objects)            # one skinned mesh per rig: no multi-mesh skin merge in RealityKit
+        bake_axes(objects, content_name, face_plus_z)
     for o in bpy.context.selected_objects:
         o.select_set(False)
     for o in objects:
@@ -46,6 +49,7 @@ def export_asset(objects, root_name, content_name, out_usdz, fps=30, end_frame=0
     if manifest:
         meta["clipManifest"] = json.dumps(manifest)
     root.SetCustomDataByKey("laxattack", meta)
+    pad_influences(st, 4)                           # uniform 4 influences on every skinned mesh
     st.GetRootLayer().Export(fixed)
     # copy textures next to the fixed layer so the packager finds them
     for d in ("textures",):
@@ -66,8 +70,62 @@ def export_asset(objects, root_name, content_name, out_usdz, fps=30, end_frame=0
     rep["usdz_bytes"] = os.path.getsize(out_usdz) if os.path.exists(out_usdz) else 0
     z = Usd.Stage.Open(out_usdz)
     rep["usdz_open"] = bool(z and z.GetDefaultPrim())
-    rep["usdz_textures"] = [str(a.path) for a in []]
+    rep["objects"] = [o.name for o in objects]
     return rep
+
+def export_lods(rep, root_name, content_name, out_usdz, ratios, fps=30, end_frame=0, manifest=None, animated=True):
+    """Decimated LODs of an already-exported (baked) asset: <name>_lod1.usdz, _lod2.usdz ..."""
+    res = {}; objs = [bpy.data.objects[n] for n in rep["objects"] if n in bpy.data.objects]; prev = 1.0
+    for i, r in enumerate(ratios, 1):
+        for o in objs:
+            if o.type == "MESH" and len(o.data.polygons) > 60:
+                m = o.modifiers.new("lod", "DECIMATE"); m.ratio = r / prev
+                bpy.context.view_layer.objects.active = o
+                while o.modifiers.find("lod") > 0:
+                    bpy.ops.object.modifier_move_up(modifier="lod")
+                bpy.ops.object.modifier_apply(modifier="lod")
+        prev = r
+        tris = sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in objs if o.type == "MESH")
+        path = out_usdz.replace(".usdz", "_lod%d.usdz" % i)
+        e = export_asset(objs, root_name, content_name, path, fps, end_frame, False, manifest, (), animated, bake=False)
+        res["lod%d" % i] = {"tris": tris, "kb": e["usdz_bytes"] // 1024, "root_identity": e["root_identity"]}
+    return res
+
+def merge_skinned(objects):
+    arms = [o for o in objects if o.type == "ARMATURE"]
+    out = list(objects)
+    for a in arms:
+        sk = [o for o in objects if o.type == "MESH" and any(m.type == "ARMATURE" and m.object == a for m in o.modifiers)]
+        if len(sk) < 2:
+            continue
+        for x in bpy.context.selected_objects:
+            x.select_set(False)
+        for o in sk:
+            o.select_set(True)
+        bpy.context.view_layer.objects.active = sk[0]
+        bpy.ops.object.join()
+        sk[0].name = a.name.replace("_rig", "") + "_body"; sk[0].data.name = sk[0].name
+        out = [o for o in out if o not in sk[1:] and o.name in bpy.data.objects]
+    return out
+
+def pad_influences(st, n):
+    from pxr import UsdSkel, UsdGeom, Vt
+    for p in st.Traverse():
+        if not p.IsA(UsdGeom.Mesh):
+            continue
+        b = UsdSkel.BindingAPI(p); ji = b.GetJointIndicesPrimvar(); jw = b.GetJointWeightsPrimvar()
+        if not ji or not ji.HasValue():
+            continue
+        k = ji.GetElementSize(); I = list(ji.Get()); W = list(jw.Get())
+        if k == n:
+            continue
+        nv = len(I) // k; I2, W2 = [], []
+        for v in range(nv):
+            ii = I[v * k:(v + 1) * k]; ww = W[v * k:(v + 1) * k]
+            pairs = sorted(zip(ww, ii), reverse=True)[:n]; tot = sum(w for w, _ in pairs) or 1.0
+            pairs += [(0.0, pairs[0][1] if pairs else 0)] * (n - len(pairs))
+            I2 += [i for _, i in pairs]; W2 += [w / tot for w, _ in pairs]
+        ji.Set(Vt.IntArray(I2)); ji.SetElementSize(n); jw.Set(Vt.FloatArray(W2)); jw.SetElementSize(n)
 
 def bake_axes(objects, content_name, face_plus_z):
     """Bake the Blender->RealityKit axis change (and optional +Z facing) into mesh data, bone rest poses and socket
