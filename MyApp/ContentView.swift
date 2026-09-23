@@ -380,6 +380,13 @@ struct AimPrompt: View {
                 .padding(.horizontal, 18)
                 .padding(.vertical, 10)
                 .background(.black.opacity(0.58), in: Capsule())
+
+            if power == 0 {
+                Text("SIDEWAYS, THEN UP: SPLIT DODGE +100")
+                    .font(.caption2.bold())
+                    .foregroundStyle(.white.opacity(0.82))
+                    .shadow(color: .black, radius: 2)
+            }
         }
     }
 }

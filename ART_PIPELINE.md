@@ -68,3 +68,37 @@ These are production starting points, not fixed engine limits. Profile before in
 5. Only after the vertical slice works, produce variants and customization pieces.
 
 RealityKit supports skeletal resources, animation retargeting, named animation libraries, additive animation processing, and animation graphs. That makes Blender-to-USDZ-to-RealityKit the intended next production step without changing the current engine.
+
+## Production handoff contract
+
+The runtime contract is defined in `MyApp/CharacterAssets.swift`. Treat these names as API: changing one in Blender requires the same change in code.
+
+- Deliver `lax_shooter.usdz` and `lax_goalie.usdz` as the first graybox exports.
+- Export in meters, Y-up, with the root at field level. Shooter faces toward negative Z; goalie faces toward positive Z.
+- Keep the skinned visual hierarchy free of gameplay collision meshes. RealityKit owns the simple character collider, ball, goal, and field physics.
+- Include child transforms named `stick_socket`, `helmet_socket`, and `effect_socket`. Sockets must inherit character motion without scale animation.
+- Put named clips in the root entity's `AnimationLibraryComponent`. The app validates the sockets and clip names before an authored character is accepted.
+- Use a single material atlas per character for the first vertical slice. Keep eyes/face separate only if expression animation requires it.
+
+Required shooter clips:
+
+`idle`, `cradle`, `aim_overhand`, `aim_bounce`, `aim_sidearm`, `split_dodge_left`, `split_dodge_right`, `release_overhand`, `release_bounce`, `release_sidearm`, `quick_stick_catch`, `quick_stick_release`, `celebrate`, `disappointed`.
+
+Required goalie clips:
+
+`goalie_ready`, `goalie_shuffle_left`, `goalie_shuffle_right`, `goalie_read_left`, `goalie_read_right`, `goalie_save_left`, `goalie_save_right`, `goalie_goal_against`.
+
+Loop `idle`, `cradle`, `goalie_ready`, and both goalie shuffle clips cleanly. All release clips need a clearly documented ball-release frame; both quick-stick clips need a clearly documented pocket-contact frame. Do not animate the world root away from field level. Use hips/pelvis motion for jumps and saves so the gameplay root and collider remain stable.
+
+## First-asset acceptance test
+
+Before producing variants, import one graybox shooter and one graybox goalie and verify:
+
+1. `CharacterAssetContract.load(named:)` loads each bundle resource without conversion or runtime warnings.
+2. `CharacterAssetContract.validate(_:role:)` reports no missing sockets or clips.
+3. Scale, facing, feet, stick grip, pocket position, and helmet attachment remain correct through every clip.
+4. Release and save timing match the existing gameplay state transitions at full game speed.
+5. The ball, goal, goalie hit volume, trajectory preview, scoring, and replay record behave identically with procedural visuals hidden.
+6. The iPhone portrait build sustains the target frame rate with the arena and both characters visible.
+
+The first production task is therefore a graybox asset-validation sprint, not a full character art pass.

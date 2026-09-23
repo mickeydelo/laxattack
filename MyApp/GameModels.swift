@@ -53,6 +53,8 @@ struct ShotInput: Equatable, Sendable {
     let timingQuality: Float?
     let dodgeDirection: Float
     let wasOnFire: Bool
+    let goaliePositionAtRelease: Float
+    let physicsVersion: Int
 }
 
 enum ShotType: String, CaseIterable, Equatable, Sendable, Identifiable {

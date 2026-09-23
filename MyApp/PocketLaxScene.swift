@@ -17,8 +17,10 @@ private struct BurstParticle {
 
 @MainActor
 final class PocketLaxScene {
+    private static let physicsVersion = 1
     private let ballStart = SIMD3<Float>(0, 0.18, 1.45)
     private let quickStickCatch = SIMD3<Float>(-0.38, 1.16, 1.82)
+    private let goalieBaseHeight: Float = 0.625
 
     private var ball: ModelEntity?
     private var camera: Entity?
@@ -71,6 +73,8 @@ final class PocketLaxScene {
     private var pendingDodgeDirection: Float = 0
     private var activeDodgeDirection: Float = 0
     private var isBuilt = false
+    private(set) var shooterPerformanceState: CharacterPerformanceState = .idle
+    private(set) var goaliePerformanceState: CharacterPerformanceState = .goalieReady
 
     func build(in content: inout RealityViewCameraContent, session: GameSession) {
         guard !isBuilt else { return }
@@ -163,7 +167,9 @@ final class PocketLaxScene {
             type: shotType,
             timingQuality: timingQuality,
             dodgeDirection: dodgeDirection,
-            wasOnFire: session.isOnFire
+            wasOnFire: session.isOnFire,
+            goaliePositionAtRelease: goalie?.position.x ?? 0,
+            physicsVersion: Self.physicsVersion
         )
         guard session.beginShot(input: input) else { return }
 
@@ -391,6 +397,7 @@ final class PocketLaxScene {
     private func update(deltaTime: TimeInterval, session: GameSession) {
         elapsedTime += deltaTime
         updateQuickStickSetup(session: session)
+        updatePerformanceStates()
         updateGoalie(deltaTime: Float(deltaTime), level: session.difficultyLevel)
         updateShooter(deltaTime: Float(deltaTime))
         updateCharacterEyes()
@@ -440,7 +447,7 @@ final class PocketLaxScene {
         }
 
         goalie.position.x = x
-        goalie.position.y = rootY
+        goalie.position.y = goalieBaseHeight + rootY
         goalie.orientation = simd_quatf(angle: roll, axis: [0, 0, 1])
         goalieTorso?.scale = squash
         goalieHead?.orientation = simd_quatf(
@@ -456,6 +463,53 @@ final class PocketLaxScene {
             angle: -0.3 - roll * 0.85,
             axis: [0, 0, 1]
         )
+    }
+
+    private func updatePerformanceStates() {
+        if celebrationTime > 0 {
+            shooterPerformanceState = .celebrate
+        } else if disappointmentTime > 0 {
+            shooterPerformanceState = .disappointed
+        } else if releaseTime > 0 {
+            switch selectedShotType {
+            case .overhand: shooterPerformanceState = .releaseOverhand
+            case .bounce: shooterPerformanceState = .releaseBounce
+            case .sidearm: shooterPerformanceState = .releaseSidearm
+            case .quickStick: shooterPerformanceState = .quickStickRelease
+            }
+        } else if isQuickStickSetup {
+            shooterPerformanceState = .quickStickCatch
+        } else if pendingDodgeDirection < -0.5 {
+            shooterPerformanceState = .splitDodgeLeft
+        } else if pendingDodgeDirection > 0.5 {
+            shooterPerformanceState = .splitDodgeRight
+        } else if isAiming {
+            switch selectedShotType {
+            case .overhand: shooterPerformanceState = .aimOverhand
+            case .bounce: shooterPerformanceState = .aimBounce
+            case .sidearm: shooterPerformanceState = .aimSidearm
+            case .quickStick: shooterPerformanceState = .quickStickCatch
+            }
+        } else {
+            shooterPerformanceState = .cradle
+        }
+
+        if goalieSlumpTime > 0 {
+            goaliePerformanceState = .goalieGoalAgainst
+        } else if goalieReactionTime > 0 {
+            goaliePerformanceState = goalieReactionDirection < 0
+                ? .goalieSaveLeft
+                : .goalieSaveRight
+        } else if goalieReadTime > 0 {
+            goaliePerformanceState = goalieReadDirection < 0
+                ? .goalieReadLeft
+                : .goalieReadRight
+        } else {
+            let shuffleVelocity = cos(Float(elapsedTime) * 1.35)
+            goaliePerformanceState = shuffleVelocity < 0
+                ? .goalieShuffleLeft
+                : .goalieShuffleRight
+        }
     }
 
     private func updateShooter(deltaTime: Float) {
@@ -1037,6 +1091,7 @@ final class PocketLaxScene {
             mesh: .generateSphere(radius: 0.23),
             materials: [white]
         )
+        helmet.name = "helmet_socket"
         helmet.position = [0, 0.4, 0]
         goalieHead = helmet
         goalie.addChild(helmet)
@@ -1071,10 +1126,16 @@ final class PocketLaxScene {
             headMaterial: white,
             scale: 0.85
         )
+        stick.name = "stick_socket"
         stick.position = [0.38, -0.02, 0.08]
         stick.orientation = simd_quatf(angle: -0.3, axis: [0, 0, 1])
         goalieStick = stick
         goalie.addChild(stick)
+
+        let effectSocket = Entity()
+        effectSocket.name = "effect_socket"
+        effectSocket.position = [0, 0.35, 0.18]
+        goalie.addChild(effectSocket)
 
         let collisionSize = SIMD3<Float>(0.68, 1.25, 0.3)
         let shape = ShapeResource.generateBox(size: collisionSize)
@@ -1091,6 +1152,7 @@ final class PocketLaxScene {
 
     private func addShooter(to root: Entity) {
         let shooter = Entity()
+        shooter.name = "shooter_root"
         shooter.position = [-0.72, 0, 1.72]
 
         let jersey = SimpleMaterial(color: .white, isMetallic: false)
@@ -1176,8 +1238,19 @@ final class PocketLaxScene {
             headMaterial: jersey,
             scale: 1
         )
+        stick.name = "stick_socket"
         stick.position = [0.34, 0.7, 0.12]
         shooter.addChild(stick)
+
+        let helmetSocket = Entity()
+        helmetSocket.name = "helmet_socket"
+        helmetSocket.position = [0, 1.05, 0]
+        shooter.addChild(helmetSocket)
+
+        let effectSocket = Entity()
+        effectSocket.name = "effect_socket"
+        effectSocket.position = [0, 0.85, 0.12]
+        shooter.addChild(effectSocket)
 
         self.shooter = shooter
         shooterStick = stick

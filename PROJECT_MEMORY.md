@@ -41,7 +41,7 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 ## Current Implementation
 
 - The user-facing app display name is **Lax Attack**. Internal Xcode target and Swift type names remain `MyApp` to avoid an unnecessary project-wide rename.
-- The implementation is split into three focused files: `ContentView.swift` for SwiftUI composition and HUD, `GameModels.swift` for round/shot state and feedback, and `PocketLaxScene.swift` for RealityKit entities, animation, physics, and collision events.
+- The implementation is split into focused files: `ContentView.swift` for SwiftUI composition and HUD, `GameModels.swift` for round/shot state and feedback, `PocketLaxScene.swift` for RealityKit entities, animation, physics, and collision events, and `CharacterAssets.swift` for the production USDZ contract.
 - RealityView uses a virtual fixed camera.
 - The miniature arena uses primitive RealityKit geometry for turf, markings, side boards, sky, hills, clouds, trees, goal, red pipes, and netting.
 - White ball begins kinematic, becomes dynamic on an upward swipe, receives an impulse, and resets after each resolved shot.
@@ -73,11 +73,15 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - Goal feedback distinguishes standard goals, top-corner finishes, and bounce goals.
 - iOS haptics distinguish release, goal, save, pipe, and miss.
 - The moving goalie is now a readable primitive character silhouette assembled from a helmet, face, torso, legs, and stick, with one kinematic collision body.
+- The goalie procedural animation is applied above a fixed 0.625-meter base height. Never assign its animated local offset directly to world Y or the body will be buried beneath the field.
 - The placeholder goal now includes a visible primitive mesh grid and field-level goal line for clearer depth and cage readability.
 - The SwiftUI HUD is composed from small section views, while `GameSession` owns observable round state and `PocketLaxScene` owns RealityKit entities, physics, subscriptions, and reset tasks.
 - The upgraded HUD includes Lax Attack branding, current/best score, five visual shot indicators, goalie difficulty, animated shot callouts, combo, live power, goals, accuracy, and replay.
 - iPhone portrait orientation is configured in build settings.
 - iOS deployment target is 26.0 so the installed iOS 26.5 simulator can run the project.
+- Every release now snapshots the goalie's X position and `physicsVersion` in `ShotInput`, alongside aim, power, timing, dodge, release type, and On Fire state. This is the minimum deterministic record for future replay/ghost migration.
+- Shooter and goalie procedural logic emit explicit `CharacterPerformanceState` values. Production assets must provide the exact named clips and sockets validated by `CharacterAssetContract`; see `ART_PIPELINE.md`.
+- The idle shot HUD now teaches the split-dodge gesture with the concise cue “SIDEWAYS, THEN UP,” making the first deception mechanic discoverable without a menu.
 
 ## Environment Discoveries
 
@@ -96,7 +100,7 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - Add authored audio assets for pocket movement, release snap, bounce, pipe, save, net impact, crowd, and UI.
 - Add a first quick-stick challenge that uses timing rather than free aiming.
 - Tune the three release profiles through hands-on device play, especially bounce restitution and sidearm late curve.
-- Establish an external modeled/rigged character asset pipeline to replace procedural primitives while preserving the current animation state machine.
+- Import the first graybox `lax_shooter.usdz` and `lax_goalie.usdz`, pass `CharacterAssetContract` validation, and align authored release/contact frames with the existing gameplay state transitions.
 
 ## Guardrails
 
@@ -117,6 +121,7 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - 2026-09-22: Added the first lacrosse decision layer: selectable Overhand/Bounce/Sidearm releases with distinct physics, previews, poses, spin/curve, haptics, and recorded shot type. Added pulsing placement targets, low-corner/five-hole scoring, placement callouts, and restrained camera kick/impact shake. The project built and launched successfully on the iPhone 17 Pro simulator with no crash/fatal/assertion output.
 - 2026-09-23: Added a synchronized Quick Stick timing challenge on the third shot, an incoming pass that reaches the procedural pocket, timing-dependent velocity/placement, a 150-point quick-stick bonus, persisted timing quality, quick-stick animation staging, and direction-aware goalie anticipation. Expanded the art pipeline and memory with the supplied concept's diorama/material/feedback quality principles. The project built and launched successfully with no crash/fatal/assertion output.
 - 2026-09-23: Added split-dodge gesture recognition and wrong-footed goalie reads, a 100-point dodge finish, release-specific restitution/friction/spin, force-driven sidearm curve, localized net deformation, and additional procedural limb articulation. Added an `On Fire` three-goal streak state with gold/orange visual treatment and a 200-point conversion bonus. The project built and launched successfully with no crash/fatal/assertion output.
+- 2026-09-23: Fixed the goalie body being buried below the turf by preserving its 0.625-meter world-space base height during procedural animation. Added explicit shooter/goalie performance states, production socket names, USDZ loading and validation, versioned release snapshots with goalie position, and an in-game split-dodge hint. Documented the exact Blender-to-RealityKit acceptance contract; the project built successfully after these changes.
 # 2026-09-22: Competitive feel and art direction
 
 - Product name is **Lax Attack**. The runtime remains SwiftUI + RealityKit in portrait orientation.
