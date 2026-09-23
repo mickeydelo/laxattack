@@ -97,3 +97,7 @@ Verified after export (skinning baked in a scratch copy): feet at Y = 0, toes to
 6. Animation is densely baked (every frame, linear); IK controls exist only in the `.blend`.
 7. 5 separate materials, not atlased (fine for graybox; atlas for final art).
 8. `celebrate` leans the head back strongly at the apex; the jump lifts the feet off the turf (intended).
+
+## Xcode integration result
+
+Integrated and runtime-validated on 2026-09-23. RealityKit successfully loads the bundled USDZ, finds every required socket plus `pocket_socket`, and generates the four named clips from the baked timeline. Runtime bounds are approximately X ±0.584 m, Y 0–1.522 m, and Z −0.268–0.297 m. The ball follows `pocket_socket` until launch, and the overhand impulse occurs 14/30 seconds after clip start at timeline frame 114. The ten unbuilt contract clips remain intentionally absent.

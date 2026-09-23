@@ -79,7 +79,7 @@ enum ShotType: String, CaseIterable, Equatable, Sendable, Identifiable {
     var symbolName: String {
         switch self {
         case .overhand: "arrow.up.forward"
-        case .bounce: "arrow.down.forward.and.arrow.up"
+        case .bounce: "arrow.down.right"
         case .sidearm: "arrow.turn.up.right"
         case .quickStick: "bolt.fill"
         }

@@ -23,6 +23,7 @@ final class PocketLaxScene {
     private let goalieBaseHeight: Float = 0.625
 
     private var ball: ModelEntity?
+    private var arenaRoot: Entity?
     private var camera: Entity?
     private var goalie: Entity?
     private var shooter: Entity?
@@ -32,6 +33,7 @@ final class PocketLaxScene {
     private var shooterEyes: [ModelEntity] = []
     private var shooterArms: [ModelEntity] = []
     private var shooterLegs: [ModelEntity] = []
+    private var shooterAnimationDriver: CharacterAnimationDriver?
     private var goalieTorso: ModelEntity?
     private var goalieHead: ModelEntity?
     private var goalieEyes: [ModelEntity] = []
@@ -69,6 +71,7 @@ final class PocketLaxScene {
     private var activeShotType: ShotType?
     private var activeCurveDirection: Float = 0
     private var isQuickStickSetup = false
+    private var isBallLaunched = false
     private var quickStickPhase: Float = 0
     private var pendingDodgeDirection: Float = 0
     private var activeDodgeDirection: Float = 0
@@ -82,6 +85,7 @@ final class PocketLaxScene {
 
         let root = Entity()
         root.name = "Lax Attack Arena"
+        arenaRoot = root
 
         addBackdrop(to: root)
         addField(to: root)
@@ -117,6 +121,42 @@ final class PocketLaxScene {
         )
     }
 
+    func installAuthoredShooter() async {
+        guard let arenaRoot, shooterAnimationDriver == nil else { return }
+
+        do {
+            let importedShooter = try await CharacterAssetContract.load(
+                named: CharacterAssetContract.shooterAssetName
+            )
+            let driver = try CharacterAssetContract.prepareShooter(importedShooter)
+            let socketReport = CharacterAssetContract.validate(importedShooter, role: .shooter)
+            guard socketReport.missingSockets.isEmpty else {
+                print("Authored shooter missing sockets: \(socketReport.missingSockets.joined(separator: ", "))")
+                return
+            }
+
+            shooter?.removeFromParent()
+            shooterTorso = nil
+            shooterHead = nil
+            shooterEyes.removeAll()
+            shooterArms.removeAll()
+            shooterLegs.removeAll()
+
+            importedShooter.position = [-0.72, 0, 1.72]
+            arenaRoot.addChild(importedShooter)
+            shooter = importedShooter
+            shooterStick = importedShooter.findEntity(named: "stick_socket")
+            shooterAnimationDriver = driver
+            driver.transition(to: .idle, duration: 0)
+
+            if !socketReport.missingAnimations.isEmpty {
+                print("Graybox shooter intentionally omits clips: \(socketReport.missingAnimations.joined(separator: ", "))")
+            }
+        } catch {
+            print("Using procedural shooter because lax_shooter failed to load: \(error)")
+        }
+    }
+
     func setShotType(_ type: ShotType) {
         selectedShotType = type
     }
@@ -138,7 +178,7 @@ final class PocketLaxScene {
             let curve = shotType == .sidearm
                 ? SIMD3<Float>(sample.direction * 0.48 * time * time, 0, 0)
                 : .zero
-            dot.position = ballStart + velocity * time + gravity + curve
+            dot.position = (ball?.position ?? ballStart) + velocity * time + gravity + curve
             dot.isEnabled = dot.position.y > 0.05 && dot.position.z > -5.4
         }
     }
@@ -158,7 +198,7 @@ final class PocketLaxScene {
         dodgeDirection: Float = 0,
         session: GameSession
     ) {
-        guard let ball else { return }
+        guard ball != nil else { return }
 
         let input = ShotInput(
             horizontal: sample.direction,
@@ -174,17 +214,15 @@ final class PocketLaxScene {
         guard session.beginShot(input: input) else { return }
 
         shotTask?.cancel()
-        feedbackPlayer.playRelease(type: shotType)
-
         aimPower = sample.power
         aimDirection = sample.direction
-        releaseTime = 0.62
+        releaseTime = shooterAnimationDriver != nil && shotType == .overhand ? 1.1 : 0.62
         selectedShotType = shotType
         activeShotType = shotType
+        isBallLaunched = false
         activeCurveDirection = abs(sample.direction) > 0.12 ? sample.direction : 1
         activeDodgeDirection = dodgeDirection
         pendingDodgeDirection = 0
-        cameraKickTime = 0.34
         setBallAppearance(isOnFire: input.wasOnFire)
         goalieReadTime = shotType == .bounce ? 0.48 : 0.72
         goalieReadDirection = abs(dodgeDirection) > 0.5 ? -dodgeDirection : sample.direction
@@ -195,6 +233,39 @@ final class PocketLaxScene {
         } else if abs(dodgeDirection) > 0.5 {
             goalieReadStrength += 0.16
         }
+
+        let velocity = shotVelocity(sample: sample, type: shotType)
+        let launchDelay = shooterAnimationDriver != nil && shotType == .overhand
+            ? CharacterAssetContract.overhandReleaseDelay
+            : 0
+
+        shotTask = Task { @MainActor [weak self, weak session] in
+            if launchDelay > 0 {
+                try? await Task.sleep(for: .seconds(launchDelay))
+            }
+            guard !Task.isCancelled, let self else { return }
+            self.launchBall(velocity: velocity, sample: sample, shotType: shotType)
+
+            try? await Task.sleep(for: .seconds(2.5))
+            guard !Task.isCancelled, let session else { return }
+
+            if session.registerMiss() {
+                self.disappointmentTime = 0.7
+                self.feedbackPlayer.playMiss()
+                await self.resetAfterResult(session: session, delay: .seconds(0.5))
+            }
+        }
+    }
+
+    private func launchBall(
+        velocity: SIMD3<Float>,
+        sample: ShotControlSample,
+        shotType: ShotType
+    ) {
+        guard let ball else { return }
+
+        feedbackPlayer.playRelease(type: shotType)
+        cameraKickTime = 0.34
 
         var body = ball.components[PhysicsBodyComponent.self] ?? PhysicsBodyComponent()
         body.mode = .dynamic
@@ -219,9 +290,9 @@ final class PocketLaxScene {
             )
         }
         ball.components.set(body)
-
-        let velocity = shotVelocity(sample: sample, type: shotType)
+        isBallLaunched = true
         ball.applyLinearImpulse(velocity * body.massProperties.mass, relativeTo: nil)
+
         let spinAxis: SIMD3<Float>
         switch shotType {
         case .overhand: spinAxis = [12, sample.direction * 4, 0]
@@ -230,17 +301,6 @@ final class PocketLaxScene {
         case .quickStick: spinAxis = [15, sample.direction * 6, 0]
         }
         ball.applyAngularImpulse(spinAxis * body.massProperties.mass, relativeTo: nil)
-
-        shotTask = Task { @MainActor [weak self, weak session] in
-            try? await Task.sleep(for: .seconds(2.5))
-            guard !Task.isCancelled, let self, let session else { return }
-
-            if session.registerMiss() {
-                self.disappointmentTime = 0.7
-                self.feedbackPlayer.playMiss()
-                await self.resetAfterResult(session: session, delay: .seconds(0.5))
-            }
-        }
     }
 
     func shootQuickStick(quality: Double, session: GameSession) {
@@ -383,6 +443,7 @@ final class PocketLaxScene {
         ball.setPosition(ballStart, relativeTo: ball.parent)
         ball.orientation = .init()
         activeShotType = nil
+        isBallLaunched = false
         activeCurveDirection = 0
         activeDodgeDirection = 0
         pendingDodgeDirection = 0
@@ -400,6 +461,7 @@ final class PocketLaxScene {
         updatePerformanceStates()
         updateGoalie(deltaTime: Float(deltaTime), level: session.difficultyLevel)
         updateShooter(deltaTime: Float(deltaTime))
+        updateAuthoredBallPocket()
         updateCharacterEyes()
         updateBallTrail(isActive: session.isAwaitingResult)
         updateBurstEffects(deltaTime: Float(deltaTime))
@@ -407,6 +469,17 @@ final class PocketLaxScene {
         updateTargetMarkers()
         updateShotPhysics(deltaTime: Float(deltaTime), isActive: session.isAwaitingResult)
         updateCamera(deltaTime: Float(deltaTime))
+    }
+
+    private func updateAuthoredBallPocket() {
+        guard shooterAnimationDriver != nil,
+              !isBallLaunched,
+              !isQuickStickSetup,
+              let ball,
+              let pocket = shooter?.findEntity(named: "pocket_socket"),
+              let parent = ball.parent else { return }
+
+        ball.setPosition(pocket.position(relativeTo: parent), relativeTo: parent)
     }
 
     private func updateGoalie(deltaTime: Float, level: Int) {
@@ -510,10 +583,25 @@ final class PocketLaxScene {
                 ? .goalieShuffleLeft
                 : .goalieShuffleRight
         }
+
+        shooterAnimationDriver?.transition(to: shooterPerformanceState)
     }
 
     private func updateShooter(deltaTime: Float) {
-        guard let shooter, let shooterStick else { return }
+        guard let shooter else { return }
+        if shooterAnimationDriver != nil {
+            if releaseTime > 0 {
+                releaseTime = max(0, releaseTime - deltaTime)
+            } else if celebrationTime > 0 {
+                celebrationTime = max(0, celebrationTime - deltaTime)
+            } else if disappointmentTime > 0 {
+                disappointmentTime = max(0, disappointmentTime - deltaTime)
+            }
+            shooter.position = [-0.72, 0, 1.72]
+            shooter.orientation = simd_quatf(angle: 0, axis: [0, 1, 0])
+            return
+        }
+        guard let shooterStick else { return }
 
         let idleBob = sin(Float(elapsedTime) * 2.4) * 0.012
         var rootY = idleBob

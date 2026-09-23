@@ -12,6 +12,7 @@ struct ContentView: View {
             RealityView { content in
                 content.camera = .virtual
                 gameScene.build(in: &content, session: session)
+                await gameScene.installAuthoredShooter()
             }
             .ignoresSafeArea()
             .contentShape(Rectangle())
