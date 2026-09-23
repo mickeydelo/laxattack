@@ -1,0 +1,197 @@
+{
+  "asset": "lax_shooter",
+  "fps": 30,
+  "timeline_end": 705,
+  "left_right_convention": "left/right are the shooter's own left/right (shooter faces -Z; shooter-left = -X in game space)",
+  "clips": [
+    {
+      "name": "idle",
+      "start": 0,
+      "end": 48,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "breathing/look loop; blink at local 30"
+    },
+    {
+      "name": "cradle",
+      "start": 60,
+      "end": 88,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "continuous cradle; pocket lags the sweep"
+    },
+    {
+      "name": "release_overhand",
+      "start": 100,
+      "end": 133,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "release_frame": 114,
+      "release_local_frame": 14,
+      "release_seconds_after_start": 0.4667,
+      "notes": "graybox timing preserved: ball leaves pocket_socket at 14/30 s"
+    },
+    {
+      "name": "celebrate",
+      "start": 150,
+      "end": 186,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "jump with stick skyward (pelvis motion only)"
+    },
+    {
+      "name": "aim_overhand",
+      "start": 200,
+      "end": 230,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "loaded overhand hold for aiming; blends into release_overhand"
+    },
+    {
+      "name": "aim_bounce",
+      "start": 240,
+      "end": 270,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "bounce-shot aim; first frame of release_bounce"
+    },
+    {
+      "name": "aim_sidearm",
+      "start": 280,
+      "end": 310,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "sidearm aim; first frame of release_sidearm"
+    },
+    {
+      "name": "split_dodge_left",
+      "start": 320,
+      "end": 344,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "in place; runtime moves root toward shooter-left (game -X) between local 6 and 16"
+    },
+    {
+      "name": "split_dodge_right",
+      "start": 350,
+      "end": 374,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "in place; runtime moves root toward shooter-right (game +X) between local 6 and 16"
+    },
+    {
+      "name": "release_bounce",
+      "start": 380,
+      "end": 413,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "release_frame": 394,
+      "release_local_frame": 14,
+      "release_seconds_after_start": 0.4667,
+      "notes": "starts from aim_bounce; downward release"
+    },
+    {
+      "name": "release_sidearm",
+      "start": 420,
+      "end": 453,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "release_frame": 433,
+      "release_local_frame": 13,
+      "release_seconds_after_start": 0.4333,
+      "notes": "starts from aim_sidearm; horizontal whip"
+    },
+    {
+      "name": "quick_stick_catch",
+      "start": 460,
+      "end": 478,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 466,
+      "contact_local_frame": 6,
+      "notes": "ball meets pocket at local 6; ends in quick-stick ready pose"
+    },
+    {
+      "name": "quick_stick_release",
+      "start": 490,
+      "end": 506,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "release_frame": 495,
+      "release_local_frame": 5,
+      "release_seconds_after_start": 0.1667,
+      "notes": "starts from quick-stick ready pose; redirect release at local 5"
+    },
+    {
+      "name": "disappointed",
+      "start": 520,
+      "end": 560,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "ends slumped (stick head resting on turf); blend to idle"
+    },
+    {
+      "name": "near_miss_reaction",
+      "start": 570,
+      "end": 600,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "extra"
+    },
+    {
+      "name": "pipe_reaction",
+      "start": 610,
+      "end": 634,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "extra"
+    },
+    {
+      "name": "save_reaction",
+      "start": 645,
+      "end": 675,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "extra"
+    },
+    {
+      "name": "run_loop",
+      "start": 685,
+      "end": 705,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "extra; in place"
+    }
+  ],
+  "required_sockets": [
+    "stick_socket",
+    "helmet_socket",
+    "effect_socket",
+    "pocket_socket",
+    "left_hand_socket",
+    "right_hand_socket"
+  ],
+  "extra_sockets": [
+    "ball_contact_socket"
+  ],
+  "legacy_ranges_unchanged": {
+    "idle": [
+      0,
+      48
+    ],
+    "cradle": [
+      60,
+      88
+    ],
+    "release_overhand": [
+      100,
+      133
+    ],
+    "celebrate": [
+      150,
+      186
+    ]
+  },
+  "ball_visual_radius_recommended_m": 0.08,
+  "stick_axes_blender": "shaft +Y, pocket open face +Z, origin = top-hand grip"
+}

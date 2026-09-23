@@ -1,0 +1,107 @@
+{
+  "asset": "lax_goal",
+  "fps": 30,
+  "timeline_end": 295,
+  "left_right_convention": "impact regions use the SHOOTER's perspective: *_left = shooter-left = game -X",
+  "clips": [
+    {
+      "name": "net_idle",
+      "start": 0,
+      "end": 60,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "gentle breeze sway (loop)"
+    },
+    {
+      "name": "net_impact_center",
+      "start": 70,
+      "end": 94,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 70,
+      "contact_local_frame": 0,
+      "notes": "shot into the middle"
+    },
+    {
+      "name": "net_impact_high_left",
+      "start": 100,
+      "end": 124,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 100,
+      "contact_local_frame": 0,
+      "notes": "shooter-left top corner"
+    },
+    {
+      "name": "net_impact_high_right",
+      "start": 130,
+      "end": 154,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 130,
+      "contact_local_frame": 0,
+      "notes": "shooter-right top corner"
+    },
+    {
+      "name": "net_impact_low_left",
+      "start": 160,
+      "end": 184,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 160,
+      "contact_local_frame": 0,
+      "notes": "shooter-left bottom corner"
+    },
+    {
+      "name": "net_impact_low_right",
+      "start": 190,
+      "end": 214,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 190,
+      "contact_local_frame": 0,
+      "notes": "shooter-right bottom corner"
+    },
+    {
+      "name": "net_impact_heavy",
+      "start": 220,
+      "end": 256,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 220,
+      "contact_local_frame": 0,
+      "notes": "hard shot: deeper pocketing, wider ripple"
+    },
+    {
+      "name": "net_settle",
+      "start": 265,
+      "end": 295,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "generic damped settle from a displaced state"
+    }
+  ],
+  "hierarchy": [
+    "lax_goal/lax_goal_rig/lax_goal_frame",
+    "lax_goal/lax_goal_rig/lax_goal_net (skinned)",
+    "lax_goal/lax_goal_rig/goal_sensor_socket",
+    "lax_goal/lax_goal_rig/net_collision_reference",
+    "lax_goal/lax_goal_rig/net_impact_center",
+    "lax_goal/lax_goal_rig/net_impact_high_left",
+    "lax_goal/lax_goal_rig/net_impact_high_right",
+    "lax_goal/lax_goal_rig/net_impact_low_left",
+    "lax_goal/lax_goal_rig/net_impact_low_right"
+  ],
+  "mouth_m": [
+    2.0,
+    2.0
+  ],
+  "depth_m": 2.1,
+  "pipe_radius_m": 0.045,
+  "goal_line": "mouth plane is at asset z = 0; the net extends toward -Z (away from the shooter)",
+  "net_collision_reference": "empty whose scale gives the half-extents of a simple box covering the net volume",
+  "tris": {
+    "frame": 1168,
+    "net": 4040
+  }
+}

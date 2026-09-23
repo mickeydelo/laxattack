@@ -1,0 +1,157 @@
+{
+  "asset": "lax_goalie",
+  "fps": 30,
+  "timeline_end": 556,
+  "left_right_convention": "left/right are from the SHOOTER's perspective (goalie faces +Z); goalie_save_left = shooter's left = game -X",
+  "clips": [
+    {
+      "name": "goalie_ready",
+      "start": 0,
+      "end": 40,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "set position; toe bounce; eyes track"
+    },
+    {
+      "name": "goalie_shuffle_left",
+      "start": 50,
+      "end": 70,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "in place; runtime slides root toward shooter-left (game -X) along the crease arc"
+    },
+    {
+      "name": "goalie_shuffle_right",
+      "start": 80,
+      "end": 100,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "in place; runtime slides root toward shooter-right (game +X)"
+    },
+    {
+      "name": "goalie_read_left",
+      "start": 110,
+      "end": 128,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "anticipation toward shooter-left; ends loaded (chain into goalie_save_left)"
+    },
+    {
+      "name": "goalie_read_right",
+      "start": 135,
+      "end": 153,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "anticipation toward shooter-right"
+    },
+    {
+      "name": "goalie_save_left",
+      "start": 160,
+      "end": 190,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 167,
+      "contact_local_frame": 7,
+      "notes": "stick save at mid height, shooter-left; contact local 7"
+    },
+    {
+      "name": "goalie_save_right",
+      "start": 200,
+      "end": 230,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 207,
+      "contact_local_frame": 7,
+      "notes": "stick save at mid height, shooter-right; contact local 7"
+    },
+    {
+      "name": "goalie_goal_against",
+      "start": 240,
+      "end": 285,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "looks back at the net, slumps; blend to ready"
+    },
+    {
+      "name": "goalie_save_high_left",
+      "start": 295,
+      "end": 325,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 302,
+      "contact_local_frame": 7,
+      "notes": "extra"
+    },
+    {
+      "name": "goalie_save_high_right",
+      "start": 335,
+      "end": 365,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 342,
+      "contact_local_frame": 7,
+      "notes": "extra"
+    },
+    {
+      "name": "goalie_save_low_left",
+      "start": 375,
+      "end": 405,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 382,
+      "contact_local_frame": 7,
+      "notes": "extra; stick head drops to the turf"
+    },
+    {
+      "name": "goalie_save_low_right",
+      "start": 415,
+      "end": 445,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 422,
+      "contact_local_frame": 7,
+      "notes": "extra"
+    },
+    {
+      "name": "goalie_five_hole_close",
+      "start": 455,
+      "end": 475,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 460,
+      "contact_local_frame": 5,
+      "notes": "extra; knees + stick close the gap"
+    },
+    {
+      "name": "goalie_body_save",
+      "start": 485,
+      "end": 509,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 490,
+      "contact_local_frame": 5,
+      "notes": "extra; chest block with recoil"
+    },
+    {
+      "name": "goalie_celebrate",
+      "start": 520,
+      "end": 556,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "extra; stick pumps"
+    }
+  ],
+  "facing": "+Z (toward the shooter); root identity at field level between the feet",
+  "required_sockets": [
+    "stick_socket",
+    "helmet_socket",
+    "effect_socket",
+    "pocket_socket",
+    "left_hand_socket",
+    "right_hand_socket"
+  ],
+  "extra_sockets": [
+    "ball_contact_socket"
+  ],
+  "runtime_note": "the procedural goalie used a 0.625 m base height; this asset's origin is at field level (y = 0)"
+}
