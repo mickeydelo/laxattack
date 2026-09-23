@@ -1,0 +1,101 @@
+{
+  "asset": "lax_stick_attack",
+  "fps": 30,
+  "timeline_end": 214,
+  "left_right_convention": "n/a",
+  "clips": [
+    {
+      "name": "pocket_idle",
+      "start": 0,
+      "end": 30,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "resting ball weight"
+    },
+    {
+      "name": "pocket_cradle_left",
+      "start": 40,
+      "end": 60,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "ball rolls toward stick-left (USD +X side of the head) with lag"
+    },
+    {
+      "name": "pocket_cradle_right",
+      "start": 70,
+      "end": 90,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "mirror of pocket_cradle_left"
+    },
+    {
+      "name": "pocket_catch_soft",
+      "start": 100,
+      "end": 115,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 102,
+      "contact_local_frame": 2,
+      "notes": "ball arrives at local 2; compression peak at 4"
+    },
+    {
+      "name": "pocket_catch_hard",
+      "start": 120,
+      "end": 138,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 121,
+      "contact_local_frame": 1,
+      "notes": "hard catch: deep compression, overshoot, settle"
+    },
+    {
+      "name": "pocket_load",
+      "start": 145,
+      "end": 157,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "ball presses back into the pocket during wind-up"
+    },
+    {
+      "name": "pocket_release",
+      "start": 160,
+      "end": 168,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "release_frame": 163,
+      "release_local_frame": 3,
+      "release_seconds_after_start": 0.1,
+      "notes": "sharp forward snap; ball exits at local 3"
+    },
+    {
+      "name": "pocket_recoil",
+      "start": 170,
+      "end": 185,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "empty pocket rebounds after the ball leaves"
+    },
+    {
+      "name": "pocket_pipe_vibration",
+      "start": 190,
+      "end": 214,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 190,
+      "contact_local_frame": 0,
+      "notes": "whole-stick buzz after hitting the pipe (rotation about the grip)"
+    }
+  ],
+  "sockets": [
+    "grip_socket",
+    "pocket_socket",
+    "ball_contact_socket",
+    "effect_socket"
+  ],
+  "axes_usd": "origin = top-hand grip; shaft points +Z; pocket open face points +Y; stick-left = +X",
+  "axes_blender": "shaft +Y, pocket face +Z",
+  "ball_visual_radius_m": 0.08,
+  "pocket_depth_m": 0.068,
+  "ball_clearance_m": 0.0074,
+  "tris": 3744
+}

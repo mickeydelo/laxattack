@@ -62,3 +62,6 @@ Home team, #10.
 
 ## Collision
 Keep RealityKit's simple character collider. Do not use skinned meshes for collision.
+
+
+Phase 1 commit: `3ef396d58503f5e7844da3cee169684900893c22`.

@@ -131,6 +131,8 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 
 - 2026-09-23: Phase 1 production foundations committed: shared skeleton families and bone-driven face (`lax_figure.py`), pose model (`lax_pose.py`), clip/bake/secondary-spring system (`lax_anim.py`), generalized USD/USDZ exporter with goalie +Z option and pxr verification (`lax_export.py`), and Blender-side validator (`lax_validate.py`). Docs: CHARACTER_NOTES.md, EXPORT_NOTES.md.
 
+- 2026-09-23: Phase 2 girl field hero committed. `3D/Production/Exports/lax_shooter.usdz` replaces the graybox look while keeping name, facing, identity root, and the four legacy ranges (idle 0-48, cradle 60-88, release_overhand 100-133 with release 114, celebrate 150-186). New clips appended: aim_overhand 200-230, aim_bounce 240-270, aim_sidearm 280-310, split_dodge_left 320-344, split_dodge_right 350-374, release_bounce 380-413 (release 394), release_sidearm 420-453 (release 433), quick_stick_catch 460-478 (contact 466), quick_stick_release 490-506 (release 495), disappointed 520-560, extras near_miss 570-600, pipe 610-634, save 645-675, run_loop 685-705. Sockets: 6 required + ball_contact_socket; pocket_socket is now the resting ball centre for a 0.08 m ball. 34,972 tris, 17 materials. Standalone `lax_stick_attack.usdz` with 9 pocket clips. Manifests beside each USDZ. Swift must add the new ranges (contract change). Phase 1 commit 3ef396d.
+
 # 2026-09-22: Competitive feel and art direction
 
 - Product name is **Lax Attack**. The runtime remains SwiftUI + RealityKit in portrait orientation.
