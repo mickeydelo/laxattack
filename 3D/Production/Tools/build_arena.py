@@ -262,7 +262,7 @@ def build_arena(export=True):
     rep = {"tris": tris, "markers": rep_markers}
     with open(os.path.join(EXP, "lax_arena_pinebrook_markers.json"), "w") as fh:
         json.dump({"asset": "lax_arena_pinebrook", "coordinates": "game space (meters, Y-up, gameplay forward -Z)",
-                   "fan_root_offset_below_seat_m": {"lax_fan_a": 0.17, "lax_fan_b": 0.17, "lax_fan_c": 0.15},
+                   "fan_root_offset_below_seat_m": {"lax_fan_a": 0.086, "lax_fan_b": 0.082, "lax_fan_c": 0.07},   # measured seated hip contact
                    "markers": rep_markers}, fh, indent=2)
     if export:
         path = os.path.join(PROD, "Exports", "lax_arena_pinebrook.usdz")

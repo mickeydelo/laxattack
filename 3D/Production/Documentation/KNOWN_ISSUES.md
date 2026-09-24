@@ -50,3 +50,4 @@ Phase 1 commit: `3ef396d58503f5e7844da3cee169684900893c22`.
 - **Preview exposure:** Blender preview renders now use AgX with no look at +0.85 exposure. "AgX - Punchy" measured about 0.7
   stop too dark on the palette scene. Previews only; the runtime look is RealityKit's (see LIGHTING_KIT.md). The v7 continuity
   playblast predates this fix and renders dark.
+- **(Fixed 2026-09-24)** `fan_root_offset_below_seat_m` was 0.17 / 0.17 / 0.15 (an estimate), which sank fans about 9 cm into the benches. Measured values are 0.086 / 0.082 / 0.070 m.

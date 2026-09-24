@@ -2,9 +2,9 @@
   "asset": "lax_arena_pinebrook",
   "coordinates": "game space (meters, Y-up, gameplay forward -Z)",
   "fan_root_offset_below_seat_m": {
-    "lax_fan_a": 0.17,
-    "lax_fan_b": 0.17,
-    "lax_fan_c": 0.15
+    "lax_fan_a": 0.086,
+    "lax_fan_b": 0.082,
+    "lax_fan_c": 0.07
   },
   "markers": {
     "bleacher_home_seat_01": {
@@ -190,5 +190,6 @@
         -31.0
       ]
     }
-  }
+  },
+  "fan_root_offset_note": "measured: lowest hip-contact vertex of each fan's seated rest pose above its root (v8). Fan root = seat marker position minus this value on game Y."
 }
