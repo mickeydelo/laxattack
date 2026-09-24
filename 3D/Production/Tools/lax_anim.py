@@ -47,6 +47,38 @@ def secondary(poses, loop):
         p["hem"] = (hem[i] - hem_in[i] * 0.5, -(hem[i] - hem_in[i] * 0.5))
     return poses
 
+CALM = ("idle", "cradle", "aim_", "goalie_ready", "goalie_scan", "crowd_idle", "crowd_watch", "crowd_anticipate", "run_loop")
+
+def _seed(s):
+    return sum((i + 1) * ord(ch) for i, ch in enumerate(s))
+
+def auto_blinks(c):
+    """Blink every ~2-3.5 s (deterministic per clip), never within 4 frames of a release/contact event or a loop seam."""
+    if c.length < 36:
+        return ()
+    avoid = [x for x in (c.release, c.contact) if x is not None]
+    rnd = random.Random(_seed(c.name)); f = 14 + rnd.randint(0, 22); out = []
+    while f < c.length - 5:
+        if all(abs(f - a) > 4 for a in avoid):
+            out.append(f)
+        f += 60 + rnd.randint(0, 45)
+    return tuple(out)
+
+def eye_darts(poses, c):
+    """Small saccades (hold, quick 2-frame move, hold). Loops start and end on the authored gaze."""
+    rnd = random.Random(_seed(c.name) + 7); n = len(poses); keys = [(0, (0.0, 0.0))]; f = 10 + rnd.randint(0, 12)
+    while f < n - 8:
+        keys.append((f, (rnd.uniform(-4, 4), rnd.uniform(-2.5, 2.5)))); f += 18 + rnd.randint(0, 20)
+    keys.append((max(n - 6, keys[-1][0] + 2), (0.0, 0.0)))
+    out = []
+    for k, p in enumerate(poses):
+        v = keys[0][1]
+        for f0, val in keys:
+            if k >= f0:
+                u = min(1.0, (k - f0) / 2.0); v = tuple(a + (b - a) * u for a, b in zip(v, val)) if u < 1 else val
+        q = dict(p); q["eye"] = (p["eye"][0] + v[0], p["eye"][1] + v[1]); out.append(q)
+    return out
+
 def stick_lag(poses, loop, release=None):
     """Hands drive the shaft; the head lags slightly (spring on the shaft direction). The ball rolls laterally in the pocket
     against angular velocity and compresses with acceleration. Release clips only lag after the release frame (timing kept)."""
@@ -80,12 +112,15 @@ def bake_clips(arm, clips, family="field", extra_channels=()):
         for c in clips:
             act = bpy.data.actions.new(c.name); act.use_fake_user = True; ad.action = act
             poses = [c.fn(f) for f in range(0, c.length + 1)]
+            blinks = c.blinks or auto_blinks(c)
+            if c.name.startswith(CALM):
+                poses = eye_darts(poses, c)
             poses = secondary(poses, c.loop)
             if family == "field" and (c.name in ("cradle", "run_loop") or c.name.startswith(("idle", "aim_", "release_", "quick_stick"))):
                 poses = stick_lag(poses, c.loop, c.release)
             prev_q = None
             for f, p in enumerate(poses):
-                apply_pose(arm, p, family, blink=any(abs(f - b) <= 1 for b in c.blinks))
+                apply_pose(arm, p, family, blink=any(abs(f - b) <= 1 for b in blinks))
                 q = pbs["stick"].rotation_quaternion.copy()
                 if prev_q is not None and q.dot(prev_q) < 0:
                     q.negate(); pbs["stick"].rotation_quaternion = q

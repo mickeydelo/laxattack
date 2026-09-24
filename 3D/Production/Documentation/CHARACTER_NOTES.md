@@ -147,3 +147,21 @@ Every character (heroes, teammates, fans) is now **one skinned mesh with one mat
 - **Packaged round trip** (`Previews/RoundTrip/atlas_characters_roundtrip.png`): all atlas textures load from the USDZs; eyes are
   open and mouths closed at rest; fans are seated on bleacher markers.
 - **Thumbnails:** `Previews/Deliverables/characters_atlas_thumbnails.png`.
+
+
+## v6 (2026-09-23): face finish, personality layer, props atlased
+- **Clean faces.**
+  - The lid and mouth-cover skin patches now taper flush with the skin at their borders and sit closer to it (lids 5.0 mm,
+    mouth cover 4.5 mm), so no rectangles or shadow lines show.
+  - Atlases force a perfectly flat normal everywhere except fabric and hair, using a baked material mask. This removes the
+    UV-seam lines on skin, helmets and plastic.
+- **Personality layer**, baked into every character's clips:
+  - **Auto-blinks** every ~2–3.5 s on clips of 36+ frames. They never fall within 4 frames of a release or contact event or a
+    loop seam. Short focused loops (`cradle`, `aim_*`) stay unblinking on purpose.
+  - **Eye darts:** small saccades (±4°, ±2.5°) on calm clips (idles, cradle, aims, `goalie_ready`, `goalie_scan`, crowd
+    idle/watch/anticipate, `run_loop`). Loops start and end on the authored gaze.
+  - **Crowd:** each fan module has its own loop phase (0, ⅓, ⅔), so neighbours never move in sync.
+- **Props atlased:** `lax_goal` (one material, 1024 atlas, 0.6 MB) and both sticks (`lax_stick_attack`, `lax_stick_goalie`;
+  1024 atlases).
+- **Clip ranges, events, sockets and manifests are unchanged.** The goal frame is now rigidly skinned to `goal_root` (merged
+  with the net), and the hierarchy note in `lax_goal_clips.json` still applies.

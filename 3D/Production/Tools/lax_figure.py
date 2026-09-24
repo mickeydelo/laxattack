@@ -318,7 +318,7 @@ def _build_character(s, collection, arm):
         # lid: skin patch hugging the head over the eye (authored closed); lid bone rotates it up onto the forehead to open
         dA = math.degrees(ew / H.r.x) * 1.25 + 2; dE = math.degrees(eh / H.r.z) + 2
         lo = math.degrees(s["eye_size"][1] / s["head_r"][2]) * 2 + 4   # lids AUTHORED OPEN (parked on the forehead): rest frame = open eyes
-        F.add(surface_patch(H, az - dA, az + dA, el - dE + lo, el + dE + lo, 0.0065), skin, "lid_" + side)
+        F.add(surface_patch(H, az - dA, az + dA, el - dE + lo, el + dE + lo, 0.0050), skin, "lid_" + side)
         # upper lash line (painted)
         pts = [H.point(az + dx * sx, el + 14.2 - 5.0 * (dx / 12.0) ** 2) for dx in (-12, -6, 0, 6, 12)]
         pts = [tuple(V(q) + (V(q) - H.c).normalized() * 0.016) for q in pts]
@@ -351,7 +351,7 @@ def _build_character(s, collection, arm):
     F.add(H.place(ellipsoid((0, 0, 0), (mw * 0.58, 0.004, 0.018), 12, 6), 0, mel - 6.5, 0.0), "blush", "head")
     # mouth cover: skin patch that leaves only the top smile line visible; jaw bone rotates it down onto the chin to open
     mA = math.degrees(mw * 1.12 / H.r.x) * 1.25 + 2
-    F.add(surface_patch(H, -mA, mA, mel - 13.5, mel + 1.8, 0.0055), skin, "jaw")
+    F.add(surface_patch(H, -mA, mA, mel - 13.5, mel + 1.8, 0.0045), skin, "jaw")
     parts["face"] = F.build(collection, arm)
     # ---- hair
     Hb = Builder(s["name"] + "_hair")
@@ -681,13 +681,16 @@ def jaw_rot(arm, jaw):     # jaw preset value: 0.14 closed line .. 1.0 open  -> 
     o = min(1.0, max(0.0, (jaw - 0.14) / 0.86))
     return (-math.radians(arm.get("mouth_open_deg", 15.0) * o), 0, 0)
 
-def surface_patch(H, az0, az1, el0, el1, off, nu=10, nv=8):
+def surface_patch(H, az0, az1, el0, el1, off, nu=12, nv=10):
+    """Skin patch hugging the head; its border tapers flush with the skin so no step or shadow line shows."""
     verts, faces = [], []
     for j in range(nv + 1):
         for i in range(nu + 1):
             az = az0 + (az1 - az0) * i / nu; el = el0 + (el1 - el0) * j / nv
             p, tx, n, tu = H.frame(az, el)
-            verts.append(tuple(p + n * off))
+            edge = min(i / nu, 1 - i / nu, j / nv, 1 - j / nv)
+            o = 0.0004 + (off - 0.0004) * smoothstep(0.0, 0.16, edge)
+            verts.append(tuple(p + n * o))
     for j in range(nv):
         for i in range(nu):
             a = j * (nu + 1) + i

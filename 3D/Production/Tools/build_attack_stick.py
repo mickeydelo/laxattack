@@ -45,6 +45,9 @@ def build_stick_asset(kind="attack", asset="lax_stick_attack", folder="AttackSti
         c = ad.edit_bones.new(n); c.head = (0, y, 0); c.tail = (0, y + 0.04, 0); c.roll = 0; c.parent = ad.edit_bones["stick"]
     bpy.ops.object.mode_set(mode="OBJECT")
     stick, meta = build_stick(kind, C, arm, name=asset + "_mesh", frame_mat=frame_mat, pocket_mat=pocket_mat)
+    stick_tris = tri_count(stick)
+    if "atlas_character" in globals():
+        stick = atlas_character(arm, [stick], asset, sdir, 1024)[0]
     socks = {}
     socks["grip_socket"] = add_socket("grip_socket", arm, "stick", Matrix.Identity(4), C, 0.05)
     socks["pocket_socket"] = add_socket("pocket_socket", arm, "pocket_01", Matrix.Translation(meta["pocket_center"]), C, 0.04)
@@ -85,8 +88,8 @@ def build_stick_asset(kind="attack", asset="lax_stick_attack", folder="AttackSti
         "axes_blender": "shaft +Y, pocket face +Z",
         "ball_visual_radius_m": BALL_R, "pocket_depth_m": meta["depth"],
         "ball_clearance_m": round(meta["W"] * 0.93 * (0.30 + 0.70 * 0.42 ** 0.55) - BALL_R, 4), "kind": kind,
-        "tris": tri_count(stick)})
-    rep = {"tris": tri_count(stick), "materials": len(stick.data.materials), "meta": {k: (list(v) if isinstance(v, tuple) else v) for k, v in meta.items()}}
+        "tris": stick_tris})
+    rep = {"tris": stick_tris, "materials": len(stick.data.materials), "meta": {k: (list(v) if isinstance(v, tuple) else v) for k, v in meta.items()}}
     if export:
         rep["export"] = export_asset([arm, stick] + list(socks.values()), asset, asset + "_rig",
                                      os.path.join(EXP, asset + ".usdz"), 30, clips[-1].end, False, man, list(socks.keys()))

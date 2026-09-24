@@ -23,8 +23,8 @@ def build_goal_asset(export=True):
     # frame: static, parented to the rig object (not skinned)
     Bf = Builder("lax_goal_frame")
     for gg in frame_parts:
-        Bf.add(gg, "goal_orange")
-    frame = Bf.build(C, parent=arm)
+        Bf.add(gg, "goal_orange", "goal_root")          # rigidly skinned to the static root (merges with the net for one atlas)
+    frame = Bf.build(C, arm)
     # net: skinned to the bone grid, mouth rim pinned to goal_root
     def net_w(p):
         w = min(1.0, max(0.0, -p.y / gmeta["depth"]))
@@ -42,6 +42,8 @@ def build_goal_asset(export=True):
     for gg in cords:
         Bn.add(gg, "cord_white", weights=net_w)
     net = Bn.build(C, arm)
+    goal_tris = {"frame": tri_count(frame), "net": tri_count(net)}
+    body = atlas_character(arm, [frame, net], "lax_goal", GOAL_DIR, 1024) if "atlas_character" in globals() else [frame, net]
     # sockets / references (static, parented to the rig object)
     def empty(name, loc, size=0.1, scale=(1, 1, 1), kind="ARROWS"):
         e = bpy.data.objects.new(name, None); e.empty_display_type = kind; e.empty_display_size = size
@@ -119,10 +121,10 @@ def build_goal_asset(export=True):
         "mouth_m": [Wd, H], "depth_m": Dp, "pipe_radius_m": gmeta["pipe_r"],
         "goal_line": "mouth plane is at asset z = 0; the net extends toward -Z (away from the shooter)",
         "net_collision_reference": "empty whose scale gives the half-extents of a simple box covering the net volume",
-        "tris": {"frame": tri_count(frame), "net": tri_count(net)}})
-    rep = {"tris": man["tris"], "materials": len(frame.data.materials) + len(net.data.materials)}
+        "tris": goal_tris})
+    rep = {"tris": goal_tris, "materials": sum(len(o.data.materials) for o in body)}
     if export:
-        rep["export"] = export_asset([arm, frame, net] + list(socks.values()), "lax_goal", "lax_goal_rig", os.path.join(EXP, "lax_goal.usdz"),
+        rep["export"] = export_asset([arm] + body + list(socks.values()), "lax_goal", "lax_goal_rig", os.path.join(EXP, "lax_goal.usdz"),
                                      30, clips[-1].end, False, man, list(socks.keys()))
         with open(os.path.join(EXP, "lax_goal_clips.json"), "w") as fh:
             json.dump(man, fh, indent=2)

@@ -40,13 +40,24 @@ FAN_CLIPS = [
          head_rot=(-10, 0, -6 * math.sin(ph)), face="big_smile")), notes="arms-up sway"),
 ]
 
+def _fan_clips(asset):
+    """Each fan module gets its own phase and energy so neighbours never move in sync."""
+    k = {"lax_fan_a": (0.0, 1.0), "lax_fan_b": (0.33, 0.85), "lax_fan_c": (0.66, 1.2)}.get(asset, (0.0, 1.0))
+    out = []
+    for c in FAN_CLIPS:
+        fn = c.fn
+        if c.loop:
+            fn = (lambda f0, N, sh: (lambda t: f0((t + sh) % N)))(c.fn, c.length, int(round(k[0] * c.length)))
+        out.append(Clip(c.name, c.start, c.length, c.loop, fn, c.contact, c.release, c.transition, c.notes, c.blinks, meta=c.meta))
+    return out
+
 def build_fan(spec, asset):
     reset_scene("LaxAttack_" + asset)
     C = coll(asset)
     arm = build_skeleton(spec, C, asset + "_rig")
     parts = build_character(spec, C, arm)
     calibrate_poles(arm, [SEAT, S(**UP), S(G=(-0.11, -0.28, 0.82))], "field")
-    bake_clips(arm, FAN_CLIPS, "field")
+    bake_clips(arm, _fan_clips(asset), "field")
     os.makedirs(CROWD_DIR, exist_ok=True)
     meshes = atlas_character(arm, list(parts.values()), asset, CROWD_DIR, 1024) if "atlas_character" in globals() else list(parts.values())
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(CROWD_DIR, "LaxAttack_" + asset + ".blend"), compress=True)

@@ -96,6 +96,20 @@ def atlas_character(arm, meshes, asset, out_dir, res=2048):
     for k, cs in (("albedo", "sRGB"), ("ao", "Non-Color"), ("rough", "Non-Color"), ("normal", "Non-Color")):
         im = bpy.data.images.new(asset + "_" + k, res, res, alpha=False, float_buffer=False); im.colorspace_settings.name = cs; imgs[k] = im
     _bake(ob, "DIFFUSE", imgs["albedo"]); _bake(ob, "AO", imgs["ao"], 40); _bake(ob, "ROUGHNESS", imgs["rough"]); _bake(ob, "NORMAL", imgs["normal"])
+    mask = bpy.data.images.new(asset + "_mask", res, res, alpha=False); mask.colorspace_settings.name = "Non-Color"
+    saved = {}
+    for m in ob.data.materials:                         # emission mask: 1 where the normal map carries real detail
+        b = m.node_tree.nodes.get("Principled BSDF"); base = m.name.replace("M_", "")
+        on = 1.0 if base.startswith(FABRIC) or base.startswith(HAIRS) else 0.0
+        saved[m] = (tuple(b.inputs["Emission Color"].default_value), b.inputs["Emission Strength"].default_value)
+        b.inputs["Emission Color"].default_value = (on, on, on, 1); b.inputs["Emission Strength"].default_value = 1.0
+    _bake(ob, "EMIT", mask)
+    for m, (c_, s_) in saved.items():
+        b = m.node_tree.nodes.get("Principled BSDF"); b.inputs["Emission Color"].default_value = c_; b.inputs["Emission Strength"].default_value = s_
+    mk = np.array(mask.pixels[:], np.float32).reshape(res, res, 4)[..., :1]
+    nn = np.array(imgs["normal"].pixels[:], np.float32).reshape(res, res, 4)
+    nn[..., :3] = nn[..., :3] * mk + np.array([0.5, 0.5, 1.0], np.float32) * (1 - mk)
+    imgs["normal"].pixels = nn.ravel(); bpy.data.images.remove(mask)
     sc.render.engine = eng
     a = np.array(imgs["albedo"].pixels[:], np.float32).reshape(res, res, 4); ao = np.array(imgs["ao"].pixels[:], np.float32).reshape(res, res, 4)
     o = ao[..., 0]
