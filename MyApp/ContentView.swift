@@ -79,6 +79,7 @@ struct GameplayScreen: View {
         ZStack {
             RealityView { content in
                 content.camera = .virtual
+                content.renderingEffects.depthOfField = .enabled
                 gameScene.build(in: &content, session: session)
                 await gameScene.installAuthoredShooter()
             }

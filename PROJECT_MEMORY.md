@@ -228,3 +228,9 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - Device capture showed the unlit contact-shadow cylinders as opaque black disks beneath the shooter, goalie, cage, and spectators. Removed the fallback meshes completely; the scene now relies on the warm shadow-casting directional light and authored material shadow reception.
 - Replaced the goalie's continuously sliding sine-wave patrol with staged push/travel/plant motion: the controller holds at each crease position, eases across during the middle of the authored shuffle, adds a restrained travel lift, and selects the matching left/right clip from the same direction signal.
 - Added small three-axis ball lag inside `pocket_socket` while cradling, reduced during aim. True pocket deformation and stick-head flex must be authored into the skinned shooter/stick clips; exact Blender requirements are recorded in `RUNTIME_INTEGRATION_FEEDBACK.md`.
+
+# 2026-09-23 — Native diorama depth pass
+
+- Enabled the iOS 27 `RealityView` native depth-of-field rendering effect. This is the preferred performance-tier effect for soft foreground/background staging; the goal, goalie, shooter, and ball remain the gameplay focus band.
+- USD inspection showed the apparent tree trunk in the lake is the arena's `midground/sailboat` or `sailboat_001` mast rendering without a readable hull/sail. Both static boats are quarantined until Blender supplies corrected complete silhouettes. The animated ambient asset remains disabled because its tree transforms are also invalid.
+- Clean Xcode build with native DOF enabled.

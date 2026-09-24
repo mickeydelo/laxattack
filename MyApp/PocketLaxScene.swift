@@ -302,6 +302,10 @@ final class PocketLaxScene {
             setGroup(named: "foreground_framing", enabled: false, under: importedArena)
             setGroup(named: "foreground_framing_soft", enabled: true, under: importedArena)
             setGroup(named: "collision_only", enabled: false, under: importedArena)
+            // The current mobile export contains sailboat masts without readable hulls/sails,
+            // which look like tree trunks planted in the lake from the gameplay camera.
+            setGroup(named: "sailboat", enabled: false, under: importedArena)
+            setGroup(named: "sailboat_001", enabled: false, under: importedArena)
             arenaRoot.addChild(importedArena)
             adoptAuthoredCameraMarkers(from: importedArena, relativeTo: arenaRoot)
             proceduralEnvironment?.isEnabled = false
