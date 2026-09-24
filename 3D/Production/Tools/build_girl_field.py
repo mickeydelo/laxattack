@@ -244,10 +244,10 @@ def build_girl(export=True):
     Ms = ad.bones["stick"].matrix_local.copy()
     socks["ball_contact_socket"] = add_socket("ball_contact_socket", arm, "pocket_01", Ms @ Matrix.Translation(meta["ball_contact"]), C, 0.03)
     ad.pose_position = "POSE"
+    meshes = atlas_character(arm, list(parts.values()) + [stick], "lax_shooter", GF_DIR) if "atlas_character" in globals() else list(parts.values()) + [stick]
     cal = [GB, AIM_O, AIM_S, prep_keys(REL_O)[4][1], prep_keys(CEL)[3][1], QS]
     poles = calibrate_poles(arm, cal, "field")
     bake_clips(arm, CLIPS, "field")
-    meshes = list(parts.values()) + [stick]
     rep = {"poles": poles, "validation": validate_character(arm, CLIPS, meshes, meta, REQUIRED_SOCKETS, REQUIRED_CLIPS)}
     os.makedirs(GF_DIR, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(GF_DIR, "LaxAttack_GirlField.blend"), compress=True)

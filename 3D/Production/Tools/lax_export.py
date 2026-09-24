@@ -76,11 +76,27 @@ def export_asset(objects, root_name, content_name, out_usdz, fps=30, end_frame=0
     rep["objects"] = [o.name for o in objects]
     return rep
 
-def export_lods(rep, root_name, content_name, out_usdz, ratios, fps=30, end_frame=0, manifest=None, animated=True):
+def export_lods(rep, root_name, content_name, out_usdz, ratios, fps=30, end_frame=0, manifest=None, animated=True, protect=True):
     """Decimated LODs of an already-exported (baked) asset: <name>_lod1.usdz, _lod2.usdz ..."""
     res = {}; objs = [bpy.data.objects[n] for n in rep["objects"] if n in bpy.data.objects]; prev = 1.0
+    seen = set()                                    # LODs reference 1024 copies of any larger texture
+    for o in objs:
+        if o.type != "MESH":
+            continue
+        for m in o.data.materials:
+            if not (m and m.node_tree):
+                continue
+            for nd in m.node_tree.nodes:
+                im = getattr(nd, "image", None)
+                if im is None or im.name in seen or im.size[0] <= 1024:
+                    continue
+                seen.add(im.name); fp = bpy.path.abspath(im.filepath); root_, ext = os.path.splitext(fp)
+                if "_1k" in root_:
+                    continue
+                im.scale(1024, 1024); new = root_ + "_1k" + ext; im.filepath_raw = new
+                im.file_format = "JPEG" if ext.lower() in (".jpg", ".jpeg") else "PNG"; im.save(); im.filepath = new
     for i, r in enumerate(ratios, 1):
-        hb = globals().get("HEAD_BONES", set())
+        hb = globals().get("HEAD_BONES", set()) if protect else set()
         for o in objs:
             if o.type == "MESH" and len(o.data.polygons) > 60:
                 m = o.modifiers.new("lod", "DECIMATE"); m.ratio = r / prev

@@ -35,3 +35,8 @@ Phase 1 commit: `3ef396d58503f5e7844da3cee169684900893c22`.
   full head. Current LOD2 sizes: 13k (shooter), about 20k (helmeted heroes).
 - **Character texture atlases** (painted-vinyl AO, fabric weave, decals) are not built yet; materials are still flat PBR values.
 - **IBL orientation** must be confirmed on device (see LIGHTING_KIT.md).
+- **Atlas seams:** faint UV seam lines can show on faces in extreme close-ups (tangent-space normal seams). They are not visible
+  at gameplay scale.
+- **Atlas file sizes:** heroes about 5.3–5.6 MB (LODs about 3.5–3.8 MB), fans about 2 MB.
+- **Crowd LODs** decimate faces too; they are only meant for midground and distant use.
+- **(Resolved)** the note about flat PBR character materials.

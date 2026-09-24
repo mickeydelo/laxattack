@@ -129,3 +129,21 @@ Women's field lacrosse uses a different kit from the men's game, per Mickey's re
 - **Behaviour mapping:** track ball = `idle_competitive`/`watch`; cut = `split_dodge_*`/`roll_dodge_*`; catch = `quick_stick_catch`;
   pass = `release_sidearm`; check = `face_dodge_*`; celebrate/react = the celebration and reaction clips.
 - Add more variants by copying a spec line in `build_phase7_heroes.py`.
+
+
+## v5: painted-vinyl texture atlases (2026-09-23)
+Every character (heroes, teammates, fans) is now **one skinned mesh with one material** carrying a baked atlas
+(`Tools/lax_atlas.py`). This replaces the 13–19 flat materials each character had before.
+
+- **Albedo** (`<asset>_albedo.jpg`, 2048; 1024 for fans):
+  - the original paint colours with subtle mottling (skin and face paint stay clean);
+  - a soft top-lit gradient;
+  - baked ambient occlusion (blurred, floor-clamped, 20% strength) for contact shading in creases.
+- **Roughness** (`<asset>_rough.jpg`): per-material values ±0.07 noise, so there's no uniform plastic gloss.
+- **Normal** (`<asset>_normal.png`, 1024): fabric weave on kits and gloves, sculpted strand bands on hair.
+- Final material: UsdPreviewSurface with base colour, roughness and normal textures, metallic 0, a light coat.
+- Textures live in `Characters/<Folder>/Textures/` and are packed inside each USDZ.
+- LOD files reference 1024 copies (`*_1k`).
+- **Packaged round trip** (`Previews/RoundTrip/atlas_characters_roundtrip.png`): all atlas textures load from the USDZs; eyes are
+  open and mouths closed at rest; fans are seated on bleacher markers.
+- **Thumbnails:** `Previews/Deliverables/characters_atlas_thumbnails.png`.

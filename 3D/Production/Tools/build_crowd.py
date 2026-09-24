@@ -47,8 +47,8 @@ def build_fan(spec, asset):
     parts = build_character(spec, C, arm)
     calibrate_poles(arm, [SEAT, S(**UP), S(G=(-0.11, -0.28, 0.82))], "field")
     bake_clips(arm, FAN_CLIPS, "field")
-    meshes = list(parts.values())
     os.makedirs(CROWD_DIR, exist_ok=True)
+    meshes = atlas_character(arm, list(parts.values()), asset, CROWD_DIR, 1024) if "atlas_character" in globals() else list(parts.values())
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(CROWD_DIR, "LaxAttack_" + asset + ".blend"), compress=True)
     man = manifest(asset, FAN_CLIPS, perspective="none", extra={
         "usage": "seated spectator; place the root on the bleacher seat top; offset clip start times per instance for asynchronous motion",
@@ -62,7 +62,7 @@ def build_fan(spec, asset):
     tris = sum(tri_count(o) for o in meshes)
     path = os.path.join(EXP, asset + ".usdz")
     e = export_asset([arm] + meshes, asset, asset + "_rig", path, 30, FAN_CLIPS[-1].end, False, man, ())
-    lods = export_lods(e, asset, asset + "_rig", path, (0.45, 0.18), 30, FAN_CLIPS[-1].end, man)
+    lods = export_lods(e, asset, asset + "_rig", path, (0.45, 0.18), 30, FAN_CLIPS[-1].end, man, protect=False)   # crowd faces are tiny at range
     with open(os.path.join(EXP, asset + "_clips.json"), "w") as fh:
         json.dump(man, fh, indent=2)
     return {"tris": tris, "y": e["baked_y_range"], "lods": {k: v["tris"] for k, v in lods.items()}}

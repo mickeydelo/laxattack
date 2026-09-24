@@ -39,11 +39,12 @@ def build_variant(spec, asset, clips_src, family, kind, required, stick_kind, fr
     Ms = ad.bones["stick"].matrix_local.copy()
     socks["ball_contact_socket"] = add_socket("ball_contact_socket", arm, "pocket_01", Ms @ Matrix.Translation(meta["ball_contact"]), C, 0.03)
     ad.pose_position = "POSE"
+    d = os.path.join(PROD, "Characters", spec.get("folder", "BoyField" if kind == "boy" else "GirlGoalie")); os.makedirs(d, exist_ok=True)
+    meshes = atlas_character(arm, list(parts.values()) + [stick], asset, d) if "atlas_character" in globals() else list(parts.values()) + [stick]
     clips = [Clip(c.name, c.start, c.length, c.loop, (c.fn if c.meta.get("travel_meters") else personality(c.fn, kind, float(c.length) if c.loop else 24.0)),
                   c.contact, c.release, c.transition, c.notes, c.blinks, meta=c.meta) for c in clips_src]
     calibrate_poles(arm, cal, family)
     bake_clips(arm, clips, family, GOALIE_EXTRA if family == "goalie" else ())
-    meshes = list(parts.values()) + [stick]
     rep = {"validation": validate_character(arm, clips, meshes, meta, REQUIRED_SOCKETS, required)}
     d = os.path.join(PROD, "Characters", spec.get("folder", "BoyField" if kind == "boy" else "GirlGoalie")); os.makedirs(d, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(d, "LaxAttack_" + spec["name"] + ".blend"), compress=True)

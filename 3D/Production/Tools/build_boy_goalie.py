@@ -156,9 +156,9 @@ def build_goalie(export=True):
     Ms = ad.bones["stick"].matrix_local.copy()
     socks["ball_contact_socket"] = add_socket("ball_contact_socket", arm, "pocket_01", Ms @ Matrix.Translation(meta["ball_contact"]), C, 0.03)
     ad.pose_position = "POSE"
+    meshes = atlas_character(arm, list(parts.values()) + [stick], "lax_goalie", BG_DIR) if "atlas_character" in globals() else list(parts.values()) + [stick]
     poles = calibrate_poles(arm, [GK, READ_L, SAVE_L, SAVE_HL, mirror(SAVE_L)], "goalie")
     bake_clips(arm, BG_CLIPS, "goalie", GOALIE_EXTRA)
-    meshes = list(parts.values()) + [stick]
     rep = {"poles": poles, "validation": validate_character(arm, BG_CLIPS, meshes, meta, REQUIRED_SOCKETS, GOALIE_CLIPS)}
     os.makedirs(BG_DIR, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(BG_DIR, "LaxAttack_BoyGoalie.blend"), compress=True)
