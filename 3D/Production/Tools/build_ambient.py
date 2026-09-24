@@ -217,6 +217,8 @@ def build_ambient(export=True):
     sc = bpy.context.scene; sc.frame_start = 0; sc.frame_end = GUST0 + GUST_N
     sc.timeline_markers.new("ambient_loop", frame=0); sc.timeline_markers.new("ambient_gust", frame=GUST0)
     objs = [o for o in bpy.data.objects if o.name.startswith(("amb_", "lax_arena_ambient"))]
+    if "palette_materials" in globals():
+        palette_materials([o for o in objs if o.type == "MESH"], "ambient", os.path.join(PROD, "Arena", "Textures"))
     tris = sum(tri_count(o) for o in objs if o.type == "MESH")
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(PROD, "Arena", "LaxAttack_Ambient.blend"), compress=True)
     clips = [Clip("ambient_loop", 0, N_LOOP, True, None, notes="seamless 8 s breeze; per-object phase/amplitude variation"),

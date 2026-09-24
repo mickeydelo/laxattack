@@ -107,3 +107,17 @@ Each has a `_target` empty:
     `yaw_deg_about_game_Y`.
 - **Turf:** a flattened traffic path from the shooter spot to the crease front. Hero tufts appear only near the camera, with
   varied scale, lean and colour (including dry tips).
+
+
+## v6 update: palette material (draw-call reduction)
+Every flat-colour surface in the arena and the ambient layer now shares **one palette material**. Each colour and roughness is a
+swatch in a small texture (`Arena/Textures/arena_palette_color.png` / `_rough.png`, and `ambient_palette_*`), and each face's UVs
+sit at its swatch centre, so the base mip level is always sampled and swatch colours never bleed.
+
+| Asset | Materials |
+|---|---|
+| `lax_arena_pinebrook*` | 4: palette, field turf (PBR set), meadow turf, sky gradient (was about 50) |
+| `lax_arena_ambient` | 1 |
+
+Checks re-run on the packaged files: frame 0 vs static twins 0.000 m, no objects near the origin, colours verified in a
+round-trip render (`Previews/RoundTrip/palette_arena_roundtrip.png`).

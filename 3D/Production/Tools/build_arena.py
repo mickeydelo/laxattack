@@ -217,6 +217,8 @@ def build_arena(export=True):
                        "contact": "seat surface (place the fan root = seat - root_offset)"} for n, loc, yaw in seats}
     rep_markers.update({n: {"position_game": [round(-l[0], 3), round(l[2], 3), round(l[1], 3)]} for n, l in refs.items()})
     bpy.context.view_layer.update()
+    if "palette_materials" in globals():         # one shared palette material for every flat-colour surface
+        palette_materials(meshes, "arena", os.path.join(PROD, "Arena", "Textures"))
     for o in meshes + marks:                     # unique ASCII names (no .001 nodes)
         if "." in o.name:
             o.name = o.name.replace(".", "_")

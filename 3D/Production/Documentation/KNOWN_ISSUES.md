@@ -40,3 +40,4 @@ Phase 1 commit: `3ef396d58503f5e7844da3cee169684900893c22`.
 - **Atlas file sizes:** heroes about 5.3–5.6 MB (LODs about 3.5–3.8 MB), fans about 2 MB.
 - **Crowd LODs** decimate faces too; they are only meant for midground and distant use.
 - **(Resolved)** the note about flat PBR character materials.
+- **(Resolved)** arena material count: the arena now uses 4 materials and the ambient layer uses 1 (shared palette).
