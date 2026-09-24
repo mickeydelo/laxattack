@@ -306,7 +306,6 @@ struct GameHUD: View {
             GameHeader(
                 score: score,
                 bestScore: bestScore,
-                modeTitle: run.title,
                 onPause: onPause
             )
 
@@ -320,53 +319,17 @@ struct GameHUD: View {
                     secondsRemaining: secondsRemaining
                 )
                 Spacer()
-                if isClutchShot {
-                    Label("CLUTCH ×2", systemImage: "bolt.fill")
-                        .font(.caption.bold())
-                        .foregroundStyle(.yellow)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(.purple.opacity(0.82), in: Capsule())
-                } else if isOnFire {
-                    Label("ON FIRE", systemImage: "flame.fill")
-                        .font(.caption.bold())
-                        .foregroundStyle(.yellow)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(.orange.opacity(0.82), in: Capsule())
-                }
-                if goalieLevel > 0, !isClutchShot, !isOnFire {
-                    Text("LEVEL \(goalieLevel)")
-                        .font(.system(size: 11, weight: .black, design: .rounded))
-                        .tracking(1.1)
-                        .foregroundStyle(.white.opacity(0.9))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(PocketLaxStyle.ink.opacity(0.76), in: Capsule())
-                }
+                MomentumBadge(
+                    combo: combo,
+                    goalieLevel: goalieLevel,
+                    isOnFire: isOnFire,
+                    isClutchShot: isClutchShot
+                )
             }
 
-            ShotCallout(feedback: feedback, combo: combo)
+            TargetDirective(hotZone: hotZone)
 
-            HStack(spacing: 6) {
-                Image(systemName: "scope")
-                Text(hotZone.title)
-                Text("•")
-                    .foregroundStyle(.white.opacity(0.45))
-                Text(hotZone.shotHint)
-                    .foregroundStyle(PocketLaxStyle.sky)
-                Text("+200")
-                    .foregroundStyle(PocketLaxStyle.gold)
-            }
-            .font(.system(size: 12, weight: .black, design: .rounded))
-            .tracking(0.8)
-            .lineLimit(1)
-            .minimumScaleFactor(0.72)
-            .foregroundStyle(.white)
-            .padding(.horizontal, 13)
-            .padding(.vertical, 7)
-            .background(PocketLaxStyle.ink.opacity(0.82), in: Capsule())
-            .overlay { Capsule().stroke(.white.opacity(0.18), lineWidth: 1) }
+            ShotCallout(feedback: feedback)
 
             if let challenge = run.challenge, let challengeProgress {
                 ChallengeProgressCard(
@@ -507,44 +470,32 @@ struct QuickStickMeter: View {
 struct GameHeader: View {
     let score: Int
     let bestScore: Int
-    let modeTitle: LocalizedStringResource
     let onPause: () -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: 10) {
-            HStack(spacing: 8) {
-                Button(action: onPause) {
-                    Image(systemName: "pause.fill")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.white)
-                        .frame(width: 40, height: 40)
-                        .background(PocketLaxStyle.ink.opacity(0.86), in: Circle())
-                        .overlay { Circle().stroke(.white.opacity(0.2), lineWidth: 1) }
-                }
-                .buttonStyle(.plain)
-
-                VStack(alignment: .leading, spacing: -1) {
-                    Text("LAX ATTACK")
-                        .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
-                    Text(modeTitle)
-                        .font(.system(size: 9, weight: .bold, design: .rounded))
-                        .foregroundStyle(PocketLaxStyle.sky)
-                }
+        HStack(alignment: .top, spacing: 10) {
+            Button(action: onPause) {
+                Image(systemName: "pause.fill")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundStyle(.white.opacity(0.88))
+                    .frame(width: 30, height: 30)
+                    .background(PocketLaxStyle.ink.opacity(0.7), in: Circle())
+                    .overlay { Circle().stroke(.white.opacity(0.15), lineWidth: 1) }
             }
-            .tracking(1.2)
+            .buttonStyle(.plain)
+            .accessibilityLabel("Pause")
 
             Spacer()
 
-            HStack(spacing: 13) {
+            HStack(spacing: 11) {
                 HeaderStat(title: "SCORE", value: score)
-                Divider().overlay(.white.opacity(0.25)).frame(height: 28)
+                Divider().overlay(.white.opacity(0.2)).frame(height: 24)
                 HeaderStat(title: "BEST", value: bestScore)
             }
-            .padding(.horizontal, 13)
-            .padding(.vertical, 7)
-            .background(PocketLaxStyle.ink.opacity(0.86), in: RoundedRectangle(cornerRadius: 18))
-            .overlay { RoundedRectangle(cornerRadius: 18).stroke(.white.opacity(0.16), lineWidth: 1) }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(PocketLaxStyle.ink.opacity(0.82), in: RoundedRectangle(cornerRadius: 16))
+            .overlay { RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.13), lineWidth: 1) }
         }
     }
 }
@@ -557,7 +508,7 @@ struct HeaderStat: View {
         VStack(spacing: 1) {
             Text(title).font(.system(size: 9, weight: .bold, design: .rounded)).foregroundStyle(.white.opacity(0.62))
             Text(value, format: .number)
-                .font(.system(size: 21, weight: .black, design: .rounded))
+                .font(.system(size: 19, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
                 .contentTransition(.numericText())
         }
@@ -628,26 +579,114 @@ struct RunStatusBadge: View {
 
 struct ShotCallout: View {
     let feedback: ShotFeedback
-    let combo: Int
 
     var body: some View {
-        VStack(spacing: 3) {
-            Text(feedback.title)
-                .font(.title.bold())
-                .foregroundStyle(feedback.color)
-                .shadow(color: .black.opacity(0.75), radius: 4, y: 2)
-                .id(feedback)
-                .transition(.scale.combined(with: .opacity))
+        Text(feedback.title)
+            .font(.system(size: 22, weight: .black, design: .rounded))
+            .foregroundStyle(feedback.color)
+            .shadow(color: .black.opacity(0.55), radius: 3, y: 2)
+            .id(feedback)
+            .transition(.scale(scale: 0.9).combined(with: .opacity))
+        .animation(.bouncy(duration: 0.35), value: feedback)
+    }
+}
 
-            if combo > 1 {
-                Text("×\(combo) COMBO")
-                    .font(.headline.bold())
-                    .foregroundStyle(.orange)
-                    .shadow(color: .black.opacity(0.7), radius: 3, y: 2)
-                    .contentTransition(.numericText())
+struct TargetDirective: View {
+    let hotZone: HotZone
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "scope")
+                .font(.system(size: 14, weight: .black))
+                .foregroundStyle(PocketLaxStyle.sky)
+                .frame(width: 30, height: 30)
+                .background(PocketLaxStyle.sky.opacity(0.13), in: Circle())
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text(hotZone.title)
+                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                Text(hotZone.shotHint)
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .tracking(0.7)
+                    .foregroundStyle(.white.opacity(0.58))
+            }
+
+            Spacer(minLength: 10)
+
+            Text("+200")
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .foregroundStyle(PocketLaxStyle.gold)
+        }
+        .padding(.leading, 7)
+        .padding(.trailing, 12)
+        .padding(.vertical, 6)
+        .frame(maxWidth: 240)
+        .background(PocketLaxStyle.ink.opacity(0.84), in: RoundedRectangle(cornerRadius: 17))
+        .overlay(alignment: .leading) {
+            Capsule()
+                .fill(PocketLaxStyle.sky)
+                .frame(width: 3, height: 28)
+                .offset(x: -1)
+        }
+        .overlay { RoundedRectangle(cornerRadius: 17).stroke(.white.opacity(0.12), lineWidth: 1) }
+    }
+}
+
+struct MomentumBadge: View {
+    let combo: Int
+    let goalieLevel: Int
+    let isOnFire: Bool
+    let isClutchShot: Bool
+
+    var body: some View {
+        HStack(spacing: 7) {
+            Image(systemName: symbolName)
+                .font(.system(size: 11, weight: .black))
+                .foregroundStyle(accent)
+
+            if combo > 1 || isOnFire || isClutchShot {
+                if combo > 1 {
+                    Text("×\(combo)")
+                        .font(.system(size: 17, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                        .contentTransition(.numericText())
+                }
+                Text(label)
+                    .font(.system(size: 9, weight: .black, design: .rounded))
+                    .tracking(0.8)
+                    .foregroundStyle(.white.opacity(0.6))
+            } else {
+                Text("LEVEL \(goalieLevel)")
+                    .font(.system(size: 10, weight: .black, design: .rounded))
+                    .tracking(0.8)
+                    .foregroundStyle(.white.opacity(0.72))
             }
         }
-        .animation(.bouncy(duration: 0.35), value: feedback)
+        .padding(.horizontal, 11)
+        .frame(height: 34)
+        .background(PocketLaxStyle.ink.opacity(0.82), in: Capsule())
+        .overlay { Capsule().stroke(accent.opacity(0.38), lineWidth: 1) }
+        .shadow(color: accent.opacity(isOnFire || isClutchShot ? 0.3 : 0), radius: 8)
+        .animation(.bouncy(duration: 0.3), value: combo)
+    }
+
+    private var symbolName: String {
+        if isClutchShot { return "bolt.fill" }
+        if isOnFire { return "flame.fill" }
+        return "gauge.with.dots.needle.67percent"
+    }
+
+    private var label: LocalizedStringResource {
+        if isClutchShot { return "CLUTCH" }
+        if isOnFire { return "HOT STREAK" }
+        return "STREAK"
+    }
+
+    private var accent: Color {
+        if isClutchShot { return .purple }
+        if isOnFire { return PocketLaxStyle.gold }
+        return PocketLaxStyle.sky
     }
 }
 

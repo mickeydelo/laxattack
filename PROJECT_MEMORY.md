@@ -243,3 +243,11 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - Pulling down more than 34 points enters a guaranteed cancel state. `RELEASE TO CANCEL` slides in from the bottom; aim/dodge state and the trajectory guide clear immediately, and releasing cannot launch the ball.
 - Adjusted the warm key light to a more raking angle and increased its shadow range so real character/cage silhouettes replace dark overhead footprints. No fallback shadow geometry exists in runtime.
 - Clean Xcode build after the interaction/physics pass.
+
+# 2026-09-23 — Gameplay information hierarchy cleanup
+
+- Removed the `LAX ATTACK / SURVIVAL` identity block from gameplay; branding and mode naming belong outside the active playfield.
+- Reduced Pause to a quiet 30-point circular control in the upper-leading corner while preserving a larger semantic button and accessibility label.
+- Replaced the unrelated called-shot, combo, on-fire, clutch, and pressure badge styles with two coordinated components: a compact target directive card and a single momentum capsule. Combo, hot streak, clutch, and goalie level now share typography, materials, borders, and motion.
+- Removed combo text from the large result callout so transient shot feedback has one job and does not compete with the persistent streak state.
+- Clean Xcode build after the HUD hierarchy pass.
