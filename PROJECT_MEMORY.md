@@ -222,3 +222,9 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - Rebuilt gameplay chrome around a dark pine-ink, sky-blue, and goal-gold palette; reduced label density, compacted the score/lives hierarchy, replaced rectangular shot tabs with rounded pills, and shortened the instruction to `FLICK TO SHOOT`.
 - Reworked the home shell with rounded display typography, a dimensional gold primary action, compact mode rows, stronger card depth, and a more cohesive diorama color palette. This is still code-native art direction; final professional menu presentation needs authored logo/illustration assets.
 - Clean Xcode build after the pass.
+
+# 2026-09-23 — 8:09 shadow and motion correction
+
+- Device capture showed the unlit contact-shadow cylinders as opaque black disks beneath the shooter, goalie, cage, and spectators. Removed the fallback meshes completely; the scene now relies on the warm shadow-casting directional light and authored material shadow reception.
+- Replaced the goalie's continuously sliding sine-wave patrol with staged push/travel/plant motion: the controller holds at each crease position, eases across during the middle of the authored shuffle, adds a restrained travel lift, and selects the matching left/right clip from the same direction signal.
+- Added small three-axis ball lag inside `pocket_socket` while cradling, reduced during aim. True pocket deformation and stick-head flex must be authored into the skinned shooter/stick clips; exact Blender requirements are recorded in `RUNTIME_INTEGRATION_FEEDBACK.md`.

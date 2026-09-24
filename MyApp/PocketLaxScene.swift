@@ -103,6 +103,7 @@ final class PocketLaxScene {
     private var goalieReadTime: Float = 0
     private var goalieReadDirection: Float = 0
     private var goalieReadStrength: Float = 0
+    private var goalieShuffleDirection: Float = 1
     private var goalieCommitState: CharacterPerformanceState?
     private var goalieReactionState: CharacterPerformanceState = .goalieReady
     private var shooterReactionState: CharacterPerformanceState?
@@ -216,7 +217,6 @@ final class PocketLaxScene {
             shooterLegs.removeAll()
 
             importedShooter.position = [shooterBaseX, 0, 1.72]
-            addToyContactShadow(size: [0.78, 0.42], to: importedShooter)
             arenaRoot.addChild(importedShooter)
             shooter = importedShooter
             shooterStick = importedShooter.findEntity(named: "stick_socket")
@@ -256,7 +256,6 @@ final class PocketLaxScene {
             controller.name = "Goalie Controller"
             controller.position = [0, 0, goalLineZ + 0.5]
             importedGoalie.name = "Goalie Visual"
-            addToyContactShadow(size: [0.86, 0.46], to: importedGoalie)
             controller.addChild(importedGoalie)
 
             let hitbox = Entity()
@@ -282,8 +281,6 @@ final class PocketLaxScene {
             let importedGoal = try await CharacterAssetContract.load(named: CharacterAssetContract.goalAssetName)
             let driver = try CharacterAssetContract.prepareTimeline(importedGoal, manifestName: "lax_goal_clips")
             importedGoal.position = [0, 0, goalLineZ]
-            addToyContactShadow(size: [2.15, 1.05], to: importedGoal)
-
             goalNet?.removeFromParent()
             goalNet = importedGoal
             hideModels(named: "Goal Pipe", under: arenaRoot)
@@ -353,20 +350,6 @@ final class PocketLaxScene {
         cameraTarget = cameraRestTarget
     }
 
-    private func addToyContactShadow(size: SIMD2<Float>, to entity: Entity) {
-        let material = UnlitMaterial(
-            color: UIColor(white: 0.03, alpha: 0.34)
-        )
-        let shadow = ModelEntity(
-            mesh: .generateCylinder(height: 0.006, radius: 0.5),
-            materials: [material]
-        )
-        shadow.name = "Contact Shadow"
-        shadow.scale = [size.x, 1, size.y]
-        shadow.position.y = 0.006
-        entity.addChild(shadow)
-    }
-
     private func installSupportCast(in arenaRoot: Entity) async {
         guard ambientAnimationDrivers.isEmpty else { return }
 
@@ -420,10 +403,6 @@ final class PocketLaxScene {
             let driver = try CharacterAssetContract.prepareTimeline(entity, manifestName: manifestName)
             entity.position = position
             entity.orientation = simd_quatf(angle: yaw, axis: [0, 1, 0])
-            addToyContactShadow(
-                size: clipName == "crowd_idle" ? [0.52, 0.3] : [0.66, 0.36],
-                to: entity
-            )
             arenaRoot.addChild(entity)
             driver.transition(to: clipName, duration: 0)
             ambientAnimationDrivers.append(driver)
@@ -824,7 +803,13 @@ final class PocketLaxScene {
               let pocket = shooter?.findEntity(named: "pocket_socket"),
               let parent = ball.parent else { return }
 
-        ball.setPosition(pocket.position(relativeTo: parent), relativeTo: parent)
+        var pocketPosition = pocket.position(relativeTo: parent)
+        let cradlePhase = Float(elapsedTime) * 5.4
+        let cradleAmount: Float = isAiming ? 0.008 : 0.022
+        pocketPosition.x += sin(cradlePhase) * cradleAmount
+        pocketPosition.y += abs(cos(cradlePhase)) * cradleAmount * 0.45
+        pocketPosition.z += cos(cradlePhase) * cradleAmount * 0.22
+        ball.setPosition(pocketPosition, relativeTo: parent)
     }
 
     private func updateGoalie(deltaTime: Float, level: Int, seed: Int) {
@@ -832,10 +817,17 @@ final class PocketLaxScene {
 
         let speed = 1.15 + Float(level) * 0.2
         let amplitude = 0.45 + Float(level) * 0.06
-        let readyBounce = sin(Float(elapsedTime) * 4.6) * 0.018
         let seedPhase = Float(seed % 997) / 997 * .pi * 2
-        var x = sin(Float(elapsedTime) * speed + seedPhase) * amplitude
-        var rootY = readyBounce
+        let travel = Float(elapsedTime) * speed + seedPhase
+        let stepNumber = Int(floor(travel / .pi))
+        let stepPhase = (travel.truncatingRemainder(dividingBy: .pi)) / .pi
+        let stepStart: Float = stepNumber.isMultiple(of: 2) ? -amplitude : amplitude
+        let stepEnd = -stepStart
+        let movingPhase = max(0, min(1, (stepPhase - 0.22) / 0.56))
+        let plantedProgress = movingPhase * movingPhase * (3 - 2 * movingPhase)
+        var x = stepStart + (stepEnd - stepStart) * plantedProgress
+        var rootY = sin(plantedProgress * .pi) * 0.025
+        goalieShuffleDirection = stepEnd > stepStart ? 1 : -1
         var roll: Float = 0
         var squash = SIMD3<Float>(1, 1, 1)
 
@@ -926,8 +918,7 @@ final class PocketLaxScene {
                 ? .goalieReadLeft
                 : .goalieReadRight
         } else {
-            let shuffleVelocity = cos(Float(elapsedTime) * 1.35)
-            goaliePerformanceState = shuffleVelocity < 0
+            goaliePerformanceState = goalieShuffleDirection < 0
                 ? .goalieShuffleLeft
                 : .goalieShuffleRight
         }

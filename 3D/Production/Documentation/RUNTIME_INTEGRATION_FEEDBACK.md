@@ -158,3 +158,9 @@ Still needed from Blender:
 # Device finding: ambient export placement (2026-09-23 7:57 PM)
 
 `lax_arena_ambient.usdz` currently renders animated tree trunks in the lake from the gameplay camera. Runtime has disabled the ambient asset and restored the static softened arena groups. Before re-enabling it, round-trip the packaged USDZ through RealityKit and verify every animated tree/hedge retains the same world-space base position as `midground_trees` in `lax_arena_pinebrook_mobile.usdz`. Please also add named bleacher seat markers so crowd placement does not rely on Swift coordinates.
+
+# Device finding: cradle and goalie locomotion (2026-09-23 8:09 PM)
+
+- The shooter cradle reads rigid. Add visible pocket deformation and shaft/head secondary rotation to `cradle`, all three `aim_*` clips, and the recovery portion of each release. The ball should compress into the pocket by roughly 1–2 cm, lag the stick head, then settle without clipping. Preserve `pocket_socket` at the instantaneous resting ball center throughout the motion.
+- The goalie shuffle clips currently read like a stationary leg loop while Swift translates the root. Re-author each shuffle as a clear push → travel → plant → settle cycle with an unambiguous planted-foot interval. Keep the exported root in place, but include named timing events or manifest fields for `push_frame`, `plant_frame`, and expected `travel_meters` so runtime root displacement can match the foot contacts exactly.
+- The 8:09 capture proved opaque fake shadow cards are unacceptable. Do not bake circular shadow geometry into assets. Characters, sticks, cage, and crowd should cast/receive the same soft directional shadow solution as the turf scene.
