@@ -214,3 +214,11 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - Results now show best combo and offer native system sharing.
 - Build and launch are clean with no asset/fallback/render-pipeline log matches after the shadow fallback.
 - Environment map and LUT mentioned by Blender are not present in the repository, so IBL and custom color-grade post-processing remain blocked on those resources. Pre-softened arena groups remain the safe DOF solution.
+
+# 2026-09-23 — 7:57 device-capture UI and grounding pass
+
+- The supplied iPhone capture confirmed `lax_arena_ambient.usdz` is not production-safe: animated tree trunks appear in the lake. Runtime now disables the ambient layer on every performance tier and keeps the static softened arena groups visible until Blender corrects the ambient export.
+- Strengthened the lightweight unlit contact shadows beneath the shooter, goalie, and goal, and added contact shadows to crowd/teammate assets. Native `GroundingShadowComponent` remains unsuitable because it produced render-pipeline errors in this simulator configuration.
+- Rebuilt gameplay chrome around a dark pine-ink, sky-blue, and goal-gold palette; reduced label density, compacted the score/lives hierarchy, replaced rectangular shot tabs with rounded pills, and shortened the instruction to `FLICK TO SHOOT`.
+- Reworked the home shell with rounded display typography, a dimensional gold primary action, compact mode rows, stronger card depth, and a more cohesive diorama color palette. This is still code-native art direction; final professional menu presentation needs authored logo/illustration assets.
+- Clean Xcode build after the pass.

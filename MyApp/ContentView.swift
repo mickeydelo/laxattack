@@ -277,7 +277,7 @@ struct GameHUD: View {
     let onHome: () -> Void
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             GameHeader(
                 score: score,
                 bestScore: bestScore,
@@ -285,7 +285,7 @@ struct GameHUD: View {
                 onPause: onPause
             )
 
-            HStack {
+            HStack(alignment: .center) {
                 RunStatusBadge(
                     rule: run.rule,
                     shotsRemaining: shotsRemaining,
@@ -310,33 +310,32 @@ struct GameHUD: View {
                         .padding(.vertical, 7)
                         .background(.orange.opacity(0.82), in: Capsule())
                 }
-                if goalieLevel > 0 {
-                    Label("PRESSURE \(goalieLevel)", systemImage: "gauge.with.dots.needle.67percent")
-                        .font(.caption.bold())
-                        .foregroundStyle(goalieLevel >= 3 ? .yellow : .white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(
-                            (goalieLevel >= 3 ? Color.red : Color.blue).opacity(0.78),
-                            in: Capsule()
-                        )
+                if goalieLevel > 0, !isClutchShot, !isOnFire {
+                    Text("LEVEL \(goalieLevel)")
+                        .font(.system(size: 11, weight: .black, design: .rounded))
+                        .tracking(1.1)
+                        .foregroundStyle(.white.opacity(0.9))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(PocketLaxStyle.ink.opacity(0.76), in: Capsule())
                 }
             }
 
             ShotCallout(feedback: feedback, combo: combo)
 
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Image(systemName: "scope")
-                Text("CALL:")
                 Text(hotZone.title)
                 Text("+200")
-                    .foregroundStyle(.yellow)
+                    .foregroundStyle(PocketLaxStyle.gold)
             }
-            .font(.caption.bold())
+            .font(.system(size: 12, weight: .black, design: .rounded))
+            .tracking(0.8)
             .foregroundStyle(.white)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(.black.opacity(0.58), in: Capsule())
+            .padding(.horizontal, 13)
+            .padding(.vertical, 7)
+            .background(PocketLaxStyle.ink.opacity(0.82), in: Capsule())
+            .overlay { Capsule().stroke(.white.opacity(0.18), lineWidth: 1) }
 
             if let challenge = run.challenge, let challengeProgress {
                 ChallengeProgressCard(
@@ -379,9 +378,9 @@ struct GameHUD: View {
                 )
             }
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 10)
-        .padding(.bottom, 28)
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 18)
     }
 }
 
@@ -392,24 +391,27 @@ struct ShotTypePicker: View {
     let onSelect: (ShotType) -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 7) {
             ForEach(availableTypes) { type in
                 Button {
                     onSelect(type)
                 } label: {
-                    VStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         Image(systemName: type.symbolName)
-                            .font(.headline.bold())
+                            .font(.subheadline.bold())
                         Text(type.title)
-                            .font(.caption2.bold())
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                            .lineLimit(1)
                     }
-                    .foregroundStyle(selection == type ? .black : .white)
+                    .foregroundStyle(selection == type ? PocketLaxStyle.ink : .white.opacity(0.88))
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 9)
+                    .padding(.vertical, 11)
                     .background(
-                        selection == type ? .yellow : .black.opacity(0.62),
-                        in: RoundedRectangle(cornerRadius: 14)
+                        selection == type ? PocketLaxStyle.gold : PocketLaxStyle.ink.opacity(0.76),
+                        in: Capsule()
                     )
+                    .overlay { Capsule().stroke(.white.opacity(selection == type ? 0.5 : 0.14), lineWidth: 1) }
+                    .shadow(color: selection == type ? PocketLaxStyle.gold.opacity(0.28) : .clear, radius: 8, y: 4)
                 }
                 .buttonStyle(.plain)
                 .disabled(!isEnabled)
@@ -476,37 +478,40 @@ struct GameHeader: View {
     let onPause: () -> Void
 
     var body: some View {
-        HStack(alignment: .top) {
-            HStack(spacing: 9) {
+        HStack(alignment: .center, spacing: 10) {
+            HStack(spacing: 8) {
                 Button(action: onPause) {
                     Image(systemName: "pause.fill")
-                        .font(.headline.bold())
+                        .font(.subheadline.bold())
                         .foregroundStyle(.white)
-                        .frame(width: 38, height: 38)
-                        .background(.black.opacity(0.62), in: RoundedRectangle(cornerRadius: 13))
+                        .frame(width: 40, height: 40)
+                        .background(PocketLaxStyle.ink.opacity(0.86), in: Circle())
+                        .overlay { Circle().stroke(.white.opacity(0.2), lineWidth: 1) }
                 }
                 .buttonStyle(.plain)
 
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: -1) {
                     Text("LAX ATTACK")
-                        .foregroundStyle(.cyan)
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
                     Text(modeTitle)
-                        .font(.caption2.bold())
-                        .foregroundStyle(.white.opacity(0.78))
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .foregroundStyle(PocketLaxStyle.sky)
                 }
             }
-            .font(.headline.bold())
-            .tracking(1.5)
+            .tracking(1.2)
 
             Spacer()
 
-            HStack(spacing: 16) {
-                HeaderStat(title: "BEST", value: bestScore)
+            HStack(spacing: 13) {
                 HeaderStat(title: "SCORE", value: score)
+                Divider().overlay(.white.opacity(0.25)).frame(height: 28)
+                HeaderStat(title: "BEST", value: bestScore)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(.black.opacity(0.62), in: RoundedRectangle(cornerRadius: 16))
+            .padding(.horizontal, 13)
+            .padding(.vertical, 7)
+            .background(PocketLaxStyle.ink.opacity(0.86), in: RoundedRectangle(cornerRadius: 18))
+            .overlay { RoundedRectangle(cornerRadius: 18).stroke(.white.opacity(0.16), lineWidth: 1) }
         }
     }
 }
@@ -517,11 +522,9 @@ struct HeaderStat: View {
 
     var body: some View {
         VStack(spacing: 1) {
-            Text(title)
-                .font(.caption2.bold())
-                .foregroundStyle(.white.opacity(0.72))
+            Text(title).font(.system(size: 9, weight: .bold, design: .rounded)).foregroundStyle(.white.opacity(0.62))
             Text(value, format: .number)
-                .font(.title3.bold())
+                .font(.system(size: 21, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
                 .contentTransition(.numericText())
         }
@@ -563,13 +566,14 @@ struct RunStatusBadge: View {
             HStack(spacing: 6) {
                 ForEach(0..<maximumStops, id: \.self) { index in
                     Image(systemName: index < stopsRemaining ? "shield.fill" : "shield")
-                        .foregroundStyle(index < stopsRemaining ? .cyan : .white.opacity(0.28))
+                        .foregroundStyle(index < stopsRemaining ? PocketLaxStyle.sky : .white.opacity(0.24))
                 }
             }
             .font(.subheadline.bold())
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
-            .background(.black.opacity(0.5), in: Capsule())
+            .background(PocketLaxStyle.ink.opacity(0.8), in: Capsule())
+            .overlay { Capsule().stroke(.white.opacity(0.14), lineWidth: 1) }
         case .timed:
             Label {
                 Text(Int(ceil(secondsRemaining)), format: .number)
@@ -620,7 +624,7 @@ struct AimPrompt: View {
     let dodgeDirection: Float
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 7) {
             if dodgeDirection != 0 {
                 Label("SPLIT DODGE", systemImage: "figure.lacrosse")
                     .font(.caption.bold())
@@ -636,15 +640,26 @@ struct AimPrompt: View {
                     .scaleEffect(y: 1.8)
             }
 
-            Text(power > 0 ? shotType.releasePrompt : "SWIPE UP TO SHOOT")
-                .font(.subheadline.bold())
+            Label(
+                power > 0 ? shotType.releasePrompt : "FLICK TO SHOOT",
+                systemImage: power > 0 ? "arrow.up" : "hand.draw.fill"
+            )
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .tracking(0.7)
                 .foregroundStyle(.white)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 10)
-                .background(.black.opacity(0.58), in: Capsule())
+                .padding(.horizontal, 16)
+                .padding(.vertical, 9)
+                .background(PocketLaxStyle.ink.opacity(0.84), in: Capsule())
+                .overlay { Capsule().stroke(.white.opacity(0.16), lineWidth: 1) }
 
         }
     }
+}
+
+private enum PocketLaxStyle {
+    static let ink = Color(red: 0.055, green: 0.12, blue: 0.16)
+    static let sky = Color(red: 0.25, green: 0.84, blue: 1)
+    static let gold = Color(red: 1, green: 0.78, blue: 0.08)
 }
 
 struct RoundCompleteCard: View {
@@ -736,10 +751,10 @@ struct HomeScreen: View {
         ZStack {
             HomeDioramaBackground()
 
-            ScrollView {
-                VStack(spacing: 18) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
                     HomeHeader(bestScore: bestScore, onSettings: onSettings)
-                        .padding(.bottom, 118)
+                        .padding(.bottom, 138)
 
                     HomeHeroCard(onPlay: onQuickShoot)
 
@@ -778,7 +793,7 @@ struct HomeScreen: View {
                     .foregroundStyle(.white.opacity(0.8))
                     .padding(.horizontal, 24)
                 }
-                .padding(.horizontal, 18)
+                .padding(.horizontal, 16)
                 .padding(.top, 12)
                 .padding(.bottom, 28)
                 .containerRelativeFrame(.horizontal)
@@ -791,19 +806,21 @@ struct HomeDioramaBackground: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [Color.cyan.opacity(0.75), Color.blue.opacity(0.48), Color.green.opacity(0.7)],
+                colors: [Color(red: 0.30, green: 0.78, blue: 0.98), Color(red: 0.16, green: 0.63, blue: 0.86), Color(red: 0.16, green: 0.53, blue: 0.28)],
                 startPoint: .top,
                 endPoint: .bottom
             )
 
-            Circle()
-                .fill(.white.opacity(0.72))
-                .frame(width: 190, height: 74)
-                .blur(radius: 14)
-                .offset(x: 80, y: -290)
+            HStack(spacing: -38) {
+                ForEach(0..<3, id: \.self) { _ in
+                    Circle().fill(.white.opacity(0.78)).frame(width: 118, height: 72)
+                }
+            }
+            .blur(radius: 8)
+            .offset(x: 70, y: -300)
 
             RoundedRectangle(cornerRadius: 80)
-                .fill(Color.green.opacity(0.88))
+                .fill(Color(red: 0.20, green: 0.65, blue: 0.28))
                 .frame(width: 470, height: 440)
                 .rotationEffect(.degrees(-4))
                 .offset(y: 235)
@@ -816,12 +833,22 @@ struct HomeDioramaBackground: View {
         }
         .ignoresSafeArea()
         .overlay(alignment: .top) {
-            Image(systemName: "mountain.2.fill")
-                .resizable()
-                .scaledToFit()
-                .foregroundStyle(.indigo.opacity(0.36))
-                .frame(width: 390)
-                .offset(y: 95)
+            ZStack {
+                Image(systemName: "mountain.2.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundStyle(Color.indigo.opacity(0.3))
+                    .frame(width: 430)
+                    .offset(y: 86)
+                Image(systemName: "tree.fill")
+                    .font(.system(size: 112))
+                    .foregroundStyle(Color(red: 0.08, green: 0.38, blue: 0.22))
+                    .offset(x: -145, y: 178)
+                Image(systemName: "tree.fill")
+                    .font(.system(size: 92))
+                    .foregroundStyle(Color(red: 0.09, green: 0.44, blue: 0.24))
+                    .offset(x: 150, y: 195)
+            }
         }
     }
 }
@@ -832,14 +859,15 @@ struct HomeHeader: View {
 
     var body: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("LAX")
+            VStack(alignment: .leading, spacing: -3) {
+                Text("LAX ATTACK")
                     .foregroundStyle(.white)
-                Text("ATTACK")
-                    .foregroundStyle(.cyan)
+                Text("POCKET-SIZED. GAME-DAY BIG.")
+                    .font(.system(size: 9, weight: .black, design: .rounded))
+                    .foregroundStyle(PocketLaxStyle.gold)
             }
-            .font(.largeTitle.bold())
-            .tracking(1.5)
+            .font(.system(size: 27, weight: .black, design: .rounded))
+            .tracking(0.8)
             .shadow(color: .black.opacity(0.35), radius: 3, y: 2)
 
             Spacer()
@@ -854,14 +882,16 @@ struct HomeHeader: View {
             }
             .padding(.horizontal, 12)
             .frame(height: 50)
-            .background(.black.opacity(0.52), in: RoundedRectangle(cornerRadius: 17))
+            .background(PocketLaxStyle.ink.opacity(0.8), in: RoundedRectangle(cornerRadius: 17))
+            .overlay { RoundedRectangle(cornerRadius: 17).stroke(.white.opacity(0.16), lineWidth: 1) }
 
             Button(action: onSettings) {
                 Image(systemName: "gearshape.fill")
                     .font(.title2.bold())
                     .foregroundStyle(.white)
                     .frame(width: 50, height: 50)
-                    .background(.black.opacity(0.52), in: RoundedRectangle(cornerRadius: 17))
+                    .background(PocketLaxStyle.ink.opacity(0.8), in: Circle())
+                    .overlay { Circle().stroke(.white.opacity(0.16), lineWidth: 1) }
             }
             .buttonStyle(.plain)
         }
@@ -873,32 +903,40 @@ struct HomeHeroCard: View {
     let onPlay: () -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
-            VStack(spacing: 3) {
-                Text("SMALL SHOTS. BIG PLAYS.")
-                    .font(.title2.bold())
-                    .foregroundStyle(.white)
-                Text("Keep scoring. Three stops end the run.")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.78))
-            }
+        VStack(spacing: 13) {
+            Text("SURVIVAL")
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .tracking(2)
+                .foregroundStyle(PocketLaxStyle.gold)
+            Text("Own the crease.")
+                .font(.system(size: 27, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+            Text("Score until the goalie stops you three times.")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.72))
 
             Button(action: onPlay) {
-                Label("PLAY", systemImage: "play.fill")
-                    .font(.title.bold())
-                    .foregroundStyle(.white)
+                Label("PLAY NOW", systemImage: "play.fill")
+                    .font(.system(size: 22, weight: .black, design: .rounded))
+                    .foregroundStyle(PocketLaxStyle.ink)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
                     .background(
-                        LinearGradient(colors: [.green, .mint], startPoint: .top, endPoint: .bottom),
+                        LinearGradient(colors: [PocketLaxStyle.gold, Color.orange], startPoint: .top, endPoint: .bottom),
                         in: RoundedRectangle(cornerRadius: 24)
                     )
-                    .shadow(color: .green.opacity(0.45), radius: 10, y: 7)
+                    .overlay { RoundedRectangle(cornerRadius: 24).stroke(.white.opacity(0.55), lineWidth: 2) }
+                    .shadow(color: .black.opacity(0.3), radius: 0, y: 6)
             }
             .buttonStyle(.plain)
         }
         .padding(18)
-        .background(.black.opacity(0.58), in: RoundedRectangle(cornerRadius: 28))
+        .background(
+            LinearGradient(colors: [PocketLaxStyle.ink.opacity(0.94), Color(red: 0.12, green: 0.27, blue: 0.25).opacity(0.94)], startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 28)
+        )
+        .overlay { RoundedRectangle(cornerRadius: 28).stroke(.white.opacity(0.18), lineWidth: 1) }
+        .shadow(color: .black.opacity(0.28), radius: 18, y: 10)
     }
 }
 
@@ -911,20 +949,30 @@ struct HomeModeButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 7) {
+            HStack(spacing: 11) {
                 Image(systemName: symbolName)
-                    .font(.title.bold())
-                Text(title)
-                    .font(.subheadline.bold())
+                    .font(.title2.bold())
+                    .frame(width: 34)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 13, weight: .black, design: .rounded))
                 Text(subtitle)
                     .font(.caption2.weight(.semibold))
-                    .multilineTextAlignment(.center)
                     .foregroundStyle(.white.opacity(0.75))
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.caption.bold())
             }
             .foregroundStyle(.white)
-            .frame(maxWidth: .infinity, minHeight: 108)
-            .padding(.horizontal, 10)
-            .background(color.opacity(0.88), in: RoundedRectangle(cornerRadius: 22))
+            .frame(maxWidth: .infinity, minHeight: 64)
+            .padding(.horizontal, 14)
+            .background(
+                LinearGradient(colors: [color.opacity(0.96), color.opacity(0.72)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                in: RoundedRectangle(cornerRadius: 19)
+            )
+            .overlay { RoundedRectangle(cornerRadius: 19).stroke(.white.opacity(0.24), lineWidth: 1) }
+            .shadow(color: .black.opacity(0.22), radius: 0, y: 4)
         }
         .buttonStyle(.plain)
     }

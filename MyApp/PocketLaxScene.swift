@@ -30,7 +30,9 @@ private struct ScenePerformanceProfile {
             )
         }
         return ScenePerformanceProfile(
-            ambientEnvironmentEnabled: true,
+            // The current ambient export places animated tree trunks across the lake.
+            // Keep the authored softened arena layers until Blender ships a corrected pass.
+            ambientEnvironmentEnabled: false,
             supportLOD: "_lod1",
             fanCount: 3
         )
@@ -352,10 +354,8 @@ final class PocketLaxScene {
     }
 
     private func addToyContactShadow(size: SIMD2<Float>, to entity: Entity) {
-        let material = SimpleMaterial(
-            color: UIColor(white: 0.08, alpha: 0.2),
-            roughness: 1,
-            isMetallic: false
+        let material = UnlitMaterial(
+            color: UIColor(white: 0.03, alpha: 0.34)
         )
         let shadow = ModelEntity(
             mesh: .generateCylinder(height: 0.006, radius: 0.5),
@@ -420,6 +420,10 @@ final class PocketLaxScene {
             let driver = try CharacterAssetContract.prepareTimeline(entity, manifestName: manifestName)
             entity.position = position
             entity.orientation = simd_quatf(angle: yaw, axis: [0, 1, 0])
+            addToyContactShadow(
+                size: clipName == "crowd_idle" ? [0.52, 0.3] : [0.66, 0.36],
+                to: entity
+            )
             arenaRoot.addChild(entity)
             driver.transition(to: clipName, duration: 0)
             ambientAnimationDrivers.append(driver)

@@ -155,3 +155,6 @@ Still needed from Blender:
 2. Deliver the referenced environment map in a RealityKit-loadable bundle format and provide its exact resource name. No `.hdr`, `.exr`, or RealityKit environment resource currently exists in `3D/Production`.
 3. Deliver the referenced color-grading LUT and exact format/name. No LUT file is currently present.
 4. Provide named bleacher seat sockets/transforms for fan placement. `CROWD_NOTES.md` says to place roots on seat tops but does not provide runtime coordinates.
+# Device finding: ambient export placement (2026-09-23 7:57 PM)
+
+`lax_arena_ambient.usdz` currently renders animated tree trunks in the lake from the gameplay camera. Runtime has disabled the ambient asset and restored the static softened arena groups. Before re-enabling it, round-trip the packaged USDZ through RealityKit and verify every animated tree/hedge retains the same world-space base position as `midground_trees` in `lax_arena_pinebrook_mobile.usdz`. Please also add named bleacher seat markers so crowd placement does not rely on Swift coordinates.
