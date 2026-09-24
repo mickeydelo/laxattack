@@ -26,18 +26,44 @@ def ready_pose(t, N=40):
           G=tuple(V(GK["G"]) + V((0.006 * s, 0, -0.01 * b))), eye=(4 * s, 0), pocket=0.002)
     return finalize(p)
 
-def shuffle(sign, N=20):
-    """In-place arc shuffle toward shooter-left (sign +1 -> Blender -X) or right (-1). Runtime slides the root."""
+SHUFFLE_L = 0.22   # design-space step per cycle (world = L * body_scale)
+
+def _ss(a, b, t):
+    return smoothstep(a, b, t)
+
+def shuffle_root(t, sign, N=20, L=SHUFFLE_L):
+    """Root displacement Swift should apply (design units, Blender X): smoothstep from push to settle."""
+    k = N / 20.0
+    return -sign * L * _ss(3 * k, 15 * k, t)
+
+def shuffle(sign, N=20, L=SHUFFLE_L):
+    """Goalie shuffle toward shooter-left (sign +1 -> Blender -X / game -X) or right (-1).
+    Beats (N=20): 0-3 ready/load, 3 PUSH (trailing foot), 3-9 lead foot travels, 9 lead PLANT, 10-15 trail recovers, 15 trail plant,
+    15-20 balanced SETTLE. Feet are authored in root space against shuffle_root(), so when Swift moves the root by
+    travel_meters along that curve the planted foot stays exactly still (no skating). Hips lead; shoulders stay level."""
+    k = N / 20.0
     def fn(t):
-        ph = 2 * math.pi * t / N; s = math.sin(ph); c = math.cos(ph)
-        lead = -0.07 * sign * max(0.0, s); trail = -0.07 * sign * max(0.0, -s)
-        lift_l = 0.04 * max(0.0, s); lift_t = 0.04 * max(0.0, -s)
-        fr = (lead, 0, lift_l) if sign > 0 else (trail, 0, lift_t)
-        fl = (trail, 0, lift_t) if sign > 0 else (lead, 0, lift_l)
-        p = Q(pelvis_off=(-0.03 * sign * (0.5 - 0.5 * c), 0, -0.09 - 0.012 * abs(s)), pelvis_rot=(8, 0, 3 * sign * s),
-              footR=fr, footL=fl, head_rot=(-8, 4 * sign, 0), eye=(10 * sign, 0), face="determined")
+        R = shuffle_root(t, sign, N, L)
+        lead_w = -sign * L * _ss(3 * k, 9 * k, t); lead_z = 0.05 * math.sin(math.pi * min(1.0, max(0.0, (t - 3 * k) / (6 * k))))
+        trail_w = -sign * L * _ss(8 * k, 14 * k, t); trail_z = 0.035 * math.sin(math.pi * min(1.0, max(0.0, (t - 8 * k) / (6 * k))))
+        push0 = math.sin(math.pi * min(1.0, max(0.0, (t - 2 * k) / (5 * k))))
+        hips_w = 0.5 * (lead_w + trail_w) - sign * 0.025 * push0          # hips stay between the feet, leaning into the step
+        lead = (lead_w - R, 0.0, lead_z); trail = (trail_w - R, 0.0, trail_z)
+        fr, fl = (lead, trail) if sign > 0 else (trail, lead)
+        push = math.sin(math.pi * min(1.0, max(0.0, (t - 2 * k) / (5 * k))))
+        roll = 4.0 * sign * push
+        p = Q(pelvis_off=(hips_w - R, 0.0, -0.115 - 0.02 * push), pelvis_rot=(10, 0, roll), spine_rot=(6, 0, -roll * 0.6), chest_rot=(2, 0, -roll * 0.4),
+              footR=fr, footL=fl, head_rot=(-8, 3 * sign, 0), eye=(10 * sign, 0), face="determined",
+              G=tuple(V(GK["G"]) + V((-0.02 * sign * push, 0, 0.01 * push))))
         return finalize(p)
     return fn
+
+def shuffle_meta(sign, N=20, L=SHUFFLE_L):
+    k = N / 20.0
+    return {"push_frame": int(round(3 * k)), "plant_frame": int(round(9 * k)), "trail_plant_frame": int(round(14 * k)), "settle_frame": int(round(15 * k)), "travel_meters": L,
+            "movement_direction": "shooter_left" if sign > 0 else "shooter_right",
+            "root_motion_curve": {"type": "smoothstep", "start_local_frame": int(round(3 * k)), "end_local_frame": int(round(15 * k)),
+                                  "axis": "game -X" if sign > 0 else "game +X"}}
 
 READ_L = finalize(Q(pelvis_off=(-0.06, -0.01, -0.11), pelvis_rot=(9, 6, 4), spine_rot=(7, 4, 3), chest_rot=(2, 4, 2),
                     head_rot=(-6, 10, 0), footR=(-0.03, 0, 0), G=(-0.26, -0.30, 0.90), D=(-0.30, -0.12, 0.95), F=(0.1, -1, 0.1),
@@ -96,11 +122,15 @@ def celebrate():
 
 BG_CLIPS = [
     Clip("goalie_ready", 0, 40, True, ready_pose, blinks=(28,), notes="set position; toe bounce; eyes track"),
-    Clip("goalie_shuffle_left", 50, 20, True, shuffle(+1), notes="in place; runtime slides root toward shooter-left (game -X) along the crease arc"),
-    Clip("goalie_shuffle_right", 80, 20, True, shuffle(-1), notes="in place; runtime slides root toward shooter-right (game +X)"),
-    Clip("goalie_read_left", 110, 18, False, keys_fn([(0, GK, "io"), (8, READ_L, "out"), (18, P(READ_L, pelvis_off=(-0.07, -0.01, -0.12)), "io")]),
+    Clip("goalie_shuffle_left", 50, 20, True, shuffle(+1), meta=shuffle_meta(+1),
+         notes="one shuffle step per cycle; Swift moves the root travel_meters toward game -X along root_motion_curve (no foot skating)"),
+    Clip("goalie_shuffle_right", 80, 20, True, shuffle(-1), meta=shuffle_meta(-1),
+         notes="one shuffle step per cycle; Swift moves the root travel_meters toward game +X along root_motion_curve"),
+    Clip("goalie_read_left", 110, 18, False, keys_fn([(0, GK, "io"), (4, P(READ_L, footR=(-0.015, 0, 0.03)), "io"), (8, READ_L, "out"),
+                                                      (18, P(READ_L, pelvis_off=(-0.07, -0.01, -0.12)), "io")]), meta={"plant_frame": 8, "travel_meters": 0.0},
          notes="anticipation toward shooter-left; ends loaded (chain into goalie_save_left)"),
-    Clip("goalie_read_right", 135, 18, False, keys_fn([(0, GK, "io"), (8, mirror(P(READ_L, G=(-0.12, -0.32, 0.90), D=(0.2, -0.12, 0.97), F=(-0.1, -1, 0.1))), "out"),
+    Clip("goalie_read_right", 135, 18, False, keys_fn([(0, GK, "io"), (4, mirror(P(READ_L, footR=(-0.015, 0, 0.03), G=(-0.12, -0.32, 0.90), D=(0.2, -0.12, 0.97), F=(-0.1, -1, 0.1))), "io"),
+                                                       (8, mirror(P(READ_L, G=(-0.12, -0.32, 0.90), D=(0.2, -0.12, 0.97), F=(-0.1, -1, 0.1))), "out"),
                                                        (18, mirror(P(READ_L, pelvis_off=(-0.07, -0.01, -0.12), G=(-0.12, -0.32, 0.90), D=(0.2, -0.12, 0.97), F=(-0.1, -1, 0.1))), "io")]),
          notes="anticipation toward shooter-right"),
     Clip("goalie_save_left", 160, 30, False, keys_fn(save_keys(SAVE_L)), contact=7, notes="stick save at mid height, shooter-left; contact local 7"),
@@ -132,7 +162,7 @@ def build_goalie(export=True):
     rep = {"poles": poles, "validation": validate_character(arm, BG_CLIPS, meshes, meta, REQUIRED_SOCKETS, GOALIE_CLIPS)}
     os.makedirs(BG_DIR, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(BG_DIR, "LaxAttack_BoyGoalie.blend"), compress=True)
-    man = manifest("lax_goalie", BG_CLIPS, perspective="goalie", extra={
+    man = manifest("lax_goalie", BG_CLIPS, perspective="goalie", body_scale=BOY_GOALIE.get("body_scale", 1.0), extra={
         "facing": "+Z (toward the shooter); root identity at field level between the feet",
         "required_sockets": REQUIRED_SOCKETS, "extra_sockets": ["ball_contact_socket"],
         "runtime_note": "the procedural goalie used a 0.625 m base height; this asset's origin is at field level (y = 0)"})

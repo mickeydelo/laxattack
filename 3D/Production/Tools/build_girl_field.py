@@ -30,10 +30,10 @@ def idle_pose(t, N=48):
 
 def cradle_pose(t, N=28):
     ph = 2 * math.pi * t / N; s = math.sin(ph); s2 = math.sin(2 * ph); b2 = 0.5 - 0.5 * math.cos(2 * ph)
-    p = K(pelvis_off=(0.012 * s, 0, -0.035 - 0.014 * b2), pelvis_rot=(0, -6, 1.5 * s), spine_rot=(6, -4, 2 * s),
-          chest_rot=(4, -4 + 6 * s, 0), head_rot=(-6 + 2 * s2, 8 - 5 * s, -1.5 * s), face="focused",
+    p = K(pelvis_off=(0.014 * s, 0, -0.04 - 0.02 * b2), pelvis_rot=(2 * b2, -6 - 3 * s, 2 * s), spine_rot=(6 + 2 * b2, -4, 2.5 * s),
+          chest_rot=(4, -4 + 9 * s, -1.5 * s), head_rot=(-6 + 1.5 * s2, 8 - 7 * s, -1.0 * s), face="focused",
           pocket=0.008 + 0.006 * math.sin(ph - 1.1))   # ball lags the cradle sweep
-    p.update(looped_stick(13 * s, 45 * s, (-0.01 * s, -0.012 * s, 0.012 * b2)))
+    p.update(looped_stick(16 * s, 55 * s, (-0.012 * s, -0.014 * s, 0.014 * b2)))
     return finalize(p)
 
 def aim_loop(base, N=30):
@@ -251,7 +251,7 @@ def build_girl(export=True):
     rep = {"poles": poles, "validation": validate_character(arm, CLIPS, meshes, meta, REQUIRED_SOCKETS, REQUIRED_CLIPS)}
     os.makedirs(GF_DIR, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(GF_DIR, "LaxAttack_GirlField.blend"), compress=True)
-    man = manifest("lax_shooter", CLIPS, extra={
+    man = manifest("lax_shooter", CLIPS, body_scale=GIRL_FIELD.get("body_scale", 1.0), extra={
         "required_sockets": REQUIRED_SOCKETS, "extra_sockets": ["ball_contact_socket"],
         "legacy_ranges_unchanged": {"idle": [0, 48], "cradle": [60, 88], "release_overhand": [100, 133], "celebrate": [150, 186]},
         "ball_visual_radius_recommended_m": BALL_R, "stick_axes_blender": "shaft +Y, pocket open face +Z, origin = top-hand grip"})

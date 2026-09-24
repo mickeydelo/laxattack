@@ -18,7 +18,19 @@
       "end": 70,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "in place; runtime slides root toward shooter-left (game -X) along the crease arc"
+      "notes": "one shuffle step per cycle; Swift moves the root travel_meters toward game -X along root_motion_curve (no foot skating)",
+      "push_frame": 3,
+      "plant_frame": 9,
+      "trail_plant_frame": 14,
+      "settle_frame": 15,
+      "travel_meters": 0.1848,
+      "movement_direction": "shooter_left",
+      "root_motion_curve": {
+        "type": "smoothstep",
+        "start_local_frame": 3,
+        "end_local_frame": 15,
+        "axis": "game -X"
+      }
     },
     {
       "name": "goalie_shuffle_right",
@@ -26,7 +38,19 @@
       "end": 100,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "in place; runtime slides root toward shooter-right (game +X)"
+      "notes": "one shuffle step per cycle; Swift moves the root travel_meters toward game +X along root_motion_curve",
+      "push_frame": 3,
+      "plant_frame": 9,
+      "trail_plant_frame": 14,
+      "settle_frame": 15,
+      "travel_meters": 0.1848,
+      "movement_direction": "shooter_right",
+      "root_motion_curve": {
+        "type": "smoothstep",
+        "start_local_frame": 3,
+        "end_local_frame": 15,
+        "axis": "game +X"
+      }
     },
     {
       "name": "goalie_read_left",
@@ -34,7 +58,9 @@
       "end": 128,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "anticipation toward shooter-left; ends loaded (chain into goalie_save_left)"
+      "notes": "anticipation toward shooter-left; ends loaded (chain into goalie_save_left)",
+      "plant_frame": 8,
+      "travel_meters": 0.0
     },
     {
       "name": "goalie_read_right",
@@ -172,7 +198,19 @@
       "end": 744,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "crossover rhythm toward shooter-left (in place)"
+      "notes": "long recovery step toward shooter-left; same beats as the shuffle",
+      "push_frame": 3,
+      "plant_frame": 9,
+      "trail_plant_frame": 14,
+      "settle_frame": 15,
+      "travel_meters": 0.2856,
+      "movement_direction": "shooter_left",
+      "root_motion_curve": {
+        "type": "smoothstep",
+        "start_local_frame": 3,
+        "end_local_frame": 15,
+        "axis": "game -X"
+      }
     },
     {
       "name": "goalie_crossover_right",
@@ -180,7 +218,19 @@
       "end": 774,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "mirror"
+      "notes": "mirror",
+      "push_frame": 3,
+      "plant_frame": 9,
+      "trail_plant_frame": 14,
+      "settle_frame": 15,
+      "travel_meters": 0.2856,
+      "movement_direction": "shooter_right",
+      "root_motion_curve": {
+        "type": "smoothstep",
+        "start_local_frame": 3,
+        "end_local_frame": 15,
+        "axis": "game +X"
+      }
     },
     {
       "name": "goalie_read_high",

@@ -31,3 +31,7 @@ Phase 1 commit: `3ef396d58503f5e7844da3cee169684900893c22`.
 - **Arena file size:** use `lax_arena_pinebrook_mobile.usdz` (1024 textures, about 8 MB) on device. The 4K source set is not generated yet.
 - **(Resolved)** crowd hero tiers are now 10–12k tris.
 - **RealityKit screenshots:** still required from the Xcode side (Blender round-trip renders are provided).
+- **LOD2 heads:** LOD decimation now protects the head and face (fixes the "C-shaped eyes" in RealityKit), so LOD2 keeps the
+  full head. Current LOD2 sizes: 13k (shooter), about 20k (helmeted heroes).
+- **Character texture atlases** (painted-vinyl AO, fabric weave, decals) are not built yet; materials are still flat PBR values.
+- **IBL orientation** must be confirmed on device (see LIGHTING_KIT.md).

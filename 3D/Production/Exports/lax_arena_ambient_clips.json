@@ -10,7 +10,7 @@
       "end": 240,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "seamless 8 s breeze: trees/hedges sway, pennants flutter, boats bob and drift, clouds glide"
+      "notes": "seamless 8 s breeze; per-object phase/amplitude variation"
     },
     {
       "name": "ambient_gust",
@@ -18,16 +18,17 @@
       "end": 340,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "stronger gust (blend in/out from ambient_loop; returns to the loop's frame-0 pose)"
+      "notes": "gust wave travels across the foliage (x -15 -> +15 m); starts/ends on the ambient_loop frame-0 pose"
     }
   ],
-  "usage": "place at the scene origin with lax_arena_pinebrook; hide the static arena group 'midground_trees' while this asset is shown",
-  "contents": [
-    "7 broadleaf trees + 2 pines (sway)",
-    "9 hedges behind the goal (sway)",
-    "4 pennant flags on the fence (flutter)",
-    "2 sailboats (bob, roll, drift)",
-    "5 clouds (glide)"
-  ],
-  "tris": 54946
+  "hierarchy": "transform animation only (no skeleton): each amb_* Xform is a local pivot; meshes are local to their pivot",
+  "pivots": {
+    "tree": "amb_tree_NN at the trunk base; amb_tree_NN_canopy on the trunk",
+    "hedge": "amb_hedge_NN at the base",
+    "flag": "amb_flag_NN at the pole base; amb_flag_NN_seg1..3 chain",
+    "boat": "amb_boat_NN at the waterline",
+    "cloud": "amb_cloud_NN"
+  },
+  "static_twins": "hide the static arena group 'ambient_twins' while this asset is shown (identical rest placement)",
+  "tris": 53762
 }

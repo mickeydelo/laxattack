@@ -1,0 +1,194 @@
+{
+  "asset": "lax_arena_pinebrook",
+  "coordinates": "game space (meters, Y-up, gameplay forward -Z)",
+  "fan_root_offset_below_seat_m": {
+    "lax_fan_a": 0.17,
+    "lax_fan_b": 0.17,
+    "lax_fan_c": 0.15
+  },
+  "markers": {
+    "bleacher_home_seat_01": {
+      "position_game": [
+        6.0,
+        0.01,
+        -14.4
+      ],
+      "yaw_deg_about_game_Y": 180.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "bleacher_home_seat_02": {
+      "position_game": [
+        4.4,
+        0.01,
+        -14.4
+      ],
+      "yaw_deg_about_game_Y": 180.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "bleacher_home_seat_03": {
+      "position_game": [
+        6.0,
+        0.37,
+        -13.95
+      ],
+      "yaw_deg_about_game_Y": 180.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "bleacher_home_seat_04": {
+      "position_game": [
+        4.4,
+        0.37,
+        -13.95
+      ],
+      "yaw_deg_about_game_Y": 180.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "bleacher_home_seat_05": {
+      "position_game": [
+        6.0,
+        0.73,
+        -13.5
+      ],
+      "yaw_deg_about_game_Y": 180.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "bleacher_home_seat_06": {
+      "position_game": [
+        4.4,
+        0.73,
+        -13.5
+      ],
+      "yaw_deg_about_game_Y": 180.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "bleacher_away_seat_01": {
+      "position_game": [
+        -4.4,
+        0.01,
+        -14.4
+      ],
+      "yaw_deg_about_game_Y": 180.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "bleacher_away_seat_02": {
+      "position_game": [
+        -6.0,
+        0.01,
+        -14.4
+      ],
+      "yaw_deg_about_game_Y": 180.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "bleacher_away_seat_03": {
+      "position_game": [
+        -4.4,
+        0.37,
+        -13.95
+      ],
+      "yaw_deg_about_game_Y": 180.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "bleacher_away_seat_04": {
+      "position_game": [
+        -6.0,
+        0.37,
+        -13.95
+      ],
+      "yaw_deg_about_game_Y": 180.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "bleacher_away_seat_05": {
+      "position_game": [
+        -4.4,
+        0.73,
+        -13.5
+      ],
+      "yaw_deg_about_game_Y": 180.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "bleacher_away_seat_06": {
+      "position_game": [
+        -6.0,
+        0.73,
+        -13.5
+      ],
+      "yaw_deg_about_game_Y": 180.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "sideline_home_01": {
+      "position_game": [
+        6.0,
+        0.46,
+        -2.2
+      ],
+      "yaw_deg_about_game_Y": 90.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "sideline_home_02": {
+      "position_game": [
+        6.0,
+        0.46,
+        -1.5
+      ],
+      "yaw_deg_about_game_Y": 90.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "sideline_home_03": {
+      "position_game": [
+        6.0,
+        0.46,
+        -0.8
+      ],
+      "yaw_deg_about_game_Y": 90.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "sideline_away_01": {
+      "position_game": [
+        -6.0,
+        0.46,
+        -2.2
+      ],
+      "yaw_deg_about_game_Y": -90.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "sideline_away_02": {
+      "position_game": [
+        -6.0,
+        0.46,
+        -1.5
+      ],
+      "yaw_deg_about_game_Y": -90.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "sideline_away_03": {
+      "position_game": [
+        -6.0,
+        0.46,
+        -0.8
+      ],
+      "yaw_deg_about_game_Y": -90.0,
+      "contact": "seat surface (place the fan root = seat - root_offset)"
+    },
+    "gameplay_focus_center": {
+      "position_game": [
+        -0.36,
+        0.9,
+        -1.99
+      ]
+    },
+    "foreground_focus_reference": {
+      "position_game": [
+        -0.0,
+        0.4,
+        3.0
+      ]
+    },
+    "far_background_focus_reference": {
+      "position_game": [
+        -0.0,
+        1.0,
+        -31.0
+      ]
+    }
+  }
+}

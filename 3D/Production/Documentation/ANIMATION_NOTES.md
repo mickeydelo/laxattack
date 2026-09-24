@@ -210,3 +210,33 @@ Workbench renders of every clip in sequence, with the frame number and clip mark
 - `lax_shooter_all_clips.mp4` (frames 0–1558)
 - `lax_goalie_all_clips.mp4` (frames 0–1398)
 - `lax_goal_net_clips.mp4` (frames 0–295), shot from the shooter side
+
+
+## v4 update: shooter stick/pocket and goalie footwork
+**Shooter** (`cradle`, `idle_*`, `aim_*`, `quick_stick_*`, and `release_*` after the release frame; release and contact frames
+unchanged):
+- Hands drive the shaft; the stick head lags on a spring.
+- The ball rolls laterally in the pocket against the stick's angular velocity (up to ±1.2 cm).
+- The pocket compresses up to about 1–2.6 cm; `pocket_socket` rides the ball centre.
+- The cradle is more athletic: deeper knee rhythm, torso counter-rotation, wider stick arc.
+
+**Goalie shuffles and crossovers** are re-authored against a documented root curve, so a planted foot never skates when Swift
+moves the controller. Manifest fields:
+
+| Field | Meaning |
+|---|---|
+| `push_frame` | Trailing foot pushes |
+| `plant_frame` | Lead foot plants |
+| `trail_plant_frame` | Trailing foot plants |
+| `settle_frame` | Balanced settle |
+| `travel_meters` | World distance per cycle |
+| `movement_direction` | `shooter_left` = game −X, `shooter_right` = game +X |
+| `root_motion_curve` | smoothstep from local frame 3 to 15 |
+
+- Shuffles travel 0.185 m (boy) / 0.180 m (girl goalie) per 20-frame cycle; crossovers travel 0.286 m.
+- **Measured foot skating with the curve applied:** shuffles 0.000 m, crossovers ≤ 0.005 m.
+- `goalie_read_*` has a small lead-foot jab (`plant_frame` 8, `travel_meters` 0).
+
+**Playblast:** `Previews/Playblasts/runtime_camera_playblast.mp4`. It uses the packaged USDZs from `camera_gameplay` with DOF:
+shooter cradle, aim and release; goalie shuffles with the root moved per the curve; net heavy impact, crowd cheer and the
+ambient gust.

@@ -76,3 +76,11 @@ exactly (parents first, roll preserved) and re-places sockets. Assets that face 
   - This does **not** replace the on-device RealityKit screenshot.
 - **Arena:** depsgraph update before reading world matrices fixes the origin-stacked meshes. `export_lods` writes decimated
   `_lod1`/`_lod2` files.
+
+
+## v4 update
+- **Transform-animated assets** (`lax_arena_ambient`) export with `bake=False, content_axis=True`: local pivots are kept, the
+  axis conversion sits on the content prim only, and the root stays identity.
+- **LOD face protection:** decimation skips vertices weighted to head/face bones.
+- **Round-trip validation** reopens the packaged USDZ. The Blender importer skips an identity root, so the checks compose a
+  converter parent rather than overwriting the file's transforms.

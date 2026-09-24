@@ -1,7 +1,7 @@
 # Lax Attack runtime export: Blender USD export + pxr post-process (identity root at field level, axis conversion on the
 # rig/content child prim), optional 180-degree yaw for assets that must face +Z (goalie), USDZ packaging, verification.
 def export_asset(objects, root_name, content_name, out_usdz, fps=30, end_frame=0, face_plus_z=False, manifest=None,
-                 sockets=(), animated=True, tmp="/tmp/laxattack_export", bake=True):
+                 sockets=(), animated=True, tmp="/tmp/laxattack_export", bake=True, content_axis=False):
     from pxr import Usd, UsdGeom, UsdSkel, Sdf, Gf, Kind, UsdUtils
     import shutil
     os.makedirs(tmp, exist_ok=True)
@@ -41,7 +41,10 @@ def export_asset(objects, root_name, content_name, out_usdz, fps=30, end_frame=0
         for a in list(prim.GetAttributes()):
             if a.GetName().startswith("xformOp:"):
                 prim.RemoveProperty(a.GetName())
-    # axis conversion is baked into geometry + skeleton rest pose (bake_axes): every prim stays identity
+    # axis conversion is baked into geometry + skeleton rest pose (bake_axes): every prim stays identity.
+    # Transform-animated assets (ambient) keep local pivots instead: the conversion sits on the content prim only.
+    if content_axis:
+        UsdGeom.Xformable(content).AddRotateXYZOp().Set(Gf.Vec3f(90, 0, 180))
     st.SetDefaultPrim(root); Usd.ModelAPI(root).SetKind(Kind.Tokens.component)
     UsdGeom.SetStageUpAxis(st, UsdGeom.Tokens.y); UsdGeom.SetStageMetersPerUnit(st, 1.0)
     st.SetTimeCodesPerSecond(fps); st.SetFramesPerSecond(fps); st.SetStartTimeCode(0); st.SetEndTimeCode(max(end_frame, 0))
@@ -77,9 +80,15 @@ def export_lods(rep, root_name, content_name, out_usdz, ratios, fps=30, end_fram
     """Decimated LODs of an already-exported (baked) asset: <name>_lod1.usdz, _lod2.usdz ..."""
     res = {}; objs = [bpy.data.objects[n] for n in rep["objects"] if n in bpy.data.objects]; prev = 1.0
     for i, r in enumerate(ratios, 1):
+        hb = globals().get("HEAD_BONES", set())
         for o in objs:
             if o.type == "MESH" and len(o.data.polygons) > 60:
                 m = o.modifiers.new("lod", "DECIMATE"); m.ratio = r / prev
+                idx = {vg.index for vg in o.vertex_groups if vg.name in hb}
+                if idx:                                   # never decimate the head/face (eyes, mouth, lids, hair, headgear)
+                    prot = o.vertex_groups.get("lod_protect") or o.vertex_groups.new(name="lod_protect")
+                    ids = [v.index for v in o.data.vertices if sum(g.weight for g in v.groups if g.group in idx) > 0.3]
+                    prot.add(ids, 1.0, "REPLACE"); m.vertex_group = "lod_protect"; m.invert_vertex_group = True
                 bpy.context.view_layer.objects.active = o
                 while o.modifiers.find("lod") > 0:
                     bpy.ops.object.modifier_move_up(modifier="lod")

@@ -39,14 +39,15 @@ def build_variant(spec, asset, clips_src, family, kind, required, stick_kind, fr
     Ms = ad.bones["stick"].matrix_local.copy()
     socks["ball_contact_socket"] = add_socket("ball_contact_socket", arm, "pocket_01", Ms @ Matrix.Translation(meta["ball_contact"]), C, 0.03)
     ad.pose_position = "POSE"
-    clips = [Clip(c.name, c.start, c.length, c.loop, personality(c.fn, kind, float(c.length) if c.loop else 24.0), c.contact, c.release, c.transition, c.notes, c.blinks) for c in clips_src]
+    clips = [Clip(c.name, c.start, c.length, c.loop, (c.fn if c.meta.get("travel_meters") else personality(c.fn, kind, float(c.length) if c.loop else 24.0)),
+                  c.contact, c.release, c.transition, c.notes, c.blinks, meta=c.meta) for c in clips_src]
     calibrate_poles(arm, cal, family)
     bake_clips(arm, clips, family, GOALIE_EXTRA if family == "goalie" else ())
     meshes = list(parts.values()) + [stick]
     rep = {"validation": validate_character(arm, clips, meshes, meta, REQUIRED_SOCKETS, required)}
     d = os.path.join(PROD, "Characters", spec.get("folder", "BoyField" if kind == "boy" else "GirlGoalie")); os.makedirs(d, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(d, "LaxAttack_" + spec["name"] + ".blend"), compress=True)
-    man = manifest(asset, clips, perspective="goalie" if family == "goalie" else "shooter", extra={
+    man = manifest(asset, clips, perspective="goalie" if family == "goalie" else "shooter", body_scale=spec.get("body_scale", 1.0), extra={
         "shares_timeline_with": "lax_goalie" if family == "goalie" else "lax_shooter",
         "note": "same clip names and frame ranges as the shared-family hero; personality layer changes the motion, not the timing"})
     rep["export"] = export_asset([arm] + meshes + list(socks.values()), asset, asset + "_rig", os.path.join(EXP, asset + ".usdz"),

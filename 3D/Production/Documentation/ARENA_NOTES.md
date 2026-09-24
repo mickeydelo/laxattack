@@ -75,3 +75,35 @@ Each has a `_target` empty:
 - 4K source texture set.
 - Flag, water and tree animation.
 - Material atlasing (49 materials).
+
+
+## v4 update (Codex brief: ambient fix, boats, DOF staging, crowd markers)
+- **Ambient v2 is transform animation only (no skeleton).** Every animated object has its own local pivot:
+  - trees: `amb_tree_NN` at the trunk base, `amb_tree_NN_canopy` on the trunk (canopy lags the trunk);
+  - hedges: `amb_hedge_NN`; flags: `amb_flag_NN` plus the `_seg1..3` chain;
+  - boats: `amb_boat_NN` at the waterline; clouds: `amb_cloud_NN`.
+  - The axis conversion sits on `lax_arena_ambient_content`; `/lax_arena_ambient` is identity.
+- **Static twins group renamed:** `midground_trees` → **`ambient_twins`** (trees, hedges, flags, boats, clouds). It is built
+  from the same geometry functions.
+- **Packaged-USDZ validation** (vertex-accurate, both files reopened):
+  - frame 0 of `ambient_loop` == static twins: max offset **0.000 m** (seamless swap);
+  - loop seam 0.000 m; `ambient_gust` starts and ends on the rest pose (0.000 m);
+  - no objects in the lake except the two boats; nothing near the origin (50/50 objects checked);
+  - round-trip render from `camera_gameplay`: `Previews/RoundTrip/arena_ambient_camera_gameplay.png`.
+- **Boats rebuilt:** closed hull (red, seated about 30% below the waterline), deck, mast, two closed double-sided sails, and a
+  pennant. They sit behind the field at game (5.0, −26) and (−8.0, −30). Motion is asynchronous bob, roll, yaw and lateral
+  drift, all seamless.
+- **Foliage:** leaf-cluster canopies (20 clusters, dark interior, sunlit tops), fuller hedges.
+- **DOF focus references** (in `camera_markers`, game space), with distances from `camera_gameplay`:
+  - `gameplay_focus_center` (−0.36, 0.9, −1.99): about 9.5 m
+  - `foreground_focus_reference` (0, 0.4, 3.0): about 5.4 m
+  - `far_background_focus_reference` (0, 1.0, −31): about 38.5 m
+  - Suggested native DOF: focus on `gameplay_focus_center`, f-stop about 1.2–2.0 equivalent. The shooter (about 7.5 m) and
+    goal (about 12.5 m) should stay inside the sharp band.
+- **Crowd markers** (group `crowd_markers`, plus `Exports/lax_arena_pinebrook_markers.json` with game positions and yaw):
+  - `bleacher_home_seat_01..06` on the new home bleacher (game +X side) and `bleacher_away_seat_01..06` (game −X side);
+  - `sideline_home_01..03` and `sideline_away_01..03` on benches at game x = ±6.0;
+  - Markers sit on the seat surface. Place a fan root at marker − `fan_root_offset_below_seat_m` (in the JSON), rotated by
+    `yaw_deg_about_game_Y`.
+- **Turf:** a flattened traffic path from the shooter spot to the crease front. Hero tufts appear only near the camera, with
+  varied scale, lean and colour (including dry tips).

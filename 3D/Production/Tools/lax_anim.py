@@ -12,8 +12,9 @@ KEYED = [("pelvis", "location"), ("pelvis", "rotation_euler"), ("spine", "rotati
 GOALIE_EXTRA = [("chest_pad", "rotation_euler"), ("throat_guard", "rotation_euler")]
 
 class Clip:
-    def __init__(self, name, start, length, loop, fn, contact=None, release=None, transition=0.12, notes="", blinks=()):
+    def __init__(self, name, start, length, loop, fn, contact=None, release=None, transition=0.12, notes="", blinks=(), meta=None):
         self.name, self.start, self.length, self.loop, self.fn = name, start, length, loop, fn
+        self.meta = meta or {}
         self.contact, self.release, self.transition, self.notes, self.blinks = contact, release, transition, notes, blinks
     @property
     def end(self):
@@ -46,6 +47,29 @@ def secondary(poses, loop):
         p["hem"] = (hem[i] - hem_in[i] * 0.5, -(hem[i] - hem_in[i] * 0.5))
     return poses
 
+def stick_lag(poses, loop, release=None):
+    """Hands drive the shaft; the head lags slightly (spring on the shaft direction). The ball rolls laterally in the pocket
+    against angular velocity and compresses with acceleration. Release clips only lag after the release frame (timing kept)."""
+    n = len(poses); D = [V(p["D"]).normalized() for p in poses]
+    comps = [spring_series([d[i] for d in D], loop, 18.0, 0.6) for i in range(3)]
+    lat_in, dep_in = [], []
+    for k in range(n):
+        a = D[(k - 1) % n] if (loop or k > 0) else D[k]; b = D[(k + 1) % n] if (loop or k < n - 1) else D[k]
+        X = D[k].cross(V(poses[k]["F"])).normalized()
+        lat_in.append(max(-0.012, min(0.012, -(b - a).dot(X) * 0.9)))
+        dep_in.append(min(0.008, (b - 2 * D[k] + a).length * 3.0))
+    lat = spring_series(lat_in, loop, 14.0, 0.45); dep = spring_series(dep_in, loop, 16.0, 0.5)
+    out = []
+    for k, p in enumerate(poses):
+        w = 1.0 if release is None else smoothstep(release + 1, release + 5, k)
+        lag = V((comps[0][k], comps[1][k], comps[2][k]))
+        Dn = (D[k] + (lag - D[k]) * 0.5 * w).normalized()
+        q = dict(p); q["D"] = tuple(Dn); q["F"] = tuple(orth(p["F"], Dn))
+        q["pocket_x"] = lat[k] * w
+        q["pocket"] = p["pocket"] + dep[k] * w
+        out.append(q)
+    return out
+
 def bake_clips(arm, clips, family="field", extra_channels=()):
     pbs = arm.pose.bones
     keyed = [(n, pth) for n, pth in KEYED + list(extra_channels) if n in pbs]
@@ -57,6 +81,8 @@ def bake_clips(arm, clips, family="field", extra_channels=()):
             act = bpy.data.actions.new(c.name); act.use_fake_user = True; ad.action = act
             poses = [c.fn(f) for f in range(0, c.length + 1)]
             poses = secondary(poses, c.loop)
+            if family == "field" and (c.name in ("cradle", "run_loop") or c.name.startswith(("idle", "aim_", "release_", "quick_stick"))):
+                poses = stick_lag(poses, c.loop, c.release)
             prev_q = None
             for f, p in enumerate(poses):
                 apply_pose(arm, p, family, blink=any(abs(f - b) <= 1 for b in c.blinks))
@@ -89,7 +115,7 @@ def bake_clips(arm, clips, family="field", extra_channels=()):
         if c.contact is not None:
             sc.timeline_markers.new(c.name + "_CONTACT", frame=c.start + c.contact)
 
-def manifest(asset, clips, fps=30, perspective="shooter", extra=None):
+def manifest(asset, clips, fps=30, perspective="shooter", extra=None, body_scale=1.0):
     m = {"asset": asset, "fps": fps, "timeline_end": clips[-1].end,
          "left_right_convention": {"shooter": "left/right are the shooter's own left/right (shooter faces -Z; shooter-left = -X in game space)",
                                    "goalie": "left/right are from the SHOOTER's perspective (goalie faces +Z); goalie_save_left = shooter's left = game -X",
@@ -104,6 +130,8 @@ def manifest(asset, clips, fps=30, perspective="shooter", extra=None):
             d["contact_frame"] = c.start + c.contact; d["contact_local_frame"] = c.contact
         if c.notes:
             d["notes"] = c.notes
+        for k, v in getattr(c, "meta", {}).items():
+            d[k] = round(v * body_scale, 4) if k == "travel_meters" else v
         m["clips"].append(d)
     if extra:
         m.update(extra)

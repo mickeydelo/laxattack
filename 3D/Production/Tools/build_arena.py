@@ -38,6 +38,12 @@ def make_field_textures(tdir, n=2048, seed=7):
     worn = np.maximum(worn, np.clip(1 - np.hypot(X - 0.72, Y - 1.72) / 0.7, 0, 1) * 0.6)          # shooting spot
     worn = np.clip(worn * 1.35 * (0.7 + 0.6 * clump), 0, 1)
     lane = np.clip(1 - np.abs(X) / 1.4, 0, 1) * 0.06                                              # brighter maintained lane
+    ax, ay, bx, by = 0.72, 1.72, 0.0, -3.4                                                        # flattened traffic path shooter -> crease
+    tt = np.clip(((X - ax) * (bx - ax) + (Y - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2), 0, 1)
+    dpath = np.hypot(X - (ax + tt * (bx - ax)), Y - (ay + tt * (by - ay)))
+    trafficm = np.clip(1 - dpath / 0.5, 0, 1) * (0.6 + 0.4 * clump)
+    streak = streak * (1 - 0.55 * trafficm)
+    lane = lane + 0.05 * trafficm
     lum = (0.80 + 0.30 * (macro - 0.5) + 0.12 * streak * 0.5 + 0.10 * (clump - 0.5) + lane) * mow
     grass = np.stack([0.12 * lum * (1 + 0.3 * (macro - 0.5)), 0.40 * lum, 0.065 * lum * (1 - 0.3 * (macro - 0.5))], -1)
     dirt = np.stack([0.30 + 0.05 * streak * 0.2, 0.22 + 0.03 * streak * 0.2, 0.12 + 0.02 * streak * 0.2], -1) * (0.9 + 0.2 * clump[..., None])
@@ -75,21 +81,21 @@ def field_top(collection, mat_name):
 def hero_tufts(collection, seed=3):
     """Sparse modeled tufts: crease edge, shooter area, camera foreground; ball corridor (|x|<0.9 between shooter and goal) kept clear."""
     rnd = random.Random(seed); B = Builder("hero_tufts"); pts = []
-    for i in range(28):
-        a = rnd.uniform(0, 2 * math.pi); r = 2.2 + rnd.uniform(0.15, 0.55); pts.append((math.cos(a) * r, -5.7 + math.sin(a) * r))
-    for i in range(28):
-        pts.append((0.72 + rnd.uniform(-1.4, 1.4), 1.72 + rnd.uniform(-0.8, 1.4)))
-    for i in range(34):
-        pts.append((rnd.uniform(-2.2, 2.2), rnd.uniform(2.6, 4.8)))
+    for i in range(44):          # hero tufts only near camera_gameplay (bottom of frame + side edges)
+        y = rnd.uniform(2.3, 5.4); spread = 0.9 + (y - 2.3) * 0.55
+        x = rnd.uniform(-spread, spread)
+        if abs(x) < 0.55 and y < 3.0:
+            continue
+        pts.append((x, y))
     for (x, y) in pts:
         if abs(x) < 0.9 and -5.0 < y < 1.0:
             continue
-        s = rnd.uniform(0.12, 0.2)
-        for k in range(9):   # fuller, softer clumps
+        s = rnd.uniform(0.10, 0.32); cm = rnd.choice(("leaf_a", "leaf_b", "leaf_b", "grass_dry"))
+        for k in range(9):   # fuller, softer clumps with varied scale / lean / colour
             a = rnd.uniform(0, 6.28); lean = rnd.uniform(0.1, 0.4)
             tip = (x + math.cos(a) * lean * s, y + math.sin(a) * lean * s, s * rnd.uniform(0.7, 1.15))
             B.add(sweep([(x, y, 0), (x + (tip[0] - x) * 0.4, y + (tip[1] - y) * 0.4, tip[2] * 0.55), tip], [s * 0.13, s * 0.08, 0.004], 4, 0.5),
-                  "leaf_b" if k % 2 else "leaf_a")
+                  cm if k % 3 else "leaf_a")
     return B.build(collection)
 
 def haze_material(m, haze=(0.80, 0.84, 0.88), t=0.45, rough=0.95):
@@ -134,12 +140,15 @@ def sky_backdrop(collection):
 def build_arena(export=True):
     tdir = os.path.join(PROD, "Arena", "Textures")
     fa, fn, fr = make_field_textures(tdir)
+    MATS["grass_dry"] = ((0.40, 0.38, 0.10), 0.85, 0.0, 0.0)
     build_scene()
     TEX_MATS["turf_field"] = (fa, 0.88, fn, fr)
     for o in [o for o in bpy.data.objects if o.type in ("ARMATURE", "CAMERA", "LIGHT") or (o.parent and o.parent.type == "ARMATURE")
-              or o.name == "dof_focus" or o.name.startswith("goal_")]:
+              or o.name == "dof_focus" or o.name.startswith(("goal_", "tree_", "pine_", "bush_6", "sailboat", "cloud_"))]:
         bpy.data.objects.remove(o, do_unlink=True)
     Dio = bpy.data.collections["Diorama"]
+    twins = make_twins(Dio)                                        # static twins of lax_arena_ambient (identical rest placement)
+    bleacher(Dio, (5.2, -14.4, -0.45), 3.4, 3); bench(Dio, (6.0, -1.5, 0), 2.2, math.radians(-90))
     plat = bpy.data.objects["field_platform"]                   # keep the soil skirt only: drop old flat-colour turf faces
     me = plat.data
     import bmesh as _bm
@@ -152,14 +161,14 @@ def build_arena(export=True):
     bpy.context.view_layer.update()
     root = bpy.data.objects.new("lax_arena_content", None); Dio.objects.link(root)
     groups = {}
-    for g in ("gameplay", "near_field", "midground", "midground_trees", "far_background", "far_background_soft", "foreground_framing",
+    for g in ("gameplay", "near_field", "midground", "ambient_twins", "far_background", "far_background_soft", "foreground_framing",
               "foreground_framing_soft", "shadow_only", "collision_only", "camera_markers"):
         e = bpy.data.objects.new(g, None); Dio.objects.link(e); e.parent = root; groups[g] = e
     fg = {o.name for o in bpy.data.collections["Foreground"].objects}
     def group_of(n):
         if n in fg: return "foreground_framing"
         if n.startswith(("field_platform", "field_markings", "field_turf", "hero_tufts")): return "gameplay"
-        if n.startswith(("tree_", "pine_", "bush_6")): return "midground_trees"   # static twins of lax_arena_ambient: hide when ambient is on
+        if n.startswith("twin_"): return "ambient_twins"   # static twins of lax_arena_ambient: hide when ambient is shown
         if n.startswith(("field_fence", "bench", "bleacher", "sign_", "banner")): return "near_field"
         if n.startswith(("far_shore", "mountains", "cloud_", "sky_backdrop")): return "far_background"
         return "midground"
@@ -188,10 +197,36 @@ def build_arena(export=True):
         c.matrix_world = Matrix.Translation(loc) @ (V(tgt) - V(loc)).to_track_quat("-Z", "Y").to_matrix().to_4x4()
         t = bpy.data.objects.new(n + "_target", None); Dio.objects.link(t); t.parent = groups["camera_markers"]; t.matrix_world = Matrix.Translation(tgt)
         marks += [c, t]
+    refs = {"gameplay_focus_center": (0.36, -1.99, 0.9), "foreground_focus_reference": (0.0, 3.0, 0.4), "far_background_focus_reference": (0.0, -31.0, 1.0)}
+    for n, loc in refs.items():
+        e = bpy.data.objects.new(n, None); Dio.objects.link(e); e.parent = groups["camera_markers"]; e.matrix_world = Matrix.Translation(loc); marks.append(e)
+    seat_group = bpy.data.objects.new("crowd_markers", None); Dio.objects.link(seat_group); seat_group.parent = root; groups["crowd_markers"] = seat_group
+    seats = []
+    for side, bx in (("home", -5.2), ("away", 5.2)):          # home = game +X side, away = game -X side
+        n = 0
+        for row in range(3):
+            for dx in (-0.8, 0.8):
+                n += 1; seats.append(("bleacher_%s_seat_%02d" % (side, n), (bx + dx, -14.4 + row * 0.45, -0.45 + 0.42 + row * 0.36 + 0.04), math.pi))
+    for side, bx, yaw in (("home", -6.0, math.radians(90)), ("away", 6.0, math.radians(-90))):
+        for k, dy in enumerate((-0.7, 0.0, 0.7)):
+            seats.append(("sideline_%s_%02d" % (side, k + 1), (bx, -1.5 + dy, 0.46), yaw))
+    for n, loc, yaw in seats:
+        e = bpy.data.objects.new(n, None); Dio.objects.link(e); e.parent = seat_group
+        e.matrix_world = Matrix.Translation(loc) @ Matrix.Rotation(yaw, 4, "Z"); marks.append(e)
+    rep_markers = {n: {"position_game": [round(-loc[0], 3), round(loc[2], 3), round(loc[1], 3)], "yaw_deg_about_game_Y": round(math.degrees(yaw), 1),
+                       "contact": "seat surface (place the fan root = seat - root_offset)"} for n, loc, yaw in seats}
+    rep_markers.update({n: {"position_game": [round(-l[0], 3), round(l[2], 3), round(l[1], 3)]} for n, l in refs.items()})
     bpy.context.view_layer.update()
+    for o in meshes + marks:                     # unique ASCII names (no .001 nodes)
+        if "." in o.name:
+            o.name = o.name.replace(".", "_")
     tris = sum(tri_count(o) for o in meshes)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(PROD, "Arena", "LaxAttack_Arena.blend"), compress=True)
-    rep = {"tris": tris}
+    rep = {"tris": tris, "markers": rep_markers}
+    with open(os.path.join(EXP, "lax_arena_pinebrook_markers.json"), "w") as fh:
+        json.dump({"asset": "lax_arena_pinebrook", "coordinates": "game space (meters, Y-up, gameplay forward -Z)",
+                   "fan_root_offset_below_seat_m": {"lax_fan_a": 0.17, "lax_fan_b": 0.17, "lax_fan_c": 0.15},
+                   "markers": rep_markers}, fh, indent=2)
     if export:
         path = os.path.join(PROD, "Exports", "lax_arena_pinebrook.usdz")
         objs = [root] + list(groups.values()) + meshes + marks

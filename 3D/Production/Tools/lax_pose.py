@@ -107,8 +107,9 @@ def apply_pose(arm, p, family="field", blink=None):
         pbs[n].rotation_euler = Euler((math.radians(h[0] * (0.5 + 0.5 * i)), 0, math.radians(h[1] * (0.5 + 0.5 * i))), "XYZ")
     pbs["hem_F"].rotation_euler = Euler((math.radians(p["hem"][0]), 0, 0), "XYZ")
     pbs["hem_B"].rotation_euler = Euler((math.radians(p["hem"][1]), 0, 0), "XYZ")
-    pbs["pocket_01"].location = (0, 0, -p["pocket"])
-    pbs["pocket_02"].location = (0, 0, -p["pocket"] * 0.4)
+    px = p.get("pocket_x", 0.0)                      # ball lag: lateral roll inside the pocket
+    pbs["pocket_01"].location = (px, 0, -p["pocket"])
+    pbs["pocket_02"].location = (px * 0.5, 0, -p["pocket"] * 0.4)
     for s in ("L", "R"):
         pbs["fingers_" + s].rotation_euler = Euler((math.radians(p["fingers"]), 0, 0), "XYZ")
     fv = face_values(p)
