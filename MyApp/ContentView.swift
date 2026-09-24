@@ -71,9 +71,11 @@ struct GameplayScreen: View {
     @State private var gameScene = PocketLaxScene()
     @State private var aimSample: ShotControlSample?
     @State private var dodgeDirection: Float = 0
+    @State private var isCancellingShot = false
     @State private var isPaused = false
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("careerShots") private var careerShots = 0
+    @AppStorage("hasSeenSplitDodgeHint") private var hasSeenSplitDodgeHint = false
 
     var body: some View {
         ZStack {
@@ -104,6 +106,8 @@ struct GameplayScreen: View {
                 isOnFire: session.isOnFire,
                 aimPower: aimSample?.normalizedPower ?? 0,
                 dodgeDirection: dodgeDirection,
+                isCancellingShot: isCancellingShot,
+                showsSplitDodgeHint: careerShots >= 3 && !hasSeenSplitDodgeHint,
                 run: run,
                 challengeProgress: run.challenge?.progress(for: session),
                 selectedShotType: session.selectedShotType,
@@ -189,10 +193,23 @@ struct GameplayScreen: View {
         DragGesture(minimumDistance: 12)
             .onChanged { value in
                 guard !session.isAwaitingResult, !session.isRoundComplete else { return }
+                let shouldCancel = value.translation.height > 34
+                if shouldCancel != isCancellingShot {
+                    withAnimation(.smooth(duration: 0.2)) {
+                        isCancellingShot = shouldCancel
+                    }
+                }
+                if shouldCancel {
+                    aimSample = nil
+                    dodgeDirection = 0
+                    gameScene.hideAimGuide()
+                    return
+                }
                 if dodgeDirection == 0,
                    abs(value.translation.width) > 55,
                    abs(value.translation.height) < 75 {
                     dodgeDirection = value.translation.width < 0 ? -1 : 1
+                    hasSeenSplitDodgeHint = true
                     gameScene.updateDodge(direction: dodgeDirection)
                 }
                 let sample = shotSample(
@@ -204,6 +221,7 @@ struct GameplayScreen: View {
                 gameScene.updateAim(using: sample, shotType: session.selectedShotType)
             }
             .onEnded { value in
+                let cancelled = isCancellingShot || value.translation.height > 34
                 let committedDodge = dodgeDirection
                 let sample = shotSample(
                     translation: value.translation,
@@ -213,6 +231,10 @@ struct GameplayScreen: View {
                 gameScene.hideAimGuide()
                 aimSample = nil
                 dodgeDirection = 0
+                withAnimation(.smooth(duration: 0.18)) {
+                    isCancellingShot = false
+                }
+                guard !cancelled else { return }
                 guard value.translation.height < -24 else { return }
                 gameScene.shoot(
                     using: sample,
@@ -262,6 +284,8 @@ struct GameHUD: View {
     let isOnFire: Bool
     let aimPower: Double
     let dodgeDirection: Float
+    let isCancellingShot: Bool
+    let showsSplitDodgeHint: Bool
     let run: GameRun
     let challengeProgress: ChallengeProgress?
     let selectedShotType: ShotType
@@ -327,11 +351,17 @@ struct GameHUD: View {
             HStack(spacing: 6) {
                 Image(systemName: "scope")
                 Text(hotZone.title)
+                Text("•")
+                    .foregroundStyle(.white.opacity(0.45))
+                Text(hotZone.shotHint)
+                    .foregroundStyle(PocketLaxStyle.sky)
                 Text("+200")
                     .foregroundStyle(PocketLaxStyle.gold)
             }
             .font(.system(size: 12, weight: .black, design: .rounded))
             .tracking(0.8)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
             .foregroundStyle(.white)
             .padding(.horizontal, 13)
             .padding(.vertical, 7)
@@ -375,7 +405,9 @@ struct GameHUD: View {
                 AimPrompt(
                     power: aimPower,
                     shotType: selectedShotType,
-                    dodgeDirection: dodgeDirection
+                    dodgeDirection: dodgeDirection,
+                    isCancellingShot: isCancellingShot,
+                    showsSplitDodgeHint: showsSplitDodgeHint
                 )
             }
         }
@@ -623,9 +655,22 @@ struct AimPrompt: View {
     let power: Double
     let shotType: ShotType
     let dodgeDirection: Float
+    let isCancellingShot: Bool
+    let showsSplitDodgeHint: Bool
 
     var body: some View {
         VStack(spacing: 7) {
+            if isCancellingShot {
+                Label("RELEASE TO CANCEL", systemImage: "xmark")
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .tracking(0.8)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 15)
+                    .padding(.vertical, 9)
+                    .background(PocketLaxStyle.ink.opacity(0.92), in: Capsule())
+                    .overlay { Capsule().stroke(.white.opacity(0.2), lineWidth: 1) }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
             if dodgeDirection != 0 {
                 Label("SPLIT DODGE", systemImage: "figure.lacrosse")
                     .font(.caption.bold())
@@ -634,6 +679,13 @@ struct AimPrompt: View {
                     .padding(.vertical, 7)
                     .background(.black.opacity(0.68), in: Capsule())
             }
+            if showsSplitDodgeHint && dodgeDirection == 0 && !isCancellingShot && power == 0 {
+                Label("SIDEWAYS, THEN UP", systemImage: "arrow.left.and.right")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .tracking(0.7)
+                    .foregroundStyle(.white.opacity(0.8))
+                    .transition(.opacity)
+            }
             if power > 0 {
                 ProgressView(value: power)
                     .tint(power > 0.82 ? .orange : .cyan)
@@ -641,10 +693,11 @@ struct AimPrompt: View {
                     .scaleEffect(y: 1.8)
             }
 
-            Label(
+            if !isCancellingShot {
+                Label(
                 power > 0 ? shotType.releasePrompt : "FLICK TO SHOOT",
                 systemImage: power > 0 ? "arrow.up" : "hand.draw.fill"
-            )
+                )
                 .font(.system(size: 13, weight: .black, design: .rounded))
                 .tracking(0.7)
                 .foregroundStyle(.white)
@@ -652,6 +705,8 @@ struct AimPrompt: View {
                 .padding(.vertical, 9)
                 .background(PocketLaxStyle.ink.opacity(0.84), in: Capsule())
                 .overlay { Capsule().stroke(.white.opacity(0.16), lineWidth: 1) }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
 
         }
     }

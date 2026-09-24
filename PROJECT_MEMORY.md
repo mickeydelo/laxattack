@@ -234,3 +234,12 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 - Enabled the iOS 27 `RealityView` native depth-of-field rendering effect. This is the preferred performance-tier effect for soft foreground/background staging; the goal, goalie, shooter, and ball remain the gameplay focus band.
 - USD inspection showed the apparent tree trunk in the lake is the arena's `midground/sailboat` or `sailboat_001` mast rendering without a readable hull/sail. Both static boats are quarantined until Blender supplies corrected complete silhouettes. The animated ambient asset remains disabled because its tree transforms are also invalid.
 - Clean Xcode build with native DOF enabled.
+
+# 2026-09-23 — Shot identity, cancellation, and dodge teaching
+
+- Shot types now have explicit tactical lanes. Low-left, low-right, and five-hole called-shot bonuses require Bounce; top-left and top-right require Overhand, Sidearm, or Quick Stick. The target HUD displays the required family next to the call.
+- Strengthened physical identities: Bounce launches downward and fastest to the turf; Sidearm is flatter/faster and retains late lateral curve; Overhand is slower with the highest arc.
+- Split Dodge remains one gesture: move sideways at least 55 points while staying mostly level, then continue upward to shoot. A small `SIDEWAYS, THEN UP` contextual hint appears after Bounce unlocks and disappears permanently after the player performs the gesture.
+- Pulling down more than 34 points enters a guaranteed cancel state. `RELEASE TO CANCEL` slides in from the bottom; aim/dodge state and the trajectory guide clear immediately, and releasing cannot launch the ball.
+- Adjusted the warm key light to a more raking angle and increased its shadow range so real character/cage silhouettes replace dark overhead footprints. No fallback shadow geometry exists in runtime.
+- Clean Xcode build after the interaction/physics pass.

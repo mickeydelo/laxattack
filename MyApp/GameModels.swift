@@ -157,6 +157,24 @@ enum HotZone: Int, CaseIterable, Equatable, Sendable {
         }
     }
 
+    var shotHint: LocalizedStringResource {
+        switch self {
+        case .topLeft, .topRight:
+            "OVERHAND / SIDEARM"
+        case .lowLeft, .lowRight, .fiveHole:
+            "BOUNCE"
+        }
+    }
+
+    func accepts(_ shotType: ShotType) -> Bool {
+        switch self {
+        case .topLeft, .topRight:
+            shotType == .overhand || shotType == .sidearm || shotType == .quickStick
+        case .lowLeft, .lowRight, .fiveHole:
+            shotType == .bounce
+        }
+    }
+
     func contains(_ position: SIMD3<Float>) -> Bool {
         let target = targetPosition
         let horizontalRadius: Float = self == .fiveHole ? 0.3 : 0.38

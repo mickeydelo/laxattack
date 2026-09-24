@@ -622,20 +622,20 @@ final class PocketLaxScene {
         case .overhand:
             return [
                 sample.direction * 2.25,
-                2.5 + sample.power * 1.18,
-                -(8.8 + sample.power * 1.92)
+                2.7 + sample.power * 1.28,
+                -(8.45 + sample.power * 1.72)
             ]
         case .bounce:
             return [
                 sample.direction * 2.15,
-                0.22 + sample.power * 0.22,
-                -(9.2 + sample.power * 1.65)
+                -0.62 + sample.power * 0.12,
+                -(10.15 + sample.power * 1.85)
             ]
         case .sidearm:
             return [
                 sample.direction * 1.7,
-                1.7 + sample.power * 0.72,
-                -(9.5 + sample.power * 1.78)
+                1.9 + sample.power * 0.66,
+                -(10.35 + sample.power * 1.95)
             ]
         case .quickStick:
             return [
@@ -652,7 +652,9 @@ final class PocketLaxScene {
 
         if names.contains("Goal Sensor") {
             let style = goalStyle(for: ball?.position ?? .zero)
+            let resolvedShotType = activeShotType ?? selectedShotType
             let hitHotZone = session.activeHotZone.contains(ball?.position ?? .zero)
+                && session.activeHotZone.accepts(resolvedShotType)
             if session.registerGoal(style: style, hitHotZone: hitHotZone) {
                 calledShotHitTime = hitHotZone ? 0.72 : 0
                 celebrationTime = 1
@@ -2005,8 +2007,10 @@ final class PocketLaxScene {
                 intensity: 4_800
             )
         )
-        light.components.set(DirectionalLightComponent.Shadow())
-        light.look(at: [0, 0, -2], from: [-3, 7, 4], relativeTo: root)
+        light.components.set(DirectionalLightComponent.Shadow(maximumDistance: 20, depthBias: 1.4))
+        // A raking key produces readable character/cage silhouettes instead of
+        // the dark circular footprint created by a near-overhead light.
+        light.look(at: [0, 0, -2], from: [-7, 8, 7], relativeTo: root)
         root.addChild(light)
     }
 
