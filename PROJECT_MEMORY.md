@@ -161,6 +161,8 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 
 - 2026-09-23 (v6b): arena + ambient flat materials collapsed into one shared palette material (arena 4 materials total, ambient 1); sRGB-encoded swatches; packaged checks re-run (twins 0.000 m, no origin stacking).
 
+- 2026-09-24 (v7): gameplay continuity for Codex — handedness channel (hand targets slide on shaft), left-handed cradle/aims/releases/quick sticks, switch_R_to_L/L_to_R (contact 8), split_dodge_left/right_switch (commit 6, contact 10, planted feet vs root curve), aim/dodge cancels, cradle_to_aim bridges, release recovers; manifest fields switch_contact_frame/dodge_commit_frame/ideal_release_window/recovery_frame/handedness/blend times; roll dodge re-authored (fix); breathing + lag layers zero at clip boundaries; all 30 hard-cut boundaries below in-clip p90. Charm pass: bigger eyes/open lids, solid pocket backing, goalie_center_taps / goalie_stick_spin / goalie_ready_lively, brighter env map + lighter atlases. Shooter timeline now ends at 2557, goalie at 1566.
+
 # 2026-09-22: Competitive feel and art direction
 
 - Product name is **Lax Attack**. The runtime remains SwiftUI + RealityKit in portrait orientation.

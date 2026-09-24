@@ -30,3 +30,15 @@ Files are in `3D/Production/Exports/Lighting/`.
 - Gentle S-curve, +12% saturation, warm highlights, slightly lifted warm shadows.
 - Intended strength 1.0; 0.6–0.8 if it clashes with UI colours.
 - Apply after tone mapping, in display space.
+
+
+## v7 update: it looked like night time on device
+- `lax_env_pinebrook_1k.exr` is re-rendered **2.2x brighter** (mean radiance 0.27 → 0.59).
+- The game should read as a **sunny midday / early golden-hour** diorama. Starting points for RealityKit:
+  - Image-based light on **every** entity (`ImageBasedLightReceiverComponent`); IBL intensity exponent about 1.0–1.5.
+  - One warm directional sun with soft shadows. Start around 6,000–10,000 lux and increase until white jerseys and the white
+    ball read clean white, not grey.
+  - If tone mapping or exposure is available, lift exposure rather than darkening the sky. Skies should be light
+    blue-to-warm, never deep navy.
+  - Apply the LUT at 0.6–0.8 after the scene is correctly bright; the LUT is not a brightness fix.
+- Sanity check: the device frame should look like `Previews/RoundTrip/palette_arena_roundtrip.png`.

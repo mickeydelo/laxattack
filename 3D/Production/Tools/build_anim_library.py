@@ -24,16 +24,17 @@ def idle_variant(N, bob, bobc, sway, look, stick_dz, face, darts, fidget, blinks
                     G=G, F=_roll_stick(GB["D"], GB["F"], fidget * math.sin(3 * ph)), face=face, eye=_steps(darts, t), pocket=0.004 + 0.003 * b)
     return fn
 
-def roll_dodge(sign):
+def roll_dodge(sign, grip=None):
     """In-place roll dodge: plant, drop the shoulder, full pivot (feet follow), burst out. sign +1 = toward shooter-left."""
     def fn(t):
         u = t / 30.0; turn = -360.0 * sign * (u * u * (3 - 2 * u)) if 0.15 < u < 0.85 else (0.0 if u <= 0.15 else -360.0 * sign)
         if 0.15 < u < 0.85:
             w = (u - 0.15) / 0.7; turn = -360.0 * sign * (w * w * (3 - 2 * w))
         dip = math.sin(math.pi * min(1.0, u / 0.85)) * 0.07
-        return dict(pelvis_off=(0.05 * sign * math.sin(math.pi * u), -0.02, -0.04 - dip), pelvis_rot=(8 * math.sin(math.pi * u), turn * 0.34, 0),
-                    spine_rot=(10 * math.sin(math.pi * u), turn * 0.33, 0), chest_rot=(6, turn * 0.33, 0), head_rot=(-8, 0, 0), feet_yaw=turn,
-                    G=(-0.10 if sign > 0 else -0.25, -0.12, 0.94), D=(0.0, 0.25, 0.97), F=(0.2, -0.98, 0), face="determined", pocket=0.012)
+        lead = -28.0 * sign * math.sin(math.pi * min(1.0, u / 0.85))      # shoulders lead the turn, then settle back to 0
+        return dict(pelvis_off=(0.05 * sign * math.sin(math.pi * u), -0.02, -0.04 - dip), pelvis_rot=(8 * math.sin(math.pi * u), turn, 0),
+                    spine_rot=(10 * math.sin(math.pi * u), lead * 0.6, 0), chest_rot=(6, lead * 0.4, 0), head_rot=(-8, -lead * 0.5, 0), feet_yaw=turn,
+                    G=grip or ((-0.10, -0.12, 0.94) if sign > 0 else (-0.20, -0.10, 0.96)), D=(0.0, 0.25, 0.97), F=(0.2, -0.98, 0), face="determined", pocket=0.012)
     return fn
 
 def face_dodge(sign):
@@ -157,3 +158,172 @@ def extend_libraries():
     CLIPS.extend([c for c in SHOOTER_LIB if c.name not in names])
     gnames = {c.name for c in BG_CLIPS}
     BG_CLIPS.extend([c for c in GOALIE_LIB if c.name not in gnames])
+    align_dodges()
+    names = {c.name for c in CLIPS}
+    CLIPS.extend([c for c in continuity_clips() if c.name not in names])
+    gnames = {c.name for c in BG_CLIPS}
+    BG_CLIPS.extend([c for c in goalie_idles() if c.name not in gnames])
+    add_meta()
+
+
+# ======================= gameplay continuity (Codex round cb53020+) =======================
+def _bump(a, b, t):
+    return math.sin(math.pi * min(1.0, max(0.0, (t - a) / (b - a))))
+
+def mirror_field(p):
+    """Left-handed mirror: body mirrored across X, stick mirrored, hands swap roles on the shaft (hand -> 1-hand)."""
+    q = {k: v for k, v in p.items() if not k.startswith("_")}
+    for k in ("pelvis_rot", "spine_rot", "chest_rot", "neck_rot", "head_rot"):
+        a = p[k]; q[k] = (a[0], -a[1], -a[2])
+    q["pelvis_off"] = (-p["pelvis_off"][0], p["pelvis_off"][1], p["pelvis_off"][2])
+    fl, fr = p["footL"], p["footR"]; q["footL"] = (-fr[0], fr[1], fr[2]); q["footR"] = (-fl[0], fl[1], fl[2])
+    for k in ("G", "D", "F"):
+        v = p[k]; q[k] = (-v[0], v[1], v[2])
+    q["eye"] = (-p["eye"][0], p["eye"][1]); q["hand"] = 1.0 - p.get("hand", 0.0); q["feet_yaw"] = -p.get("feet_yaw", 0.0)
+    h = p.get("hair", (0, 0, 0)); q["hair"] = (h[0], -h[1], h[2]) if len(h) == 3 else h
+    return q
+
+def _mirror_fn(f0):
+    return lambda t: finalize(mirror_field(f0(t)))
+
+def _clip(name):
+    return next(c for c in CLIPS if c.name == name)
+
+def continuity_clips():
+    out = []; cur = [1570]
+    def add(name, length, loop, fn, contact=None, release=None, notes="", meta=None):
+        out.append(Clip(name, cur[0], length, loop, fn, contact, release, notes=notes, meta=meta or {})); cur[0] += length + 10
+    CR = cradle_pose(0); CL = finalize(mirror_field(CR))
+    for src in ("cradle", "aim_overhand", "aim_bounce", "aim_sidearm", "release_overhand", "release_bounce", "release_sidearm",
+                "quick_stick_catch", "quick_stick_release"):
+        c = _clip(src)
+        add(src + "_L", c.length, c.loop, _mirror_fn(c.fn), c.contact, c.release, notes="left-handed (left hand on top) mirror of " + src)
+    MID = K(G=(0.0, -0.30, 0.97), D=(0.0, -0.10, 0.99), F=(0.0, -0.99, -0.10), hand=0.5, face="focused", head_rot=(-2, 0, 0))
+    sw = [(0, CR, "io"), (4, P(MID, G=(-0.16, -0.30, 0.95), D=(-0.35, -0.08, 0.93), F=(0.3, -0.95, 0), hand=0.18), "in"), (8, MID, "lin"),
+          (12, P(MID, G=(0.16, -0.30, 0.95), D=(0.35, -0.08, 0.93), F=(-0.3, -0.95, 0), hand=0.82), "out"), (16, CL, "io")]
+    f_sw = keys_fn(sw)
+    add("switch_R_to_L", 16, False, f_sw, contact=8, notes="stick sweeps across the face; hands meet mid-shaft at contact (8) and regrip left-on-top")
+    add("switch_L_to_R", 16, False, _mirror_fn(f_sw), contact=8, notes="mirror: left-on-top -> right-on-top")
+    Ld = 0.30
+    DS = [(0, CR, "io"),
+          (4, K(pelvis_off=(0, 0, -0.08), pelvis_rot=(6, 4, -4), chest_rot=(8, 6, 0), G=(-0.30, -0.24, 0.96), D=(-0.45, -0.05, 0.89), F=(0.5, -0.85, 0.1), face="determined"), "in"),
+          (6, K(pelvis_off=(0, 0, -0.10), pelvis_rot=(8, -4, 6), chest_rot=(10, -6, 4), G=(-0.24, -0.28, 1.00), D=(-0.30, -0.10, 0.95), F=(0.5, -0.85, 0.1), face="determined"), "out"),
+          (10, K(pelvis_off=(0, 0, -0.09), pelvis_rot=(6, -8, 8), chest_rot=(8, -10, 6), G=(0.0, -0.32, 0.98), D=(0.0, -0.12, 0.99), F=(0, -0.99, 0.1), hand=0.5, face="determined"), "lin"),
+          (16, K(pelvis_off=(0, 0, -0.07), pelvis_rot=(8, 10, 6), chest_rot=(6, 12, 2), G=(0.24, -0.26, 0.90), D=(0.45, -0.05, 0.89), F=(-0.5, -0.85, 0.1), hand=1.0, face="determined"), "out"),
+          (24, CL, "io")]
+    f_ds = keys_fn(DS)
+    def dodge_switch(t, f_ds=f_ds):
+        R = Ld * smoothstep(6, 16, t)                      # Swift root curve (Blender +X = shooter-left)
+        lead = Ld * smoothstep(8, 14, t); push = Ld * smoothstep(12, 17, t)
+        p = dict(f_ds(t))
+        p["footL"] = (lead - R, 0.0, 0.05 * _bump(8, 14, t)); p["footR"] = (push - R, 0.0, 0.04 * _bump(12, 17, t))
+        po = p["pelvis_off"]; p["pelvis_off"] = (0.5 * (lead + push) - R + 0.03 * _bump(4, 12, t), po[1], po[2])
+        return finalize(p)
+    dmeta = lambda d: {"dodge_commit_frame": 6, "switch_contact_frame": 10, "travel_meters": Ld, "movement_direction": d,
+                       "root_motion_curve": {"type": "smoothstep", "start_local_frame": 6, "end_local_frame": 16, "axis": "game -X" if d == "shooter_left" else "game +X"}}
+    add("split_dodge_left_switch", 24, False, dodge_switch, notes="split dodge toward shooter-left with R->L hand switch; planted feet vs root curve", meta=dmeta("shooter_left"))
+    add("split_dodge_right_switch", 24, False, _mirror_fn(dodge_switch), notes="split dodge toward shooter-right with L->R hand switch", meta=dmeta("shooter_right"))
+    # cancellations / recoveries: from each aim stance and each dodge commit back to the cradle of the current hand
+    def strip(p):
+        return finalize({k: v for k, v in p.items() if not k.startswith("_")})
+    for a in ("aim_overhand", "aim_bounce", "aim_sidearm", "aim_overhand_L", "aim_bounce_L", "aim_sidearm_L"):
+        src = next(c for c in CLIPS + out if c.name == a); pa = strip(src.fn(0)); dst = CL if a.endswith("_L") else CR
+        add(a + "_cancel", 8, False, keys_fn([(0, pa, "io"), (8, dst, "io")]), notes="aim stance -> cradle (same hand)")
+    for d, cf in (("split_dodge_left", 6), ("split_dodge_right", 6), ("roll_dodge_left", 8), ("roll_dodge_right", 8), ("face_dodge_left", 5),
+                  ("face_dodge_right", 5), ("split_dodge_left_switch", 6), ("split_dodge_right_switch", 6)):
+        src = next(c for c in CLIPS + out if c.name == d); pa = strip(src.fn(cf)); pa["feet_yaw"] = 0.0 if abs(pa.get("feet_yaw", 0)) > 180 else pa.get("feet_yaw", 0.0)
+        pa["footL"] = (0, 0, 0); pa["footR"] = (0, 0, 0); pa = finalize(pa)
+        dst = CL if pa.get("hand", 0) > 0.5 else CR
+        add(d + "_cancel", 10, False, keys_fn([(0, pa, "io"), (10, dst, "io")]), notes="cancel from the dodge commit pose -> cradle (current hand)")
+    for a in ("aim_overhand", "aim_bounce", "aim_sidearm", "aim_overhand_L", "aim_bounce_L", "aim_sidearm_L"):
+        src = next(c for c in CLIPS + out if c.name == a); pa = strip(src.fn(0)); st_ = CL if a.endswith("_L") else CR
+        add("cradle_to_" + a, 8, False, keys_fn([(0, st_, "io"), (8, pa, "io")]), notes="cradle -> aim stance bridge (same hand)")
+    for r_ in ("release_overhand", "release_bounce", "release_sidearm", "quick_stick_release",
+               "release_overhand_L", "release_bounce_L", "release_sidearm_L", "quick_stick_release_L"):
+        src = next(c for c in CLIPS + out if c.name == r_); pe = strip(src.fn(src.length)); dst = CL if r_.endswith("_L") else CR
+        add(r_ + "_recover", 10, False, keys_fn([(0, pe, "io"), (10, dst, "io")]), notes="follow-through -> cradle (same hand)")
+    return out
+
+def align_dodges():
+    """Existing dodges ease in from / out to the exact cradle pose (roll dodges keep their full turn)."""
+    CR = {k: v for k, v in cradle_pose(0).items() if not k.startswith("_")}
+    for c in CLIPS:
+        if c.name not in ("split_dodge_left", "split_dodge_right", "roll_dodge_left", "roll_dodge_right", "face_dodge_left", "face_dodge_right") or getattr(c, "_aligned", False):
+            continue
+        f0, L = c.fn, c.length
+        def fn(t, f0=f0, L=L):
+            p = finalize({k: v for k, v in f0(t).items() if not k.startswith("_")})
+            a = smoothstep(0, 5, t); b = smoothstep(L - 7, L, t)
+            if a < 1:
+                p = finalize({k: v for k, v in lerp_pose(CR, p, a).items() if not k.startswith("_")} | {"face": p["face"]})
+            if b > 0:
+                e = dict(CR); e["feet_yaw"] = round(p.get("feet_yaw", 0.0) / 360.0) * 360.0
+                pr = e["pelvis_rot"]; e["pelvis_rot"] = (pr[0], pr[1] + round(p["pelvis_rot"][1] / 360.0) * 360.0, pr[2])   # full turns stay full turns
+                p = finalize({k: v for k, v in lerp_pose(p, e, b).items() if not k.startswith("_")} | {"face": p["face"] if b < 0.5 else CR["face"]})
+            return p
+        c.fn = fn; c._aligned = True
+    for rel, aim in (("release_overhand", "aim_overhand"), ("release_bounce", "aim_bounce"), ("release_sidearm", "aim_sidearm")):
+        c = next(x for x in CLIPS if x.name == rel)
+        if getattr(c, "_aligned", False):
+            continue
+        a0 = finalize({k: v for k, v in next(x for x in CLIPS if x.name == aim).fn(0).items() if not k.startswith("_")})
+        f0 = c.fn
+        def fn(t, f0=f0, a0=a0):
+            p = finalize({k: v for k, v in f0(t).items() if not k.startswith("_")})
+            w = smoothstep(0, 3, t)
+            return p if w >= 1 else finalize({k: v for k, v in lerp_pose(a0, p, w).items() if not k.startswith("_")} | {"face": p["face"]})
+        c.fn = fn; c._aligned = True
+
+def goalie_idles():
+    out = []
+    taps = [(0, GK, "io"), (6, Q(G=(-0.42, -0.14, 0.94), D=(-0.6, 0.3, 0.74), pelvis_rot=(8, 14, 0), head_rot=(-6, 18, 0)), "in"),
+            (9, Q(G=(-0.44, -0.12, 0.92), D=(-0.62, 0.34, 0.70), pelvis_rot=(8, 14, 0), head_rot=(-6, 18, 0)), "out"),
+            (14, Q(pelvis_off=(0, 0, -0.11), head_rot=(-8, 0, 0)), "io"),
+            (22, Q(G=(0.04, -0.16, 0.94), D=(0.6, 0.3, 0.74), F=(-0.1, -1, 0), pelvis_rot=(8, -14, 0), head_rot=(-6, -18, 0)), "in"),
+            (25, Q(G=(0.06, -0.14, 0.92), D=(0.62, 0.34, 0.70), F=(-0.1, -1, 0), pelvis_rot=(8, -14, 0), head_rot=(-6, -18, 0)), "out"),
+            (30, Q(pelvis_off=(0, 0, -0.11), head_rot=(-8, 0, 0)), "io"), (38, Q(head_rot=(0, 0, 0), face="determined"), "io"), (48, GK, "io")]
+    out.append(Clip("goalie_center_taps", 1410, 48, False, keys_fn(taps), contact=9, notes="waiting routine: tap left pipe, re-centre, tap right pipe, nod",
+                    meta={"pipe_tap_frames": [9, 25], "recommended_use": "between shots while the shooter resets"}))
+    def spin(t):
+        u = t / 40.0; D0 = (-0.10, -0.12, 0.99)
+        p = Q(G=(-0.20, -0.30, 0.92), D=D0, F=_roll_stick(D0, (0.05, -1.0, 0.1), 720 * smoothstep(4, 30, t)),
+              head_rot=(-4, 9 * math.sin(2 * math.pi * 3 * u) * (1 - u), 0), pelvis_off=(0, 0, -0.07 - 0.012 * math.sin(2 * math.pi * 2 * u)),
+              face="disappointed" if u < 0.55 else "determined")
+        p = finalize(p)
+        return finalize({k: v for k, v in lerp_pose(p, GK, smoothstep(32, 40, t)).items() if not k.startswith("_")} | {"face": p["face"] if t < 36 else "focused"})
+    out.append(Clip("goalie_stick_spin", 1468, 40, False, spin, notes="after a goal against: spins the stick twice in his hands, shakes it off, re-sets",
+                    meta={"recommended_use": "after goalie_goal_against or a missed save"}))
+    def lively(t):
+        ph = 2 * math.pi * t / 48; b = 0.5 - 0.5 * math.cos(2 * ph)
+        return finalize(P(GK, pelvis_off=(0.006 * math.sin(ph), 0, -0.09 - 0.022 * b), G=tuple(V(GK["G"]) + V((0.01 * math.sin(ph), 0, -0.012 * b))),
+                          F=_roll_stick(GK["D"], GK["F"], 12 * math.sin(2 * ph)), head_rot=(-8, 7 * math.sin(ph), 0), eye=(6 * math.sin(ph + 0.5), 0)))
+    out.append(Clip("goalie_ready_lively", 1518, 48, True, lively, blinks=(20,), notes="livelier ready loop: bounce, stick waggle, tracking head"))
+    return out
+
+def add_meta():
+    for c in CLIPS:
+        m = c.meta; hl = "left" if c.name.endswith("_L") or "_L_" in c.name else "right"
+        m.setdefault("recommended_blend_in_s", 0.08 if c.name.startswith(("release_", "quick_stick_release")) else 0.12)
+        m.setdefault("recommended_blend_out_s", 0.15)
+        if c.name.startswith(("cradle", "aim_")) and not c.name.endswith("_cancel"):
+            m["handedness"] = hl
+        if c.name.startswith("aim_") and not c.name.endswith("_cancel"):
+            kind = c.name.split("_")[1]; m["compatible_releases"] = ["release_%s%s" % (kind, "_L" if hl == "left" else "")]
+        if c.name.startswith(("release_", "quick_stick_release")) and c.release is not None:
+            m["handedness"] = hl; m["ideal_release_window"] = [max(0, c.release - 2), c.release + 1]; m["recovery_frame"] = min(c.length, c.release + 9)
+        if c.name.startswith("quick_stick_catch") and c.contact is not None:
+            m["handedness"] = hl; m["contact_window"] = [max(0, c.contact - 1), c.contact + 1]; m["recovery_frame"] = min(c.length, c.contact + 8)
+        if c.name.startswith("switch_"):
+            m["switch_contact_frame"] = 8; m["recovery_frame"] = 12
+            m["handedness_start"], m["handedness_end"] = ("right", "left") if "R_to_L" in c.name else ("left", "right")
+        if c.name in ("split_dodge_left", "split_dodge_right", "roll_dodge_left", "roll_dodge_right", "face_dodge_left", "face_dodge_right"):
+            cf = {"split": 6, "roll": 8, "face": 5}[c.name.split("_")[0]]
+            m["dodge_commit_frame"] = cf; m["recovery_frame"] = cf + 10; m["handedness_start"] = m["handedness_end"] = "right"
+            m["movement_direction"] = "shooter_left" if c.name.endswith("left") else "shooter_right"
+        if c.name.endswith("_switch") and c.name.startswith("split_dodge"):
+            m["recovery_frame"] = 18
+            m["handedness_start"], m["handedness_end"] = ("right", "left") if "left" in c.name else ("left", "right")
+        if c.name.endswith("_recover") or c.name.startswith("cradle_to_"):
+            m["recovery_frame"] = c.length; m["handedness"] = hl
+        if c.name.endswith("_cancel"):
+            m["recovery_frame"] = c.length; m["cancel_of"] = c.name[:-7]

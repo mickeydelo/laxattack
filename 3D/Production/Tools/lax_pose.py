@@ -6,11 +6,11 @@ STANCE = {"field": {"L": V((0.035, -0.03, 0)), "R": V((-0.035, 0.045, 0))},
 BASE_FIELD = dict(pelvis_off=(0, 0, -0.035), pelvis_rot=(0, -6, 0), spine_rot=(6, -4, 0), chest_rot=(4, -4, 0),
                   neck_rot=(-4, 4, 0), head_rot=(-6, 8, 0), footL=(0, 0, 0), footR=(0, 0, 0),
                   G=(-0.24, -0.25, 0.86), D=(-0.60, 0.05, 0.80), F=(0.55, -0.83, 0.10),
-                  hair=(0, 0, 0), hem=(0, 0), face="neutral", eye=(0, 0), pocket=0.0, fingers=0.0, feet_yaw=0.0)
+                  hair=(0, 0, 0), hem=(0, 0), face="neutral", eye=(0, 0), pocket=0.0, fingers=0.0, feet_yaw=0.0, hand=0.0)
 BASE_GOALIE = dict(pelvis_off=(0, 0, -0.085), pelvis_rot=(8, 0, 0), spine_rot=(6, 0, 0), chest_rot=(2, 0, 0),
                    neck_rot=(-6, 0, 0), head_rot=(-8, 0, 0), footL=(0, 0, 0), footR=(0, 0, 0),
                    G=(-0.21, -0.30, 0.98), D=(-0.10, -0.12, 0.99), F=(0.0, -1.0, 0.1),
-                   hair=(0, 0, 0), hem=(0, 0), face="focused", eye=(0, 0), pocket=0.0, fingers=0.0, feet_yaw=0.0)
+                   hair=(0, 0, 0), hem=(0, 0), face="focused", eye=(0, 0), pocket=0.0, fingers=0.0, feet_yaw=0.0, hand=0.0)
 
 def P(base, **kw):
     p = {k: (tuple(v) if isinstance(v, (tuple, list)) else v) for k, v in base.items()}
@@ -33,6 +33,20 @@ def vslerp(a, b, t):
         return a.lerp(b, t).normalized()
     ang = math.acos(d); s = math.sin(ang)
     return (a * math.sin((1 - t) * ang) + b * math.sin(t * ang)) / s
+
+_HAND_CACHE = {}
+
+def hand_targets(arm, pbs, h):
+    """hand 0 = right hand on top (grip), 1 = left hand on top. Targets slide along the shaft; 0.5 = hands together (switch contact)."""
+    key = arm.name
+    if key not in _HAND_CACHE:
+        b = arm.data.bones; Ms = b["stick"].matrix_local; Mi = Ms.inverted()
+        yR = (Mi @ b["ik_hand_R"].head_local).y; yL = (Mi @ b["ik_hand_L"].head_local).y
+        conv = {sd: (b["ik_hand_" + sd].matrix_local.inverted() @ Ms).to_3x3() for sd in ("R", "L")}
+        _HAND_CACHE[key] = (yR, yL, conv)
+    yR, yL, conv = _HAND_CACHE[key]
+    pbs["ik_hand_R"].location = conv["R"] @ V((0, (yL - yR) * h, 0))
+    pbs["ik_hand_L"].location = conv["L"] @ V((0, (yR - yL) * h, 0))
 
 def lerp_pose(p, q, t):
     r = {}
@@ -110,6 +124,7 @@ def apply_pose(arm, p, family="field", blink=None):
     px = p.get("pocket_x", 0.0)                      # ball lag: lateral roll inside the pocket
     pbs["pocket_01"].location = (px, 0, -p["pocket"])
     pbs["pocket_02"].location = (px * 0.5, 0, -p["pocket"] * 0.4)
+    hand_targets(arm, pbs, p.get("hand", 0.0))
     for s in ("L", "R"):
         pbs["fingers_" + s].rotation_euler = Euler((math.radians(p["fingers"]), 0, 0), "XYZ")
     fv = face_values(p)

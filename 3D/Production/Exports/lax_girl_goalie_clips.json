@@ -1,7 +1,7 @@
 {
   "asset": "lax_girl_goalie",
   "fps": 30,
-  "timeline_end": 1398,
+  "timeline_end": 1566,
   "left_right_convention": "left/right are from the SHOOTER's perspective (goalie faces +Z); goalie_save_left = shooter's left = game -X",
   "clips": [
     {
@@ -363,6 +363,38 @@
       "contact_frame": 1345,
       "contact_local_frame": 7,
       "notes": "high save flowing into celebration"
+    },
+    {
+      "name": "goalie_center_taps",
+      "start": 1410,
+      "end": 1458,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 1419,
+      "contact_local_frame": 9,
+      "notes": "waiting routine: tap left pipe, re-centre, tap right pipe, nod",
+      "pipe_tap_frames": [
+        9,
+        25
+      ],
+      "recommended_use": "between shots while the shooter resets"
+    },
+    {
+      "name": "goalie_stick_spin",
+      "start": 1468,
+      "end": 1508,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "after a goal against: spins the stick twice in his hands, shakes it off, re-sets",
+      "recommended_use": "after goalie_goal_against or a missed save"
+    },
+    {
+      "name": "goalie_ready_lively",
+      "start": 1518,
+      "end": 1566,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "livelier ready loop: bounce, stick waggle, tracking head"
     }
   ],
   "shares_timeline_with": "lax_goalie",

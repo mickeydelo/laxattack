@@ -215,7 +215,7 @@ def build_skeleton(s, collection, name):
         p, tx, n, tu = H.frame(az, s["eye_el"])
         ctr = p - n * 0.10
         bone("eye_" + side, ctr, ctr + n * 0.04, "head", roll_z=(0, 0, 1))
-        top = p + tu * (s["eye_size"][1] + 0.004) + n * 0.004
+        top = p + tu * (s["eye_size"][1] * EYE_K + 0.004) + n * 0.004
         bone("lid_" + side, hc, hc + (p - hc).normalized() * 0.1, "head", roll_z=(0, 0, 1))   # lid hinge about head centre
         bp = H.point(az * 1.02, s["eye_el"] + 23.0)
         bone("brow_" + side, bp, bp + H.frame(az, s["eye_el"] + 23.0)[2] * 0.03, "head", roll_z=(0, 0, 1))
@@ -256,7 +256,7 @@ def build_skeleton(s, collection, name):
     bone("ik_hand_R", g0, g0 + V((0, 0, 0.05)), "stick", deform=False)
     bone("ik_hand_L", g0 + V((0, 0, -GRIP_SPREAD)), g0 + V((0, 0, -GRIP_SPREAD + 0.05)), "stick", deform=False)
     bpy.ops.object.mode_set(mode="OBJECT")
-    arm["lid_open_deg"] = math.degrees(s["eye_size"][1] / s["head_r"][2]) * 2 + 4; arm["mouth_open_deg"] = 15.0
+    arm["lid_open_deg"] = math.degrees(s["eye_size"][1] * EYE_K / s["head_r"][2]) * 2 + 4; arm["mouth_open_deg"] = 15.0
     arm["body_scale"] = s.get("body_scale", 1.0); arm["head_k"] = s.get("head_k", 1.0); arm["family"] = s["family"]
     pb = arm.pose.bones
     for side in ("L", "R"):
@@ -299,13 +299,13 @@ def _build_character(s, collection, arm):
         B.add(H.place(ellipsoid((0, 0, 0), (0.030, 0.045, 0.052), 12, 8), 86 * sx, -6.0, -0.01), skin, "head")  # ear
     parts["head"] = B.build(collection, arm)
     F = Builder(s["name"] + "_face")
-    ew, eh = s["eye_size"]
+    ew, eh = s["eye_size"][0] * EYE_K, s["eye_size"][1] * EYE_K
     for side, sx in (("L", 1), ("R", -1)):
         az, el = s["eye_az"] * sx, s["eye_el"]
         if s.get("eye_style") == "toy":   # vinyl-toy eye: one glossy dark oval + two painted highlights
             F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.006, eh), 22, 12), az, el, -0.003), s["iris"], "eye_" + side)
-            F.add(H.place(ellipsoid((0, 0, 0), (0.015, 0.003, 0.017), 10, 6), az + 3.5 * sx, el + 5.0, 0.0035), "eye_white", "eye_" + side)
-            F.add(H.place(ellipsoid((0, 0, 0), (0.007, 0.003, 0.007), 8, 5), az - 4.0 * sx, el - 6.0, 0.0035), "eye_white", "eye_" + side)
+            F.add(H.place(ellipsoid((0, 0, 0), (0.021, 0.003, 0.024), 12, 7), az + 4.2 * sx, el + 6.4, 0.0035), "eye_white", "eye_" + side)
+            F.add(H.place(ellipsoid((0, 0, 0), (0.010, 0.003, 0.010), 8, 5), az - 4.8 * sx, el - 7.2, 0.0035), "eye_white", "eye_" + side)
         else:
             F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.018, eh), 20, 12), az, el, -0.004), "eye_white", "head")
             F.add(H.place(ellipsoid((0, 0, 0), (ew * 0.72, 0.012, eh * 0.78), 18, 10), az - 2.0 * sx, el - 1.5, 0.004), s["iris"], "eye_" + side)
@@ -317,7 +317,7 @@ def _build_character(s, collection, arm):
         top = p + tu * (eh + 0.004) + n * 0.004
         # lid: skin patch hugging the head over the eye (authored closed); lid bone rotates it up onto the forehead to open
         dA = math.degrees(ew / H.r.x) * 1.25 + 2; dE = math.degrees(eh / H.r.z) + 2
-        lo = math.degrees(s["eye_size"][1] / s["head_r"][2]) * 2 + 4   # lids AUTHORED OPEN (parked on the forehead): rest frame = open eyes
+        lo = math.degrees(s["eye_size"][1] * EYE_K / s["head_r"][2]) * 2 + 4   # lids AUTHORED OPEN (parked on the forehead): rest frame = open eyes
         F.add(surface_patch(H, az - dA, az + dA, el - dE + lo, el + dE + lo, 0.0050), skin, "lid_" + side)
         # upper lash line (painted)
         pts = [H.point(az + dx * sx, el + 14.2 - 5.0 * (dx / 12.0) ** 2) for dx in (-12, -6, 0, 6, 12)]
@@ -593,6 +593,16 @@ def stick_geo(kind="attack"):
             if len(pts) >= 3:
                 cords.append(sweep(pts, [0.0045] * len(pts), 6, 1.0))
     g["pocket"] = cords
+    bv, bf = [], []                                   # solid woven backing: the ball never shows through the cord gaps
+    NU, NV = 12, 14
+    for j in range(NV + 1):
+        for i in range(NU + 1):
+            u = -1 + 2 * i / NU; v = 0.02 + 0.95 * j / NV
+            q = bag(u * 0.985, v); bv.append(tuple(q - V((0, 0, 0.003))))
+    for j in range(NV):
+        for i in range(NU):
+            a = j * (NU + 1) + i; bf.append((a, a + NU + 1, a + NU + 2, a + 1)); bf.append((a, a + 1, a + NU + 2, a + NU + 1))
+    g["bag"] = [(bv, bf)]
     g["strings"] = []
     for v in (0.80, 0.86):
         pts = [tuple(bag(u / 6.0, v) + V((0, 0, 0.006))) for u in range(-6, 7)]
@@ -622,6 +632,8 @@ def build_stick(kind, collection, arm=None, bone="stick", name=None, frame_mat="
             B.add(xform(geo, M), m, bone)
     for geo in g["pocket"]:
         B.add(xform(geo, M), pocket_mat, weights=pocket_w if arm is not None else None)
+    for geo in g.get("bag", []):
+        B.add(xform(geo, M), "pocket_bag", weights=pocket_w if arm is not None else None, smooth=False)
     ob = B.build(collection, arm)
     return ob, g["meta"]
 
@@ -660,17 +672,19 @@ def add_character_sockets(s, arm, collection, stick_meta):
 
 # ------------------------------------------------------------------ face poses (bone-driven; values per bone)
 # lid scale: 1 = closed, 0.1 = open. jaw scale: 1 = open mouth, 0.16 = closed smile line.
+EYE_K = 1.16          # bigger, sparklier toy eyes (in-game readability)
+
 FACE = {
     "neutral":     dict(lid=0.10, jaw=0.14, mouth=(0.004, 0.0), brow=(0.0, 0.0), eye=(0, 0)),
     "blink":       dict(lid=1.00, jaw=0.14, mouth=(0.004, 0.0), brow=(-0.006, 0.0), eye=(0, 0)),
-    "focused":     dict(lid=0.36, jaw=0.12, mouth=(-0.003, 0.0), brow=(-0.010, 16.0), eye=(0, 0)),
-    "determined":  dict(lid=0.22, jaw=0.18, mouth=(-0.008, 0.0), brow=(-0.013, 24.0), eye=(0, 0)),
-    "smile":       dict(lid=0.16, jaw=0.34, mouth=(0.013, 0.006), brow=(0.007, -6.0), eye=(0, 0)),
-    "big_smile":   dict(lid=0.24, jaw=1.00, mouth=(0.016, 0.009), brow=(0.017, -10.0), eye=(0, 0)),
-    "strain":      dict(lid=0.58, jaw=0.50, mouth=(-0.012, 0.010), brow=(-0.016, 28.0), eye=(0, 0)),
+    "focused":     dict(lid=0.13, jaw=0.12, mouth=(0.0, 0.0), brow=(-0.006, 9.0), eye=(0, 0)),
+    "determined":  dict(lid=0.15, jaw=0.18, mouth=(-0.004, 0.0), brow=(-0.009, 15.0), eye=(0, 0)),
+    "smile":       dict(lid=0.12, jaw=0.34, mouth=(0.013, 0.006), brow=(0.009, -6.0), eye=(0, 0)),
+    "big_smile":   dict(lid=0.20, jaw=1.00, mouth=(0.016, 0.009), brow=(0.017, -10.0), eye=(0, 0)),
+    "strain":      dict(lid=0.40, jaw=0.50, mouth=(-0.012, 0.010), brow=(-0.013, 22.0), eye=(0, 0)),
     "surprise":    dict(lid=0.02, jaw=0.90, mouth=(-0.004, -0.010), brow=(0.026, -8.0), eye=(0, 0)),
-    "disappointed":dict(lid=0.36, jaw=0.24, mouth=(-0.005, -0.002), brow=(0.010, -22.0), eye=(0, -7)),
-    "smirk":       dict(lid=0.30, jaw=0.18, mouth=(0.016, 0.0), brow=(0.006, 10.0), eye=(5, 0), asym=True),
+    "disappointed":dict(lid=0.28, jaw=0.24, mouth=(-0.005, -0.002), brow=(0.010, -22.0), eye=(0, -7)),
+    "smirk":       dict(lid=0.20, jaw=0.18, mouth=(0.016, 0.0), brow=(0.006, 10.0), eye=(5, 0), asym=True),
 }
 
 def lid_rot(arm, lid):     # lid preset value: 0.1 open .. 1.0 closed  ->  hinge rotation (radians), no joint scale

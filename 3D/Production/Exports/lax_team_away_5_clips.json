@@ -1,7 +1,7 @@
 {
   "asset": "lax_team_away_5",
   "fps": 30,
-  "timeline_end": 1558,
+  "timeline_end": 2557,
   "left_right_convention": "left/right are the shooter's own left/right (shooter faces -Z; shooter-left = -X in game space)",
   "clips": [
     {
@@ -10,7 +10,9 @@
       "end": 48,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "breathing/look loop; blink at local 30"
+      "notes": "breathing/look loop; blink at local 30",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "cradle",
@@ -18,7 +20,10 @@
       "end": 88,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "continuous cradle; pocket lags the sweep"
+      "notes": "continuous cradle; pocket lags the sweep",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "right"
     },
     {
       "name": "release_overhand",
@@ -29,7 +34,15 @@
       "release_frame": 114,
       "release_local_frame": 14,
       "release_seconds_after_start": 0.4667,
-      "notes": "graybox timing preserved: ball leaves pocket_socket at 14/30 s"
+      "notes": "graybox timing preserved: ball leaves pocket_socket at 14/30 s",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "right",
+      "ideal_release_window": [
+        12,
+        15
+      ],
+      "recovery_frame": 23
     },
     {
       "name": "celebrate",
@@ -37,7 +50,9 @@
       "end": 186,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "jump with stick skyward (pelvis motion only)"
+      "notes": "jump with stick skyward (pelvis motion only)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "aim_overhand",
@@ -45,7 +60,13 @@
       "end": 230,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "loaded overhand hold for aiming; blends into release_overhand"
+      "notes": "loaded overhand hold for aiming; blends into release_overhand",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "right",
+      "compatible_releases": [
+        "release_overhand"
+      ]
     },
     {
       "name": "aim_bounce",
@@ -53,7 +74,13 @@
       "end": 270,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "bounce-shot aim; first frame of release_bounce"
+      "notes": "bounce-shot aim; first frame of release_bounce",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "right",
+      "compatible_releases": [
+        "release_bounce"
+      ]
     },
     {
       "name": "aim_sidearm",
@@ -61,7 +88,13 @@
       "end": 310,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "sidearm aim; first frame of release_sidearm"
+      "notes": "sidearm aim; first frame of release_sidearm",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "right",
+      "compatible_releases": [
+        "release_sidearm"
+      ]
     },
     {
       "name": "split_dodge_left",
@@ -69,7 +102,14 @@
       "end": 344,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "in place; runtime moves root toward shooter-left (game -X) between local 6 and 16"
+      "notes": "in place; runtime moves root toward shooter-left (game -X) between local 6 and 16",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "dodge_commit_frame": 6,
+      "recovery_frame": 16,
+      "handedness_start": "right",
+      "handedness_end": "right",
+      "movement_direction": "shooter_left"
     },
     {
       "name": "split_dodge_right",
@@ -77,7 +117,14 @@
       "end": 374,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "in place; runtime moves root toward shooter-right (game +X) between local 6 and 16"
+      "notes": "in place; runtime moves root toward shooter-right (game +X) between local 6 and 16",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "dodge_commit_frame": 6,
+      "recovery_frame": 16,
+      "handedness_start": "right",
+      "handedness_end": "right",
+      "movement_direction": "shooter_right"
     },
     {
       "name": "release_bounce",
@@ -88,7 +135,15 @@
       "release_frame": 394,
       "release_local_frame": 14,
       "release_seconds_after_start": 0.4667,
-      "notes": "starts from aim_bounce; downward release"
+      "notes": "starts from aim_bounce; downward release",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "right",
+      "ideal_release_window": [
+        12,
+        15
+      ],
+      "recovery_frame": 23
     },
     {
       "name": "release_sidearm",
@@ -99,7 +154,15 @@
       "release_frame": 433,
       "release_local_frame": 13,
       "release_seconds_after_start": 0.4333,
-      "notes": "starts from aim_sidearm; horizontal whip"
+      "notes": "starts from aim_sidearm; horizontal whip",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "right",
+      "ideal_release_window": [
+        11,
+        14
+      ],
+      "recovery_frame": 22
     },
     {
       "name": "quick_stick_catch",
@@ -109,7 +172,15 @@
       "transition_seconds": 0.12,
       "contact_frame": 466,
       "contact_local_frame": 6,
-      "notes": "ball meets pocket at local 6; ends in quick-stick ready pose"
+      "notes": "ball meets pocket at local 6; ends in quick-stick ready pose",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "right",
+      "contact_window": [
+        5,
+        7
+      ],
+      "recovery_frame": 14
     },
     {
       "name": "quick_stick_release",
@@ -120,7 +191,15 @@
       "release_frame": 495,
       "release_local_frame": 5,
       "release_seconds_after_start": 0.1667,
-      "notes": "starts from quick-stick ready pose; redirect release at local 5"
+      "notes": "starts from quick-stick ready pose; redirect release at local 5",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "right",
+      "ideal_release_window": [
+        3,
+        6
+      ],
+      "recovery_frame": 14
     },
     {
       "name": "disappointed",
@@ -128,7 +207,9 @@
       "end": 560,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "ends slumped (stick head resting on turf); blend to idle"
+      "notes": "ends slumped (stick head resting on turf); blend to idle",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "near_miss_reaction",
@@ -136,7 +217,9 @@
       "end": 600,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "extra"
+      "notes": "extra",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "pipe_reaction",
@@ -144,7 +227,9 @@
       "end": 634,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "extra"
+      "notes": "extra",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "save_reaction",
@@ -152,7 +237,9 @@
       "end": 675,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "extra"
+      "notes": "extra",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "run_loop",
@@ -160,7 +247,9 @@
       "end": 705,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "extra; in place"
+      "notes": "extra; in place",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "idle_relaxed",
@@ -168,7 +257,9 @@
       "end": 792,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "loose, happy look-around"
+      "notes": "loose, happy look-around",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "idle_competitive",
@@ -176,7 +267,9 @@
       "end": 848,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "toe bounce, eyes locked on goal"
+      "notes": "toe bounce, eyes locked on goal",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "idle_nervous",
@@ -184,7 +277,9 @@
       "end": 920,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "weight shifts, darting eyes, stick fidget"
+      "notes": "weight shifts, darting eyes, stick fidget",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "roll_dodge_left",
@@ -192,7 +287,14 @@
       "end": 960,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "in place; 360 pivot with planted-foot turn; root may slide toward shooter-left"
+      "notes": "in place; 360 pivot with planted-foot turn; root may slide toward shooter-left",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "dodge_commit_frame": 8,
+      "recovery_frame": 18,
+      "handedness_start": "right",
+      "handedness_end": "right",
+      "movement_direction": "shooter_left"
     },
     {
       "name": "roll_dodge_right",
@@ -200,7 +302,14 @@
       "end": 1000,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "in place; mirror"
+      "notes": "in place; mirror",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "dodge_commit_frame": 8,
+      "recovery_frame": 18,
+      "handedness_start": "right",
+      "handedness_end": "right",
+      "movement_direction": "shooter_right"
     },
     {
       "name": "face_dodge_left",
@@ -208,7 +317,14 @@
       "end": 1034,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "stick swept across the face to shooter-left and back"
+      "notes": "stick swept across the face to shooter-left and back",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "dodge_commit_frame": 5,
+      "recovery_frame": 15,
+      "handedness_start": "right",
+      "handedness_end": "right",
+      "movement_direction": "shooter_left"
     },
     {
       "name": "face_dodge_right",
@@ -216,7 +332,14 @@
       "end": 1069,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "mirror"
+      "notes": "mirror",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "dodge_commit_frame": 5,
+      "recovery_frame": 15,
+      "handedness_start": "right",
+      "handedness_end": "right",
+      "movement_direction": "shooter_right"
     },
     {
       "name": "celebrate_fist_pump",
@@ -224,7 +347,9 @@
       "end": 1110,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "double pump; short"
+      "notes": "double pump; short",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "celebrate_stick_twirl",
@@ -232,7 +357,9 @@
       "end": 1160,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "two stick twirls overhead"
+      "notes": "two stick twirls overhead",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "celebrate_jump_tuck",
@@ -240,7 +367,9 @@
       "end": 1200,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "big tuck jump (pelvis motion only)"
+      "notes": "big tuck jump (pelvis motion only)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "celebrate_knee_slide",
@@ -248,7 +377,9 @@
       "end": 1250,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "in-place knee drop + lean back, stick skyward; runtime may add a short forward slide"
+      "notes": "in-place knee drop + lean back, stick skyward; runtime may add a short forward slide",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "celebrate_point",
@@ -256,7 +387,9 @@
       "end": 1284,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "stick points to a teammate (toward shooter-left)"
+      "notes": "stick points to a teammate (toward shooter-left)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "celebrate_restrained",
@@ -264,7 +397,9 @@
       "end": 1325,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "cool nod and smile"
+      "notes": "cool nod and smile",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "celebrate_clutch",
@@ -272,7 +407,9 @@
       "end": 1389,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "huge win: jump celebration flowing into a stick twirl"
+      "notes": "huge win: jump celebration flowing into a stick twirl",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "weak_miss",
@@ -280,7 +417,9 @@
       "end": 1424,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "little shoulder shrug, never a tantrum"
+      "notes": "little shoulder shrug, never a tantrum",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "goal_glance_back",
@@ -288,7 +427,9 @@
       "end": 1465,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "grin back over the shoulder"
+      "notes": "grin back over the shoulder",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "run_start",
@@ -296,7 +437,9 @@
       "end": 1491,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "blend into run_loop"
+      "notes": "blend into run_loop",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "run_stop",
@@ -304,7 +447,9 @@
       "end": 1518,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "plant and settle"
+      "notes": "plant and settle",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15
     },
     {
       "name": "stumble_recover",
@@ -312,7 +457,572 @@
       "end": 1558,
       "loop": false,
       "transition_seconds": 0.12,
-      "notes": "trip, windmill, laugh it off"
+      "notes": "trip, windmill, laugh it off",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 30,
+      "handedness": "right"
+    },
+    {
+      "name": "cradle_L",
+      "start": 1570,
+      "end": 1598,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "left-handed (left hand on top) mirror of cradle",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "left"
+    },
+    {
+      "name": "aim_overhand_L",
+      "start": 1608,
+      "end": 1638,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "left-handed (left hand on top) mirror of aim_overhand",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "left",
+      "compatible_releases": [
+        "release_overhand_L"
+      ]
+    },
+    {
+      "name": "aim_bounce_L",
+      "start": 1648,
+      "end": 1678,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "left-handed (left hand on top) mirror of aim_bounce",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "left",
+      "compatible_releases": [
+        "release_bounce_L"
+      ]
+    },
+    {
+      "name": "aim_sidearm_L",
+      "start": 1688,
+      "end": 1718,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "left-handed (left hand on top) mirror of aim_sidearm",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "left",
+      "compatible_releases": [
+        "release_sidearm_L"
+      ]
+    },
+    {
+      "name": "release_overhand_L",
+      "start": 1728,
+      "end": 1761,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "release_frame": 1742,
+      "release_local_frame": 14,
+      "release_seconds_after_start": 0.4667,
+      "notes": "left-handed (left hand on top) mirror of release_overhand",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "left",
+      "ideal_release_window": [
+        12,
+        15
+      ],
+      "recovery_frame": 23
+    },
+    {
+      "name": "release_bounce_L",
+      "start": 1771,
+      "end": 1804,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "release_frame": 1785,
+      "release_local_frame": 14,
+      "release_seconds_after_start": 0.4667,
+      "notes": "left-handed (left hand on top) mirror of release_bounce",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "left",
+      "ideal_release_window": [
+        12,
+        15
+      ],
+      "recovery_frame": 23
+    },
+    {
+      "name": "release_sidearm_L",
+      "start": 1814,
+      "end": 1847,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "release_frame": 1827,
+      "release_local_frame": 13,
+      "release_seconds_after_start": 0.4333,
+      "notes": "left-handed (left hand on top) mirror of release_sidearm",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "left",
+      "ideal_release_window": [
+        11,
+        14
+      ],
+      "recovery_frame": 22
+    },
+    {
+      "name": "quick_stick_catch_L",
+      "start": 1857,
+      "end": 1875,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 1863,
+      "contact_local_frame": 6,
+      "notes": "left-handed (left hand on top) mirror of quick_stick_catch",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "left",
+      "contact_window": [
+        5,
+        7
+      ],
+      "recovery_frame": 14
+    },
+    {
+      "name": "quick_stick_release_L",
+      "start": 1885,
+      "end": 1901,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "release_frame": 1890,
+      "release_local_frame": 5,
+      "release_seconds_after_start": 0.1667,
+      "notes": "left-handed (left hand on top) mirror of quick_stick_release",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "left",
+      "ideal_release_window": [
+        3,
+        6
+      ],
+      "recovery_frame": 14
+    },
+    {
+      "name": "switch_R_to_L",
+      "start": 1911,
+      "end": 1927,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 1919,
+      "contact_local_frame": 8,
+      "notes": "stick sweeps across the face; hands meet mid-shaft at contact (8) and regrip left-on-top",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "switch_contact_frame": 8,
+      "recovery_frame": 12,
+      "handedness_start": "right",
+      "handedness_end": "left"
+    },
+    {
+      "name": "switch_L_to_R",
+      "start": 1937,
+      "end": 1953,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "contact_frame": 1945,
+      "contact_local_frame": 8,
+      "notes": "mirror: left-on-top -> right-on-top",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "switch_contact_frame": 8,
+      "recovery_frame": 12,
+      "handedness_start": "left",
+      "handedness_end": "right"
+    },
+    {
+      "name": "split_dodge_left_switch",
+      "start": 1963,
+      "end": 1987,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "split dodge toward shooter-left with R->L hand switch; planted feet vs root curve",
+      "dodge_commit_frame": 6,
+      "switch_contact_frame": 10,
+      "travel_meters": 0.252,
+      "movement_direction": "shooter_left",
+      "root_motion_curve": {
+        "type": "smoothstep",
+        "start_local_frame": 6,
+        "end_local_frame": 16,
+        "axis": "game -X"
+      },
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 18,
+      "handedness_start": "right",
+      "handedness_end": "left"
+    },
+    {
+      "name": "split_dodge_right_switch",
+      "start": 1997,
+      "end": 2021,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "split dodge toward shooter-right with L->R hand switch",
+      "dodge_commit_frame": 6,
+      "switch_contact_frame": 10,
+      "travel_meters": 0.252,
+      "movement_direction": "shooter_right",
+      "root_motion_curve": {
+        "type": "smoothstep",
+        "start_local_frame": 6,
+        "end_local_frame": 16,
+        "axis": "game +X"
+      },
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 18,
+      "handedness_start": "left",
+      "handedness_end": "right"
+    },
+    {
+      "name": "aim_overhand_cancel",
+      "start": 2031,
+      "end": 2039,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "aim stance -> cradle (same hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 8,
+      "cancel_of": "aim_overhand"
+    },
+    {
+      "name": "aim_bounce_cancel",
+      "start": 2049,
+      "end": 2057,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "aim stance -> cradle (same hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 8,
+      "cancel_of": "aim_bounce"
+    },
+    {
+      "name": "aim_sidearm_cancel",
+      "start": 2067,
+      "end": 2075,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "aim stance -> cradle (same hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 8,
+      "cancel_of": "aim_sidearm"
+    },
+    {
+      "name": "aim_overhand_L_cancel",
+      "start": 2085,
+      "end": 2093,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "aim stance -> cradle (same hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 8,
+      "cancel_of": "aim_overhand_L"
+    },
+    {
+      "name": "aim_bounce_L_cancel",
+      "start": 2103,
+      "end": 2111,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "aim stance -> cradle (same hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 8,
+      "cancel_of": "aim_bounce_L"
+    },
+    {
+      "name": "aim_sidearm_L_cancel",
+      "start": 2121,
+      "end": 2129,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "aim stance -> cradle (same hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 8,
+      "cancel_of": "aim_sidearm_L"
+    },
+    {
+      "name": "split_dodge_left_cancel",
+      "start": 2139,
+      "end": 2149,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cancel from the dodge commit pose -> cradle (current hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "cancel_of": "split_dodge_left"
+    },
+    {
+      "name": "split_dodge_right_cancel",
+      "start": 2159,
+      "end": 2169,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cancel from the dodge commit pose -> cradle (current hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "cancel_of": "split_dodge_right"
+    },
+    {
+      "name": "roll_dodge_left_cancel",
+      "start": 2179,
+      "end": 2189,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cancel from the dodge commit pose -> cradle (current hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "cancel_of": "roll_dodge_left"
+    },
+    {
+      "name": "roll_dodge_right_cancel",
+      "start": 2199,
+      "end": 2209,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cancel from the dodge commit pose -> cradle (current hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "cancel_of": "roll_dodge_right"
+    },
+    {
+      "name": "face_dodge_left_cancel",
+      "start": 2219,
+      "end": 2229,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cancel from the dodge commit pose -> cradle (current hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "cancel_of": "face_dodge_left"
+    },
+    {
+      "name": "face_dodge_right_cancel",
+      "start": 2239,
+      "end": 2249,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cancel from the dodge commit pose -> cradle (current hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "cancel_of": "face_dodge_right"
+    },
+    {
+      "name": "split_dodge_left_switch_cancel",
+      "start": 2259,
+      "end": 2269,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cancel from the dodge commit pose -> cradle (current hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "cancel_of": "split_dodge_left_switch"
+    },
+    {
+      "name": "split_dodge_right_switch_cancel",
+      "start": 2279,
+      "end": 2289,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cancel from the dodge commit pose -> cradle (current hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "cancel_of": "split_dodge_right_switch"
+    },
+    {
+      "name": "cradle_to_aim_overhand",
+      "start": 2299,
+      "end": 2307,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cradle -> aim stance bridge (same hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "right",
+      "recovery_frame": 8
+    },
+    {
+      "name": "cradle_to_aim_bounce",
+      "start": 2317,
+      "end": 2325,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cradle -> aim stance bridge (same hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "right",
+      "recovery_frame": 8
+    },
+    {
+      "name": "cradle_to_aim_sidearm",
+      "start": 2335,
+      "end": 2343,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cradle -> aim stance bridge (same hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "right",
+      "recovery_frame": 8
+    },
+    {
+      "name": "cradle_to_aim_overhand_L",
+      "start": 2353,
+      "end": 2361,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cradle -> aim stance bridge (same hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "left",
+      "recovery_frame": 8
+    },
+    {
+      "name": "cradle_to_aim_bounce_L",
+      "start": 2371,
+      "end": 2379,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cradle -> aim stance bridge (same hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "left",
+      "recovery_frame": 8
+    },
+    {
+      "name": "cradle_to_aim_sidearm_L",
+      "start": 2389,
+      "end": 2397,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cradle -> aim stance bridge (same hand)",
+      "recommended_blend_in_s": 0.12,
+      "recommended_blend_out_s": 0.15,
+      "handedness": "left",
+      "recovery_frame": 8
+    },
+    {
+      "name": "release_overhand_recover",
+      "start": 2407,
+      "end": 2417,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "follow-through -> cradle (same hand)",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "handedness": "right"
+    },
+    {
+      "name": "release_bounce_recover",
+      "start": 2427,
+      "end": 2437,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "follow-through -> cradle (same hand)",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "handedness": "right"
+    },
+    {
+      "name": "release_sidearm_recover",
+      "start": 2447,
+      "end": 2457,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "follow-through -> cradle (same hand)",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "handedness": "right"
+    },
+    {
+      "name": "quick_stick_release_recover",
+      "start": 2467,
+      "end": 2477,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "follow-through -> cradle (same hand)",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "handedness": "right"
+    },
+    {
+      "name": "release_overhand_L_recover",
+      "start": 2487,
+      "end": 2497,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "follow-through -> cradle (same hand)",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "handedness": "left"
+    },
+    {
+      "name": "release_bounce_L_recover",
+      "start": 2507,
+      "end": 2517,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "follow-through -> cradle (same hand)",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "handedness": "left"
+    },
+    {
+      "name": "release_sidearm_L_recover",
+      "start": 2527,
+      "end": 2537,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "follow-through -> cradle (same hand)",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "handedness": "left"
+    },
+    {
+      "name": "quick_stick_release_L_recover",
+      "start": 2547,
+      "end": 2557,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "follow-through -> cradle (same hand)",
+      "recommended_blend_in_s": 0.08,
+      "recommended_blend_out_s": 0.15,
+      "recovery_frame": 10,
+      "handedness": "left"
     }
   ],
   "shares_timeline_with": "lax_shooter",

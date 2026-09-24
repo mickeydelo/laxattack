@@ -463,6 +463,12 @@ def setup_eevee(samples=64, res=(720, 1560)):
     vs.exposure = 0.35; vs.gamma = 1.0
     if hasattr(r.image_settings, "media_type"):
         r.image_settings.media_type = "IMAGE"      # playblasts switch scenes to video output
+    vs = bpy.context.scene.view_settings            # always restore the style-bible look (env-map renders switch to Standard)
+    try:
+        vs.view_transform = "AgX"; vs.look = "AgX - Punchy"
+    except Exception:
+        pass
+    vs.exposure = 0.35
     r.image_settings.file_format = "PNG"; r.image_settings.color_mode = "RGB"
 
 def make_camera(name, loc, target, collection, vfov_deg=None, lens=None, portrait=True):
@@ -618,3 +624,5 @@ def scratch_push(paths, branch="scratch-previews"):
     commit, _, _ = g("commit-tree", tree, "-m", "scratch previews (throwaway)")
     out, rc, err = g("push", "-f", "origin", commit + ":refs/heads/" + branch)
     return {"commit": commit, "rc": rc, "err": err[-300:]}
+
+MATS["pocket_bag"] = ((0.10, 0.12, 0.22), 0.9, 0.0, 0.0)   # solid pocket backing

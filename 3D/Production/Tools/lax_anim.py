@@ -1,7 +1,7 @@
 # Lax Attack animation system: clip timeline, baking (body + face + pocket + fingers), baked secondary springs.
 # Poses are authored in the 1.5 m design space (see lax_pose); apply_pose scales them by the rig's body_scale.
 KEYED = [("pelvis", "location"), ("pelvis", "rotation_euler"), ("spine", "rotation_euler"), ("chest", "rotation_euler"),
-         ("neck", "rotation_euler"), ("head", "rotation_euler"), ("ik_foot_L", "location"), ("ik_foot_R", "location"), ("ik_foot_L", "rotation_euler"), ("ik_foot_R", "rotation_euler"),
+         ("neck", "rotation_euler"), ("head", "rotation_euler"), ("ik_foot_L", "location"), ("ik_foot_R", "location"), ("ik_foot_L", "rotation_euler"), ("ik_foot_R", "rotation_euler"), ("ik_hand_L", "location"), ("ik_hand_R", "location"),
          ("stick", "location"), ("stick", "rotation_quaternion"),
          ("hair_01", "rotation_euler"), ("hair_02", "rotation_euler"), ("hair_03", "rotation_euler"),
          ("hem_F", "rotation_euler"), ("hem_B", "rotation_euler"), ("pocket_01", "location"), ("pocket_02", "location"),
@@ -91,14 +91,20 @@ def stick_lag(poses, loop, release=None):
         lat_in.append(max(-0.012, min(0.012, -(b - a).dot(X) * 0.9)))
         dep_in.append(min(0.008, (b - 2 * D[k] + a).length * 3.0))
     lat = spring_series(lat_in, loop, 14.0, 0.45); dep = spring_series(dep_in, loop, 16.0, 0.5)
+    # continuity: every clip's first frame is the exact authored pose (loops subtract their frame-0 offset, which keeps them
+    # periodic); one-shot clips also ease the layer out over their last frames so the next clip starts cleanly
+    off0 = (V((comps[0][0], comps[1][0], comps[2][0])) - D[0]) if loop else V((0, 0, 0))
+    lat0 = lat[0] if loop else 0.0; dep0 = dep[0] if loop else 0.0
     out = []
     for k, p in enumerate(poses):
         w = 1.0 if release is None else smoothstep(release + 1, release + 5, k)
+        if not loop:
+            w *= smoothstep(0, 3, k) * (1 - smoothstep(n - 7, n - 1, k))
         lag = V((comps[0][k], comps[1][k], comps[2][k]))
-        Dn = (D[k] + (lag - D[k]) * 0.5 * w).normalized()
+        Dn = (D[k] + ((lag - D[k]) - off0) * 0.5 * w).normalized()
         q = dict(p); q["D"] = tuple(Dn); q["F"] = tuple(orth(p["F"], Dn))
-        q["pocket_x"] = lat[k] * w
-        q["pocket"] = p["pocket"] + dep[k] * w
+        q["pocket_x"] = (lat[k] - lat0) * w
+        q["pocket"] = p["pocket"] + (dep[k] - dep0) * w
         out.append(q)
     return out
 
@@ -113,10 +119,17 @@ def bake_clips(arm, clips, family="field", extra_channels=()):
             act = bpy.data.actions.new(c.name); act.use_fake_user = True; ad.action = act
             poses = [c.fn(f) for f in range(0, c.length + 1)]
             blinks = c.blinks or auto_blinks(c)
+            per = (c.length / max(1, round(c.length / 48.0))) if c.loop else 48.0     # breathing: whole cycles per loop
+            for k, p in enumerate(poses):
+                bth = math.sin(2 * math.pi * k / per) if c.loop else \
+                    math.sin(2 * math.pi * k / 48.0) * smoothstep(0, 6, k) * (1 - smoothstep(c.length - 6, c.length, k))   # 0 at both ends
+                p["chest_rot"] = (p["chest_rot"][0] + 1.3 * bth, p["chest_rot"][1], p["chest_rot"][2])
+                p["spine_rot"] = (p["spine_rot"][0] + 0.5 * bth, p["spine_rot"][1], p["spine_rot"][2])
+                p["head_rot"] = (p["head_rot"][0] - 0.9 * bth, p["head_rot"][1], p["head_rot"][2])
             if c.name.startswith(CALM):
                 poses = eye_darts(poses, c)
             poses = secondary(poses, c.loop)
-            if family == "field" and (c.name in ("cradle", "run_loop") or c.name.startswith(("idle", "aim_", "release_", "quick_stick"))):
+            if family == "field" and (c.name in ("run_loop",) or c.name.startswith(("idle", "cradle", "aim_", "release_", "quick_stick", "switch_", "split_dodge", "face_dodge"))):
                 poses = stick_lag(poses, c.loop, c.release)
             prev_q = None
             for f, p in enumerate(poses):

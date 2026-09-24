@@ -240,3 +240,108 @@ moves the controller. Manifest fields:
 **Playblast:** `Previews/Playblasts/runtime_camera_playblast.mp4`. It uses the packaged USDZs from `camera_gameplay` with DOF:
 shooter cradle, aim and release; goalie shuffles with the root moved per the curve; net heavy impact, crowd cheer and the
 ambient gust.
+
+
+## v7: gameplay animation continuity (Codex brief from cb53020)
+Everything is appended after frame 1558 (shooter) and 1398 (goalie). **All earlier ranges, release/contact frames, sockets,
+roots and facing are unchanged.** The boy field player and both teammates share the shooter timeline; the girl goalie shares
+the goalie timeline.
+
+### Handedness system
+- New pose channel `hand`: 0 = right hand on top (the original carry), 1 = left hand on top.
+- The IK hand targets slide along the shaft, so a switch is a real regrip: the hands meet mid-shaft (`hand` 0.5) at
+  `switch_contact_frame`.
+- Left-handed clips are true mirrors: body, stick, pocket and gaze are mirrored, and the hands swap roles.
+
+### New shooter clips (41)
+| Clip | Frames | | Timing metadata |
+|---|---|---|---|
+| cradle_L | 1570–1598 | loop | handedness=left |
+| aim_overhand_L | 1608–1638 | loop | handedness=left |
+| aim_bounce_L | 1648–1678 | loop | handedness=left |
+| aim_sidearm_L | 1688–1718 | loop | handedness=left |
+| release_overhand_L | 1728–1761 |  | release_frame=1742, ideal_release_window=[12, 15], recovery_frame=23, handedness=left |
+| release_bounce_L | 1771–1804 |  | release_frame=1785, ideal_release_window=[12, 15], recovery_frame=23, handedness=left |
+| release_sidearm_L | 1814–1847 |  | release_frame=1827, ideal_release_window=[11, 14], recovery_frame=22, handedness=left |
+| quick_stick_catch_L | 1857–1875 |  | contact_frame=1863, recovery_frame=14, handedness=left |
+| quick_stick_release_L | 1885–1901 |  | release_frame=1890, ideal_release_window=[3, 6], recovery_frame=14, handedness=left |
+| switch_R_to_L | 1911–1927 |  | contact_frame=1919, switch_contact_frame=8, recovery_frame=12, handedness_start=right, handedness_end=left |
+| switch_L_to_R | 1937–1953 |  | contact_frame=1945, switch_contact_frame=8, recovery_frame=12, handedness_start=left, handedness_end=right |
+| split_dodge_left_switch | 1963–1987 |  | switch_contact_frame=10, dodge_commit_frame=6, recovery_frame=18, handedness_start=right, handedness_end=left |
+| split_dodge_right_switch | 1997–2021 |  | switch_contact_frame=10, dodge_commit_frame=6, recovery_frame=18, handedness_start=left, handedness_end=right |
+| aim_overhand_cancel | 2031–2039 |  | recovery_frame=8 |
+| aim_bounce_cancel | 2049–2057 |  | recovery_frame=8 |
+| aim_sidearm_cancel | 2067–2075 |  | recovery_frame=8 |
+| aim_overhand_L_cancel | 2085–2093 |  | recovery_frame=8 |
+| aim_bounce_L_cancel | 2103–2111 |  | recovery_frame=8 |
+| aim_sidearm_L_cancel | 2121–2129 |  | recovery_frame=8 |
+| split_dodge_left_cancel | 2139–2149 |  | recovery_frame=10 |
+| split_dodge_right_cancel | 2159–2169 |  | recovery_frame=10 |
+| roll_dodge_left_cancel | 2179–2189 |  | recovery_frame=10 |
+| roll_dodge_right_cancel | 2199–2209 |  | recovery_frame=10 |
+| face_dodge_left_cancel | 2219–2229 |  | recovery_frame=10 |
+| face_dodge_right_cancel | 2239–2249 |  | recovery_frame=10 |
+| split_dodge_left_switch_cancel | 2259–2269 |  | recovery_frame=10 |
+| split_dodge_right_switch_cancel | 2279–2289 |  | recovery_frame=10 |
+| cradle_to_aim_overhand | 2299–2307 |  | recovery_frame=8, handedness=right |
+| cradle_to_aim_bounce | 2317–2325 |  | recovery_frame=8, handedness=right |
+| cradle_to_aim_sidearm | 2335–2343 |  | recovery_frame=8, handedness=right |
+| cradle_to_aim_overhand_L | 2353–2361 |  | recovery_frame=8, handedness=left |
+| cradle_to_aim_bounce_L | 2371–2379 |  | recovery_frame=8, handedness=left |
+| cradle_to_aim_sidearm_L | 2389–2397 |  | recovery_frame=8, handedness=left |
+| release_overhand_recover | 2407–2417 |  | recovery_frame=10, handedness=right |
+| release_bounce_recover | 2427–2437 |  | recovery_frame=10, handedness=right |
+| release_sidearm_recover | 2447–2457 |  | recovery_frame=10, handedness=right |
+| quick_stick_release_recover | 2467–2477 |  | recovery_frame=10, handedness=right |
+| release_overhand_L_recover | 2487–2497 |  | recovery_frame=10, handedness=left |
+| release_bounce_L_recover | 2507–2517 |  | recovery_frame=10, handedness=left |
+| release_sidearm_L_recover | 2527–2537 |  | recovery_frame=10, handedness=left |
+| quick_stick_release_L_recover | 2547–2557 |  | recovery_frame=10, handedness=left |
+
+### New goalie clips
+| Clip | Frames | | Metadata |
+|---|---|---|---|
+| goalie_center_taps | 1410–1458 |  | contact_frame=1419 |
+| goalie_stick_spin | 1468–1508 |  |  |
+| goalie_ready_lively | 1518–1566 | loop |  |
+
+### Manifest timing fields
+| Field | Meaning |
+|---|---|
+| `switch_contact_frame` | Hands meet on the shaft (local frame) |
+| `dodge_commit_frame` | Plant / point of no return |
+| `ideal_release_window` | [first, last] local frames for the ball launch; `release_frame` stays the exact event |
+| `recovery_frame` | From here the clip may be interrupted into cradle/idle |
+| `handedness`, `handedness_start` / `handedness_end` | `right` / `left` |
+| `compatible_releases` | Which releases each aim loop chains into |
+| `recommended_blend_in_s` / `recommended_blend_out_s` | 0.12 / 0.15 s; releases blend in at 0.08 s |
+| `travel_meters`, `movement_direction`, `root_motion_curve` | Root motion on the switch dodges: smoothstep over local frames 6–16. Feet are authored against it, so they stay planted when Swift moves the root |
+
+### Recommended chains
+- Aim: `cradle` → `cradle_to_aim_X` → `aim_X` → `release_X` → `release_X_recover` → `cradle`.
+- Cancel an aim: `aim_X_cancel`. Cancel a dodge after its commit: `<dodge>_cancel`.
+- Left hand: the same chains with `_L`.
+- Switching hands: `switch_R_to_L` / `switch_L_to_R`, or while dodging, `split_dodge_left_switch` / `split_dodge_right_switch`.
+
+### Continuity layer
+- **Breathing** is baked into every clip. It is exactly 0 on each clip's first frame and eases to 0 on the last frame of
+  one-shot clips, so it never pops.
+- **Stick-head lag and ball-in-pocket lag** are 0 on the first frame of every clip (loops subtract their frame-0 offset and stay
+  periodic) and ease out at one-shot ends.
+- The six older dodges now ease in from and out to the exact cradle pose.
+- `roll_dodge_*` was re-authored: the pelvis carries the full 360° turn and the shoulders only lead it. This fixes a twisted end
+  pose and the old 2.4 cm grip miss.
+- Releases ease in from their exact aim pose over 3 frames (release frames unchanged).
+
+### Validation (packaged USDZs re-imported, `camera_gameplay`, hard cuts with no blending)
+- `Previews/Playblasts/continuity_transitions_playblast.mp4`: 694 frames covering every new transition in sequence, with root
+  motion applied per the manifest curves.
+- `continuity_contact_sheet.png` and `continuity_boundary_metrics.json`.
+- Mean frame-to-frame change in the shooter region:
+  - inside clips: median 0.0034, 90th percentile 0.0081;
+  - **all 30 clip boundaries fall below the in-clip 90th percentile** (worst: switch_L_to_R->cradle 0.0066, cradle->quick_stick_catch 0.0059, cradle->split_dodge_left_switch 0.0053).
+- Shooter: 0 validation errors, all loops seamless, worst hand-to-grip gap 2.1 cm (cradle).
+  - Goalie worst: 1.7 cm (`goalie_kick_save_right`).
+  - Variants: ≤ 2.4 cm.
+- **Note:** the playblast preview renders darker than intended (a colour-management setting leaked from the environment-map
+  render). Motion and continuity are unaffected; renders now always restore the AgX look.

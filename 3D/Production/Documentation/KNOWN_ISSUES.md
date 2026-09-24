@@ -41,3 +41,9 @@ Phase 1 commit: `3ef396d58503f5e7844da3cee169684900893c22`.
 - **Crowd LODs** decimate faces too; they are only meant for midground and distant use.
 - **(Resolved)** the note about flat PBR character materials.
 - **(Resolved)** arena material count: the arena now uses 4 materials and the ambient layer uses 1 (shared palette).
+- **(Resolved)** `roll_dodge_right` grip miss and its twisted end pose.
+- **Continuity playblast preview is dark:** colour management leaked from the environment-map render. Previews only; exports
+  are unaffected.
+- **Blender USD importer caching:** re-importing a just-exported USDZ in the same session can return stale data. Validation
+  now force-reloads USD layers first.
+- **Remaining hand-to-grip gaps** of up to 2.4 cm on some variant clips (cradles, kick saves).

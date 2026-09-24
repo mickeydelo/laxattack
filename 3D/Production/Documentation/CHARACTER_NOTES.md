@@ -165,3 +165,16 @@ Every character (heroes, teammates, fans) is now **one skinned mesh with one mat
   1024 atlases).
 - **Clip ranges, events, sockets and manifests are unchanged.** The goal frame is now rigidly skinned to `goal_root` (merged
   with the net), and the hierarchy note in `lax_goal_clips.json` still applies.
+
+
+## v7: charm pass (Mickey's device review, 2026-09-24)
+- **Eyes:** 16% larger toy eyes with larger highlights. Lids stay open across expressions (`focused` 0.13, `determined` 0.15,
+  `strain` 0.40) and brows are softer. This removes the sleepy/grumpy look.
+- **Pocket:** a solid woven backing (`pocket_bag`) under the cords, skinned to the same pocket bones. The ball no longer shows
+  through the string gaps from behind. The cradle pose now angles the pocket toward the gameplay camera.
+- **Albedo:** atlases are lighter (softer baked occlusion, flatter top-lit gradient).
+- **Goalie idles** (all goalies):
+  - `goalie_center_taps`: tap the left pipe, re-centre, tap the right pipe, nod.
+  - `goalie_stick_spin`: after a goal against, spins the stick twice in his hands and re-sets.
+  - `goalie_ready_lively`: bounce, stick waggle, tracking head.
+  - Existing idles remain: `goalie_tap_pipes`, `goalie_scan`, `goalie_reset_gloves`, `goalie_helmet_nod`.
