@@ -463,12 +463,14 @@ def setup_eevee(samples=64, res=(720, 1560)):
     vs.exposure = 0.35; vs.gamma = 1.0
     if hasattr(r.image_settings, "media_type"):
         r.image_settings.media_type = "IMAGE"      # playblasts switch scenes to video output
+    if hasattr(r.image_settings, "color_management"):
+        r.image_settings.color_management = "FOLLOW_SCENE"   # EXR saves leave an OVERRIDE (linear Standard) that darkens PNGs
     vs = bpy.context.scene.view_settings            # always restore the style-bible look (env-map renders switch to Standard)
     try:
-        vs.view_transform = "AgX"; vs.look = "AgX - Punchy"
+        vs.view_transform = "AgX"; vs.look = "None"          # "AgX - Punchy" measured ~0.7 stop too dark on the palette scene
     except Exception:
         pass
-    vs.exposure = 0.35
+    vs.exposure = 0.85
     r.image_settings.file_format = "PNG"; r.image_settings.color_mode = "RGB"
 
 def make_camera(name, loc, target, collection, vfov_deg=None, lens=None, portrait=True):

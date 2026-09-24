@@ -47,3 +47,6 @@ Phase 1 commit: `3ef396d58503f5e7844da3cee169684900893c22`.
 - **Blender USD importer caching:** re-importing a just-exported USDZ in the same session can return stale data. Validation
   now force-reloads USD layers first.
 - **Remaining hand-to-grip gaps** of up to 2.4 cm on some variant clips (cradles, kick saves).
+- **Preview exposure:** Blender preview renders now use AgX with no look at +0.85 exposure. "AgX - Punchy" measured about 0.7
+  stop too dark on the palette scene. Previews only; the runtime look is RealityKit's (see LIGHTING_KIT.md). The v7 continuity
+  playblast predates this fix and renders dark.

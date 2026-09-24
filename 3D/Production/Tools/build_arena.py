@@ -137,6 +137,38 @@ def sky_backdrop(collection):
             vi = ob.data.loops[li].vertex_index; uv.data[li].uv = ((vi // 2) / seg, (vi % 2) * 0.999)
     return ob
 
+def flower_clump(seed, s=1.4):
+    rnd = random.Random(seed); out = []
+    cols = ("kit_white", "accent_gold", "petal_pink", "petal_lilac", "accent_coral")
+    for k in range(rnd.randint(5, 9)):
+        x, y = rnd.uniform(-0.22, 0.22) * s, rnd.uniform(-0.12, 0.12) * s; h = rnd.uniform(0.10, 0.20) * s
+        out.append((sweep([(x, y, 0), (x + rnd.uniform(-0.02, 0.02), y, h)], [0.006 * s, 0.004 * s], 5, 1.0), "leaf_b"))
+        out.append((ellipsoid((x + 0.03 * s, y, h * 0.4), (0.03 * s, 0.012 * s, 0.006 * s), 8, 4), "leaf_a"))
+        col = rnd.choice(cols); c = V((x, y, h))
+        for pi_ in range(5):
+            a = 2 * math.pi * pi_ / 5 + rnd.uniform(0, 0.3)
+            out.append((ellipsoid(tuple(c + V((math.cos(a) * 0.022 * s, math.sin(a) * 0.022 * s, 0))), (0.02 * s, 0.02 * s, 0.006 * s), 8, 4), col))
+        out.append((ellipsoid(tuple(c + V((0, 0, 0.004 * s))), (0.011 * s, 0.011 * s, 0.008 * s), 8, 5), "accent_gold" if col != "accent_gold" else "accent_coral"))
+    return out
+
+def flower_beds(Dio):
+    """Toy flower clumps: along the fence base, by the bench and signs, and soft foreground clumps near the camera corners."""
+    MATS.setdefault("petal_pink", ((0.95, 0.45, 0.62), 0.6, 0.0, 0.0)); MATS.setdefault("petal_lilac", ((0.62, 0.50, 0.92), 0.6, 0.0, 0.0))
+    spots = [(x, -12.25 + 0.12 * ((i * 7) % 3 - 1)) for i, x in enumerate((-6.2, -5.1, -4.0, -2.9, -1.7, 1.8, 3.0, 4.1, 5.2, 6.3))]
+    spots += [(-6.0, -2.6), (-6.0, -0.4), (6.0, -2.6), (6.0, -0.4), (-4.6, -11.9), (4.6, -11.9)]
+    out = []
+    for i, (x, y) in enumerate(spots):
+        B = Builder("flowers_%02d" % i)
+        for g, m in flower_clump(200 + i):
+            B.add(g, m)
+        o = B.build(Dio); o.location = (x, y, 0.0); out.append(o)
+    for i, (x, y, s) in enumerate(((1.55, 3.05, 2.2), (-1.35, 3.25, 2.0), (1.1, 3.6, 1.8))):
+        B = Builder("flowers_fg_%02d" % i)
+        for g, m in flower_clump(300 + i, s):
+            B.add(g, m)
+        o = B.build(Dio); o.location = (x, y, 0.0); out.append(o)
+    return out
+
 def build_arena(export=True):
     tdir = os.path.join(PROD, "Arena", "Textures")
     fa, fn, fr = make_field_textures(tdir)
@@ -148,6 +180,7 @@ def build_arena(export=True):
         bpy.data.objects.remove(o, do_unlink=True)
     Dio = bpy.data.collections["Diorama"]
     twins = make_twins(Dio)                                        # static twins of lax_arena_ambient (identical rest placement)
+    flower_beds(Dio)
     bleacher(Dio, (5.2, -14.4, -0.45), 3.4, 3); bench(Dio, (6.0, -1.5, 0), 2.2, math.radians(-90))
     plat = bpy.data.objects["field_platform"]                   # keep the soil skirt only: drop old flat-colour turf faces
     me = plat.data
@@ -169,6 +202,8 @@ def build_arena(export=True):
         if n in fg: return "foreground_framing"
         if n.startswith(("field_platform", "field_markings", "field_turf", "hero_tufts")): return "gameplay"
         if n.startswith("twin_"): return "ambient_twins"   # static twins of lax_arena_ambient: hide when ambient is shown
+        if n.startswith("flowers_fg"): return "foreground_framing"
+        if n.startswith("flowers"): return "near_field"
         if n.startswith(("field_fence", "bench", "bleacher", "sign_", "banner")): return "near_field"
         if n.startswith(("far_shore", "mountains", "cloud_", "sky_backdrop")): return "far_background"
         return "midground"

@@ -7,7 +7,7 @@ def export_asset(objects, root_name, content_name, out_usdz, fps=30, end_frame=0
     os.makedirs(tmp, exist_ok=True)
     raw = os.path.join(tmp, root_name + ".usdc"); fixed = os.path.join(tmp, root_name + "_fixed.usdc")
     sc = bpy.context.scene; sc.render.fps, sc.render.fps_base = fps, 1.0
-    if bpy.context.object and bpy.context.object.mode != "OBJECT":
+    if getattr(bpy.context, "object", None) and bpy.context.object.mode != "OBJECT":
         bpy.ops.object.mode_set(mode="OBJECT")
     for o in bpy.context.selected_objects:
         o.select_set(False)
