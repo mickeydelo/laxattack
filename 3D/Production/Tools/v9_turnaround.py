@@ -18,7 +18,7 @@ def v9_turnaround(spec, look, name, tag="v9", res=(620, 820)):
                            frame_mat="goggle_white" if look == "player" else "cage_white", pocket_mat="cage_white")
     st.rotation_euler = (0, 0, math.radians(-80)); st.location = (-0.45, -0.75, 0.025)
     L = coll("Lookdev"); v9_studio(sc, L)
-    setup_eevee(64, res); sc.render.use_stamp = False; sc.view_settings.exposure = -0.2
+    setup_eevee(64, res); sc.render.use_stamp = False; sc.view_settings.exposure = -0.35
     tiles = []
     for view, loc in (("front", (0.0, -4.4, 0.95)), ("side", (-4.4, 0.0, 0.95)), ("back", (0.0, 4.4, 0.95))):
         cam = make_camera("cam_" + view, loc, (0, 0, 0.64), L, lens=58, portrait=True)

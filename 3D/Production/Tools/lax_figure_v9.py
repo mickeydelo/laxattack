@@ -4,7 +4,7 @@
 def _lin(c):
     return tuple(x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4 for x in c)
 _SRGB = {   # concept colours (sRGB) -> linear shader values
-    "skin_v9": ((0.97, 0.79, 0.64), 0.36, 0.25), "hair_v9": ((0.40, 0.22, 0.12), 0.30, 0.35), "eye_v9": ((0.16, 0.09, 0.05), 0.08, 0.6),
+    "skin_v9": ((0.95, 0.72, 0.55), 0.36, 0.25), "hair_v9": ((0.40, 0.22, 0.12), 0.30, 0.35), "eye_v9": ((0.16, 0.09, 0.05), 0.08, 0.6),
     "eye_hi_v9": ((1.0, 1.0, 1.0), 0.2, 0.0), "brow_v9": ((0.30, 0.16, 0.09), 0.5, 0.0), "mouth_v9": ((0.55, 0.22, 0.18), 0.4, 0.0),
     "blush_v9": ((0.98, 0.66, 0.60), 0.5, 0.0), "goggle_white": ((0.96, 0.94, 0.89), 0.18, 0.4), "strap_dark": ((0.16, 0.16, 0.17), 0.5, 0.0),
     "tie_cream": ((0.97, 0.94, 0.87), 0.3, 0.2), "helmet_navy_v9": ((0.10, 0.17, 0.33), 0.22, 0.5), "helmet_vent": ((0.04, 0.06, 0.12), 0.6, 0.0),
@@ -54,20 +54,20 @@ def lobe(c, r, n_axis, ridges=7, depth=0.08, seg=(18, 12)):
     return deform(ellipsoid(c, r, seg[0], seg[1]), f)
 
 def v9_face(s, H, F):
-    ew, eh = 0.036, 0.054
+    ew, eh = 0.031, 0.046
     for side, sx in (("L", 1), ("R", -1)):
-        az, el = 23.0 * sx, -7.0
+        az, el = 25.0 * sx, -11.0
         F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.005, eh), 26, 16), az, el, -0.001), "eye_v9", "eye_" + side)
-        F.add(H.place(ellipsoid((0, 0, 0), (0.0125, 0.0025, 0.016), 12, 8), az + 3.2, el + 4.6, 0.0035), "eye_hi_v9", "eye_" + side)
+        F.add(H.place(ellipsoid((0, 0, 0), (0.011, 0.0025, 0.014), 12, 8), az + 2.8, el + 4.0, 0.0035), "eye_hi_v9", "eye_" + side)
         F.add(H.place(ellipsoid((0, 0, 0), (0.0055, 0.0025, 0.0055), 8, 5), az - 3.4, el - 6.0, 0.0035), "eye_hi_v9", "eye_" + side)
         dA = math.degrees(ew / H.r.x) * 1.3 + 2; dE = math.degrees(eh / H.r.z) + 2
         lo = math.degrees(eh / H.r.z) * 2 + 4
         F.add(surface_patch(H, az - dA, az + dA, el - dE + lo, el + dE + lo, 0.0042), s["skin"], "lid_" + side)
-        bpts = [H.point(az + dx * sx, el + 19.5 + 1.2 - 0.03 * dx * dx) for dx in (-7, -2, 3, 8)]
+        bpts = [H.point(az + dx * sx, el + 17.5 + 1.2 - 0.03 * dx * dx) for dx in (-7, -2, 3, 8)]
         bpts = [tuple(V(q) + (V(q) - H.c).normalized() * 0.0035) for q in bpts]
         F.add(sweep(bpts, [0.0035, 0.0052, 0.005, 0.003], 8, 0.5), "brow_v9", "brow_" + side)
-        F.add(H.place(ellipsoid((0, 0, 0), (0.036, 0.004, 0.022), 14, 6), 37 * sx, -21.0, -0.0015), "blush_v9", "head")
-    mw = 0.030; mel = -26.0
+        F.add(H.place(ellipsoid((0, 0, 0), (0.038, 0.004, 0.023), 14, 6), 38 * sx, -24.0, -0.0015), "blush_v9", "head")
+    mw = 0.028; mel = -30.0
     def mouth_shape(q):
         x = q.x / mw; z = q.z
         return V((q.x, q.y, z * (1.0 if z < 0 else 0.25) + 0.010 * x * x))
@@ -81,19 +81,23 @@ def v9_face(s, H, F):
     F.add(surface_patch(H, -mA, mA, mel - 11.0, mel + 1.4, 0.0038), s["skin"], "jaw")
 
 def v9_hair_player(s, H, Hb):
-    bnd = lambda az: _interp([(0, 34), (20, 30), (42, 18), (70, 9), (92, -2), (112, -20), (150, -36), (180, -42)], az)
-    cap, rim = hair_cap(H, bnd, base=1.065, grooves=28, depth=0.022, part=True, back_bulge=0.06)
+    bnd = lambda az: _interp([(0, 30), (14, 26), (34, 15), (56, 6), (80, 2), (100, -14), (130, -32), (180, -42)], az)
+    cap, rim = hair_cap(H, bnd, base=1.065, grooves=24, depth=0.034, part=True, back_bulge=0.06)
     Hb.add(cap, "hair_v9", "head"); Hb.add(sweep(rim, [0.012] * len(rim), 8, 1.0, cap0=False, cap1=False), "hair_v9", "head")
+    for sx in (1, -1):   # swept bangs: from the centre part down and out across the forehead to the temples
+        for k_, (e0, a1, e1, rr) in enumerate(((44, 30, 24, 0.034), (40, 42, 14, 0.030))):
+            pts = [H.point(3 * sx, e0, 1.07), H.point(14 * sx, e0 - 8, 1.085), H.point(a1 * sx, e1 + 2, 1.085), H.point((a1 + 12) * sx, e1 - 8, 1.07)]
+            Hb.add(sweep(pts, [rr, rr * 1.05, rr * 0.8, rr * 0.3], 12, 0.45), "hair_v9", "head")
     for sx in (1, -1):   # flowing locks: in front of the ears and just behind them
         pts = [H.point(60 * sx, 16, 1.06), H.point(68 * sx, -4, 1.07), H.point(70 * sx, -24, 1.065), H.point(66 * sx, -40, 1.055), H.point(62 * sx, -48, 1.05)]
         Hb.add(sweep(pts, [0.030, 0.030, 0.024, 0.014, 0.004], 12, 0.5), "hair_v9", "head")
         pts = [H.point(104 * sx, 4, 1.07), H.point(108 * sx, -20, 1.075), H.point(104 * sx, -40, 1.06)]
         Hb.add(sweep(pts, [0.034, 0.028, 0.006], 12, 0.5), "hair_v9", "head")
-    c = V(H.point(140, -34, 1.2)); n = (c - H.c).normalized()
-    for off, r in (((0, 0, 0), 0.105), ((0.045, 0.035, -0.065), 0.082), ((-0.04, 0.05, -0.06), 0.076), ((0.025, 0.07, 0.035), 0.072), ((0.0, 0.025, -0.12), 0.064), ((-0.05, 0.02, 0.04), 0.066)):
+    c = V(H.point(152, -22, 1.24)); n = (c - H.c).normalized()
+    for off, r in (((0, 0, 0), 0.13), ((0.055, 0.04, -0.08), 0.10), ((-0.05, 0.06, -0.075), 0.094), ((0.03, 0.085, 0.04), 0.088), ((0.0, 0.03, -0.15), 0.078), ((-0.06, 0.025, 0.05), 0.082)):
         cc = c + V(off)
         Hb.add(lobe(tuple(cc), (r, r * 0.95, r * 0.9), tuple((cc - H.c).normalized()), ridges=8, depth=0.10), "hair_v9", "head")
-    tie_c = V(H.point(140, -28, 1.09))
+    tie_c = V(H.point(152, -14, 1.11))
     Hb.add(torus(tuple(tie_c), 0.058, 0.016, 20, 8, "Y"), "tie_cream", "head")
 
 def v9_goggles(s, H, G):
@@ -111,7 +115,7 @@ def v9_goggles(s, H, G):
     for sx in (1, -1):
         G.add(superellipsoid((0.014, 0.024, 0.030), 0.45, 0.45, 10, 6, gp(48 * sx, -4, 0.022)), "goggle_white", "head")
     strap = [H.point(a, -2 + 10 * smoothstep(80, 180, abs(a)), 1.075) for a in list(range(52, 181, 12)) + list(range(-180, -51, 12))]
-    G.add(sweep(strap, [0.017] * len(strap), 6, 2.6), "strap_dark", "head")
+    G.add(sweep(strap, [0.010] * len(strap), 6, 2.6), "strap_dark", "head")
     G.add(superellipsoid((0.030, 0.012, 0.020), 0.4, 0.4, 10, 5, tuple(H.point(180, 8, 1.11))), "goggle_white", "head")
 
 def v9_hair_goalie(s, H, Hb):
@@ -234,7 +238,7 @@ def build_character_v9(s, collection, arm, look):
         for sx in (1, -1):
             Bp.add(superellipsoid((0.075, 0.07, 0.06), 0.55, 0.6, 16, 8, (0.17 * sx * tk, -0.01, 0.86)), s["kit"], "chest")
             Bp.add(sweep([(0.13 * sx * tk, -0.13 * tk, 0.88), (0.19 * sx * tk, -0.06, 0.90)], [0.011, 0.011], 8, 1.0), s["kit_trim"], "chest")
-        num = text_mesh("num_front", s["number"], 0.15, collection, 0.014)
+        num = text_mesh("num_front_v9_150", s["number"], 0.15, collection, 0.014)
         Bp.add(xform(num, Matrix.Translation((-0.045, -0.178 * tk, 0.655)) @ Matrix.Rotation(math.radians(90), 4, "X")), s["number_mat"], "chest")
         parts["pads"] = Bp.build(collection, arm)
     if look == "player":
@@ -253,13 +257,13 @@ def build_character_v9(s, collection, arm, look):
             parts["collar"] = Bc.build(collection, arm)
     return parts
 
-PLAYER_V9 = dict(GIRL_FIELD, name="v9_player", skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
+PLAYER_V9 = dict(GIRL_FIELD, name="v9_player", head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
                  number="10", number_mat="kit_red_v9", bottom="shorts_v9", bottom_mat="kit_red_v9", bottom_trim="kit_cream_v9",
-                 sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_red_v9", glove=None, glove_cuff=None, limb_k=1.38, hand_k=1.35, shoe_k=1.5, torso_k=1.2, sole="kit_red_v9", front_number_size=0.17, front_number_x=-0.095, front_number_z=0.68)
-GOALIE_V9 = dict(BOY_GOALIE, name="v9_goalie", skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_navy_v9", kit_trim="kit_cyan_v9",
+                 sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_red_v9", glove=None, glove_cuff=None, limb_k=1.5, hand_k=1.4, shoe_k=1.5, torso_k=1.22, sole="kit_red_v9", front_number_size=0.17, front_number_x=-0.095, front_number_z=0.68)
+GOALIE_V9 = dict(BOY_GOALIE, name="v9_goalie", head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_navy_v9", kit_trim="kit_cyan_v9",
                  number="2", number_mat="sock_white_v9", bottom="shorts_v9", bottom_mat="kit_navy_v9", bottom_trim="kit_cyan_v9",
                  sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_navy_v9",
-                 glove="kit_navy_v9", glove_cuff="sock_white_v9", body_scale=0.82, limb_k=1.38, shoe_k=1.5, torso_k=1.2, sole="kit_cyan_v9", chest_protector=False)
+                 glove="kit_navy_v9", glove_cuff="sock_white_v9", body_scale=0.82, limb_k=1.5, shoe_k=1.5, torso_k=1.22, sole="kit_cyan_v9", chest_protector=False)
 
 
 def pose_turnaround(arm, look):
@@ -276,6 +280,6 @@ def pose_turnaround(arm, look):
             q = V(R0.col[1]).rotation_difference(V(d).normalized())
             pb.matrix = Matrix.Translation(pb.head) @ (q.to_matrix() @ R0).to_4x4()
             bpy.context.view_layer.update()
-        set_loc_world(pbs["ik_foot_" + side], V((0.055 * sx, -0.01, 0.0)))
-    set_loc_world(pbs["pelvis"], V((0, 0.0, -0.03)))
+        set_loc_world(pbs["ik_foot_" + side], V((0.07 * sx, -0.01, 0.0)))
+    set_loc_world(pbs["pelvis"], V((0, 0.0, -0.012)))
     bpy.context.view_layer.update()

@@ -471,7 +471,7 @@ def _build_character(s, collection, arm):
     K.add(wrap(num_b, 1, 0.128 * tk), s.get("number_mat", trim), "chest")
     if s["number"] and not s.get("chest_protector"):
         fns = s.get("front_number_size", 0.09)
-        num_f = text_mesh("num_f", s["number"], fns, collection, 0.01)
+        num_f = text_mesh("num_f_%03d" % int(fns * 1000), s["number"], fns, collection, 0.01)   # size-keyed: no stale cached text mesh
         num_f = xform(num_f, Matrix.Translation((s.get("front_number_x", -0.07 * fns / 0.09), -0.133 * tk, s.get("front_number_z", 0.80))) @ Matrix.Rotation(math.radians(90), 4, "X"))
         K.add(wrap(num_f, -1, -0.133 * tk), s.get("number_mat", trim), "chest")
     if s["bottom"] == "kilt":
