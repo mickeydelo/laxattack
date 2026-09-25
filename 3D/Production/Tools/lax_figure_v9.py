@@ -82,7 +82,7 @@ def v9_face(s, H, F):
 
 def v9_hair_player(s, H, Hb):
     bnd = lambda az: _interp([(0, 30), (14, 26), (34, 15), (56, 6), (80, 2), (100, -14), (130, -32), (180, -42)], az)
-    cap, rim = hair_cap(H, bnd, base=1.065, grooves=20, depth=0.046, part=True, back_bulge=0.06)
+    cap, rim = hair_cap(H, bnd, base=1.08, grooves=20, depth=0.046, part=True, back_bulge=0.10)
     Hb.add(cap, "hair_v9", "head"); Hb.add(sweep(rim, [0.012] * len(rim), 8, 1.0, cap0=False, cap1=False), "hair_v9", "head")
     for sx in (1, -1):   # swept bangs: from the centre part down and out across the forehead to the temples
         for k_, (e0, a1, e1, rr) in enumerate(((44, 30, 24, 0.034), (40, 42, 14, 0.030))):
@@ -93,11 +93,11 @@ def v9_hair_player(s, H, Hb):
         Hb.add(sweep(pts, [0.030, 0.030, 0.024, 0.014, 0.004], 12, 0.5), "hair_v9", "head")
         pts = [H.point(104 * sx, 4, 1.07), H.point(108 * sx, -20, 1.075), H.point(104 * sx, -40, 1.06)]
         Hb.add(sweep(pts, [0.034, 0.028, 0.006], 12, 0.5), "hair_v9", "head")
-    c = V(H.point(152, -22, 1.24)); n = (c - H.c).normalized()
-    for off, r in (((0, 0, 0), 0.13), ((0.055, 0.04, -0.08), 0.10), ((-0.05, 0.06, -0.075), 0.094), ((0.03, 0.085, 0.04), 0.088), ((0.0, 0.03, -0.15), 0.078), ((-0.06, 0.025, 0.05), 0.082)):
+    c = V(H.point(154, -20, 1.30)); n = (c - H.c).normalized()
+    for off, r in (((0, 0, 0), 0.15), ((0.065, 0.045, -0.09), 0.115), ((-0.06, 0.07, -0.085), 0.108), ((0.035, 0.1, 0.045), 0.10), ((0.0, 0.035, -0.17), 0.09), ((-0.07, 0.03, 0.055), 0.094)):
         cc = c + V(off)
         Hb.add(lobe(tuple(cc), (r, r * 0.95, r * 0.9), tuple((cc - H.c).normalized()), ridges=8, depth=0.10), "hair_v9", "head")
-    tie_c = V(H.point(152, -14, 1.11))
+    tie_c = V(H.point(154, -11, 1.14))
     Hb.add(torus(tuple(tie_c), 0.058, 0.016, 20, 8, "Y"), "tie_cream", "head")
 
 def v9_goggles(s, H, G):

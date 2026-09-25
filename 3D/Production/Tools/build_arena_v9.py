@@ -182,11 +182,17 @@ def build_v9_gameplay_scene(cam_preset="behind_shooter"):
     for o in [o for o in bpy.data.objects if o.name == "v9_clouds"]:
         bpy.data.objects.remove(o, do_unlink=True)
     Bc = Builder("v9_clouds"); rnd = random.Random(4)
-    for (x, y, z, s) in ((-46, -170, 34, 5.5), (-10, -185, 40, 6.5), (24, -175, 36, 6.0), (60, -190, 42, 7.0), (-78, -185, 38, 6.0), (8, -160, 30, 4.0)):
+    for (x, y, z, s) in ((-46, -165, 19, 5.0), (-12, -180, 23, 6.0), (22, -170, 20, 5.5), (56, -185, 24, 6.5), (-80, -180, 22, 5.5), (6, -155, 17, 3.6), (84, -175, 20, 5.0)):
         for k in range(12):
             r = s * rnd.uniform(0.45, 0.8); c = (x + rnd.uniform(-1.8, 1.8) * s, y + rnd.uniform(-0.3, 0.3) * s, z + rnd.uniform(0, 0.8) * s)
             Bc.add(deform(ellipsoid(c, (r, r * 0.7, r * 0.72), 14, 9), lambda q, z0=z - 0.1 * s: V((q.x, q.y, max(q.z, z0)))), "cloud_v9")
     Bc.build(Dio)
+    for i, (x, y, h) in enumerate(((-12.5, -19.6, 3.4), (-9.6, -20.2, 2.9), (-6.8, -19.8, 3.0), (7.0, -20.1, 2.8), (9.8, -19.6, 3.5), (12.8, -20.3, 3.0))):
+        popcorn_tree(Dio, "v9_shore_tree_%02d" % i, (x, y, -0.45), h, 300 + i)
+    Bs = Builder("v9_shore_bushes")
+    for k in [k_ for k_ in range(18) if abs(-14 + 28 * k_ / 17.0) > 4.5]:
+        leafy_bush(Bs, (-14 + 28 * k / 17.0 + random.Random(k).uniform(-0.5, 0.5), -19.0 + random.Random(k + 50).uniform(-0.6, 0.4), -0.2), 0.55, 700 + k)
+    Bs.build(Dio)
     C = coll("v9_chars")
     sh = build_skeleton(PLAYER_V9, C, "v9_shooter_rig"); build_character_v9(PLAYER_V9, C, sh, "player")
     build_stick("attack", C, sh, name="v9_shooter_stick", frame_mat="goggle_white", pocket_mat="cage_white")
@@ -199,6 +205,11 @@ def build_v9_gameplay_scene(cam_preset="behind_shooter"):
     pk = sh.matrix_world @ sh.pose.bones["pocket_01"].head
     ball = obj_from_geo("v9_ball", ellipsoid((0, 0, 0), (0.065, 0.065, 0.065), 20, 14), "goggle_white", C); ball.location = pk + V((0, 0.0, 0.05))
     sc = bpy.context.scene; L = coll("Lookdev"); setup_world()
+    for n_ in sc.world.node_tree.nodes:                 # deeper concept-blue sky gradient
+        if n_.type == "VALTORGB":
+            els = n_.color_ramp.elements
+            els[0].color = tuple(_lin3((0.70, 0.84, 0.98))) + (1.0,)
+            els[-1].color = tuple(_lin3((0.20, 0.47, 0.92))) + (1.0,)
     sun = bpy.data.lights.new("v9_sun", "SUN"); sun.energy = 5.2; sun.color = (1.0, 0.88, 0.70); sun.angle = math.radians(4.0)
     so = bpy.data.objects.new("v9_sun", sun); L.objects.link(so); so.rotation_euler = (V((0, 0, 0)) - V((-7, 9, 11))).to_track_quat("-Z", "Y").to_euler()
     fill = bpy.data.lights.new("v9_fill", "SUN"); fill.energy = 0.9; fill.color = (0.75, 0.85, 1.0)
@@ -222,7 +233,11 @@ def build_v9_gameplay_scene(cam_preset="behind_shooter"):
         ng.links.new(rl.outputs["Image"], gl.inputs["Image"]); ng.links.new(gl.outputs["Image"], go.inputs[0])
     except Exception as e:
         print("bloom skipped:", e)
-    presets = {"behind_shooter": ((0.45, 9.2, 3.5), (0.2, -5.4, 0.7), 40, 11.0)}
-    loc, tgt, fov, fd = presets[cam_preset]
+    presets = {"behind_shooter": ((0.45, 6.9, 2.95), (0.15, -5.5, 0.75), 44, 8.9, None),
+               "menu_hero": ((0.9, 4.9, 1.0), (-0.3, -3.0, 0.8), 50, 2.8, ((0.15, 2.3, 0.0), math.radians(165)))}
+    loc, tgt, fov, fd, shx = presets[cam_preset]
+    if shx is not None:                                   # menu: shooter turned toward camera in the foreground
+        sh.location = shx[0]; sh.rotation_euler = (0, 0, shx[1])
+        bpy.context.view_layer.update(); ball.location = sh.matrix_world @ sh.pose.bones["pocket_01"].head + V((0, 0, 0.05))
     cam = make_camera("cam_" + cam_preset, loc, tgt, L, vfov_deg=fov)
     return cam, fd
