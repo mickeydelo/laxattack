@@ -132,3 +132,97 @@ def build_env_v9(Dio):
         B.add(g, m)
     b = B.build(Dio); b.location = (5.5, -30.0, -0.43); b.rotation_euler = (0, 0, math.radians(78)); out.append(b)
     return out
+
+
+def carpet_tufts(C, seed=17, n=1400):
+    """Dense small tufts for a lush lawn read (keeps the ball corridor and crease clear)."""
+    rnd = random.Random(seed); B = Builder("v9_carpet_tufts"); k = 0
+    while k < n:
+        x, y = rnd.uniform(-6.8, 6.8), rnd.uniform(-12.2, 7.5)
+        if (abs(x) < 0.9 and -5.2 < y < 2.2) or (math.hypot(x, y + 5.7) < 2.3):
+            continue
+        s = rnd.uniform(0.05, 0.10); k += 1
+        for j in range(4):
+            a_ = rnd.uniform(0, 6.28); tip = (x + math.cos(a_) * 0.3 * s, y + math.sin(a_) * 0.3 * s, s * rnd.uniform(0.8, 1.2))
+            B.add(sweep([(x, y, 0), tip], [s * 0.16, 0.003], 4, 0.5), "tuft_tip_v9" if j == 0 else "tuft_v9")
+    return B.build(C)
+
+def split_rail_fence(C, y=-12.55, x0=-14.0, x1=14.0):
+    B = Builder("v9_fence"); x = x0
+    while x <= x1 + 1e-3:
+        B.add(superellipsoid((0.075, 0.075, 0.58), 0.25, 0.35, 10, 6, (x, y, 0.56)), "bark_v9")
+        B.add(superellipsoid((0.085, 0.085, 0.04), 0.3, 0.4, 10, 4, (x, y, 1.15)), "bark_v9")
+        x += 2.2
+    for z in (0.52, 0.92):
+        B.add(superellipsoid(((x1 - x0) / 2 + 0.1, 0.05, 0.065), 0.25, 0.3, 40, 6, ((x0 + x1) / 2, y + 0.07, z)), "bark_v9")
+    return B.build(C)
+
+def rock_stacks(C, seed=8, y0=-75.0):
+    rnd = random.Random(seed); B = Builder("v9_rock_stacks"); x = -72.0
+    while x < 72.0:
+        for k in range(rnd.randint(2, 4)):
+            s = rnd.uniform(0.5, 1.4); c = (x + rnd.uniform(-1.0, 1.0), y0 + rnd.uniform(-1.2, 1.0), -0.45 + s * rnd.uniform(0.2, 0.5) + k * 0.15)
+            B.add(ellipsoid(c, (s * rnd.uniform(1.0, 1.5), s * rnd.uniform(0.7, 1.0), s * rnd.uniform(0.55, 0.8)), 12, 8), rnd.choice(("rock_v9", "rock_v9", "rock_dark_v9")))
+        x += rnd.uniform(1.6, 2.6)
+    return B.build(C)
+
+def build_v9_gameplay_scene(cam_preset="behind_shooter"):
+    """Full v9 lookdev scene: v8 arena base + v9 scenery + v9 characters + concept lighting. Returns the camera."""
+    G_ = globals()
+    G_["palette_materials"] = lambda *a, **k: {}
+    build_arena(False)
+    for o in [o for o in bpy.data.objects if o.type == "EMPTY" and o.name in ("camera_markers", "crowd_markers")]:
+        for c in list(o.children):
+            bpy.data.objects.remove(c, do_unlink=True)
+    Dio = bpy.data.collections["Diorama"]
+    build_env_v9(Dio)
+    for o in [o for o in bpy.data.objects if o.name.startswith(("field_fence", "v9_shore_rocks"))]:
+        bpy.data.objects.remove(o, do_unlink=True)
+    carpet_tufts(Dio); split_rail_fence(Dio); rock_stacks(Dio)
+    for o in [o for o in bpy.data.objects if o.name == "v9_clouds"]:
+        bpy.data.objects.remove(o, do_unlink=True)
+    Bc = Builder("v9_clouds"); rnd = random.Random(4)
+    for (x, y, z, s) in ((-46, -170, 34, 5.5), (-10, -185, 40, 6.5), (24, -175, 36, 6.0), (60, -190, 42, 7.0), (-78, -185, 38, 6.0), (8, -160, 30, 4.0)):
+        for k in range(12):
+            r = s * rnd.uniform(0.45, 0.8); c = (x + rnd.uniform(-1.8, 1.8) * s, y + rnd.uniform(-0.3, 0.3) * s, z + rnd.uniform(0, 0.8) * s)
+            Bc.add(deform(ellipsoid(c, (r, r * 0.7, r * 0.72), 14, 9), lambda q, z0=z - 0.1 * s: V((q.x, q.y, max(q.z, z0)))), "cloud_v9")
+    Bc.build(Dio)
+    C = coll("v9_chars")
+    sh = build_skeleton(PLAYER_V9, C, "v9_shooter_rig"); build_character_v9(PLAYER_V9, C, sh, "player")
+    build_stick("attack", C, sh, name="v9_shooter_stick", frame_mat="goggle_white", pocket_mat="cage_white")
+    calibrate_poles(sh, [GB, AIM_O, AIM_S, QS], "field"); apply_pose(sh, finalize(cradle_pose(0)), "field"); sh.location = (0.72, 1.72, 0.0)
+    gk = build_skeleton(GOALIE_V9, C, "v9_goalie_rig"); build_character_v9(GOALIE_V9, C, gk, "goalie")
+    build_stick("goalie", C, gk, name="v9_goalie_stick", frame_mat="cage_white", pocket_mat="cage_white")
+    calibrate_poles(gk, [GK, READ_L, SAVE_L, SAVE_HL, mirror(SAVE_L)], "goalie"); apply_pose(gk, GK, "goalie")
+    gk.location = (0.0, -4.95, 0.0); gk.rotation_euler = (0, 0, math.pi)
+    bpy.context.view_layer.update()
+    pk = sh.matrix_world @ sh.pose.bones["pocket_01"].head
+    ball = obj_from_geo("v9_ball", ellipsoid((0, 0, 0), (0.065, 0.065, 0.065), 20, 14), "goggle_white", C); ball.location = pk + V((0, 0.0, 0.05))
+    sc = bpy.context.scene; L = coll("Lookdev"); setup_world()
+    sun = bpy.data.lights.new("v9_sun", "SUN"); sun.energy = 5.2; sun.color = (1.0, 0.88, 0.70); sun.angle = math.radians(4.0)
+    so = bpy.data.objects.new("v9_sun", sun); L.objects.link(so); so.rotation_euler = (V((0, 0, 0)) - V((-7, 9, 11))).to_track_quat("-Z", "Y").to_euler()
+    fill = bpy.data.lights.new("v9_fill", "SUN"); fill.energy = 0.9; fill.color = (0.75, 0.85, 1.0)
+    fo = bpy.data.objects.new("v9_fill", fill); L.objects.link(fo); fo.rotation_euler = (V((0, 0, 0)) - V((8, -6, 6))).to_track_quat("-Z", "Y").to_euler()
+    setup_eevee(48, (585, 1268)); sc.render.use_stamp = False
+    sc.view_settings.view_transform = "Standard"; sc.view_settings.look = "None"; sc.view_settings.exposure = 0.25
+    try:                                   # soft bloom (compositor API differs between Blender versions; optional)
+        if hasattr(sc, "compositing_node_group"):
+            ng = bpy.data.node_groups.new("v9_comp", "CompositorNodeTree")
+            ng.interface.new_socket("Image", in_out="OUTPUT", socket_type="NodeSocketColor")
+            rl = ng.nodes.new("CompositorNodeRLayers"); gl = ng.nodes.new("CompositorNodeGlare"); go = ng.nodes.new("NodeGroupOutput")
+            sc.compositing_node_group = ng
+        else:
+            sc.use_nodes = True; nt = sc.node_tree
+            for n in list(nt.nodes):
+                nt.nodes.remove(n)
+            ng = nt; rl = nt.nodes.new("CompositorNodeRLayers"); gl = nt.nodes.new("CompositorNodeGlare"); go = nt.nodes.new("CompositorNodeComposite")
+        for k_, v_ in (("glare_type", "FOG_GLOW"), ("threshold", 0.8), ("size", 7), ("mix", -0.6)):
+            if hasattr(gl, k_):
+                setattr(gl, k_, v_)
+        ng.links.new(rl.outputs["Image"], gl.inputs["Image"]); ng.links.new(gl.outputs["Image"], go.inputs[0])
+    except Exception as e:
+        print("bloom skipped:", e)
+    presets = {"behind_shooter": ((0.45, 9.2, 3.5), (0.2, -5.4, 0.7), 40, 11.0)}
+    loc, tgt, fov, fd = presets[cam_preset]
+    cam = make_camera("cam_" + cam_preset, loc, tgt, L, vfov_deg=fov)
+    return cam, fd

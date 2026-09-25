@@ -4,7 +4,7 @@
 def _lin(c):
     return tuple(x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4 for x in c)
 _SRGB = {   # concept colours (sRGB) -> linear shader values
-    "skin_v9": ((0.95, 0.72, 0.55), 0.36, 0.25), "hair_v9": ((0.40, 0.22, 0.12), 0.30, 0.35), "eye_v9": ((0.16, 0.09, 0.05), 0.08, 0.6),
+    "skin_v9": ((0.95, 0.72, 0.55), 0.36, 0.25), "hair_v9": ((0.36, 0.19, 0.10), 0.24, 0.45), "eye_v9": ((0.16, 0.09, 0.05), 0.08, 0.6),
     "eye_hi_v9": ((1.0, 1.0, 1.0), 0.2, 0.0), "brow_v9": ((0.30, 0.16, 0.09), 0.5, 0.0), "mouth_v9": ((0.55, 0.22, 0.18), 0.4, 0.0),
     "blush_v9": ((0.98, 0.66, 0.60), 0.5, 0.0), "goggle_white": ((0.96, 0.94, 0.89), 0.18, 0.4), "strap_dark": ((0.16, 0.16, 0.17), 0.5, 0.0),
     "tie_cream": ((0.97, 0.94, 0.87), 0.3, 0.2), "helmet_navy_v9": ((0.10, 0.17, 0.33), 0.22, 0.5), "helmet_vent": ((0.04, 0.06, 0.12), 0.6, 0.0),
@@ -82,7 +82,7 @@ def v9_face(s, H, F):
 
 def v9_hair_player(s, H, Hb):
     bnd = lambda az: _interp([(0, 30), (14, 26), (34, 15), (56, 6), (80, 2), (100, -14), (130, -32), (180, -42)], az)
-    cap, rim = hair_cap(H, bnd, base=1.065, grooves=24, depth=0.034, part=True, back_bulge=0.06)
+    cap, rim = hair_cap(H, bnd, base=1.065, grooves=20, depth=0.046, part=True, back_bulge=0.06)
     Hb.add(cap, "hair_v9", "head"); Hb.add(sweep(rim, [0.012] * len(rim), 8, 1.0, cap0=False, cap1=False), "hair_v9", "head")
     for sx in (1, -1):   # swept bangs: from the centre part down and out across the forehead to the temples
         for k_, (e0, a1, e1, rr) in enumerate(((44, 30, 24, 0.034), (40, 42, 14, 0.030))):
