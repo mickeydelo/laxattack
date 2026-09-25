@@ -76,7 +76,7 @@ def export_asset(objects, root_name, content_name, out_usdz, fps=30, end_frame=0
     rep["objects"] = [o.name for o in objects]
     return rep
 
-def export_lods(rep, root_name, content_name, out_usdz, ratios, fps=30, end_frame=0, manifest=None, animated=True, protect=True):
+def export_lods(rep, root_name, content_name, out_usdz, ratios, fps=30, end_frame=0, manifest=None, animated=True, protect=True, keep=()):
     """Decimated LODs of an already-exported (baked) asset: <name>_lod1.usdz, _lod2.usdz ..."""
     res = {}; objs = [bpy.data.objects[n] for n in rep["objects"] if n in bpy.data.objects]; prev = 1.0
     seen = set()                                    # LODs reference 1024 copies of any larger texture
@@ -98,7 +98,7 @@ def export_lods(rep, root_name, content_name, out_usdz, ratios, fps=30, end_fram
     for i, r in enumerate(ratios, 1):
         hb = globals().get("HEAD_BONES", set()) if protect else set()
         for o in objs:
-            if o.type == "MESH" and len(o.data.polygons) > 60:
+            if o.type == "MESH" and len(o.data.polygons) > 60 and not any(o.name.startswith(k) for k in keep):
                 m = o.modifiers.new("lod", "DECIMATE"); m.ratio = r / prev
                 idx = {vg.index for vg in o.vertex_groups if vg.name in hb}
                 if idx:                                   # never decimate the head/face (eyes, mouth, lids, hair, headgear)

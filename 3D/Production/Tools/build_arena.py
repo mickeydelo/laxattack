@@ -111,7 +111,7 @@ def soft_copy(o, group, t, haze):
     for i, slot in enumerate(c.data.materials):
         if slot:
             c.data.materials[i] = mat(haze_material(slot.name, haze, t))
-    sm = c.modifiers.new("soften", "SMOOTH"); sm.factor = 0.8; sm.iterations = 6
+    sm = c.modifiers.new("soften", "SMOOTH"); sm.factor = 0.6; sm.iterations = 3
     bpy.context.view_layer.objects.active = c; bpy.ops.object.modifier_apply(modifier="soften")
     return c
 
@@ -201,7 +201,8 @@ def build_arena(export=True):
         e = bpy.data.objects.new(g, None); Dio.objects.link(e); e.parent = root; groups[g] = e
     fg = {o.name for o in bpy.data.collections["Foreground"].objects}
     def group_of(n):
-        if n.startswith(("v9_pine_forest", "v9_rock_stacks", "v9_lake", "v9_clouds", "v9_boat")): return "far_background"
+        if n.startswith("v9_lake"): return "midground"          # no hazed soft copy (it glared white on device)
+        if n.startswith(("v9_pine_forest", "v9_rock_stacks", "v9_clouds", "v9_boat")): return "far_background"
         if n.startswith(("v9_tree", "v9_shore_tree", "v9_shore_bushes")): return "midground"
         if n.startswith(("v9_fence", "v9_field_tufts", "v9_carpet_tufts")): return "near_field"
         if n.startswith("v9_foreground_bushes"): return "foreground_framing"
@@ -221,7 +222,7 @@ def build_arena(export=True):
     for o in meshes:
         g = group_of(o.name)
         if g == "far_background" and not o.name.startswith("sky_"):
-            soft.append(soft_copy(o, groups["far_background_soft"], 0.22, (0.72, 0.80, 0.90)))
+            soft.append(soft_copy(o, groups["far_background_soft"], 0.10, (0.72, 0.80, 0.90)))
         elif g == "foreground_framing":
             soft.append(soft_copy(o, groups["foreground_framing_soft"], 0.12, (0.55, 0.62, 0.45)))
     meshes += soft
@@ -286,7 +287,8 @@ def build_arena(export=True):
                           {"asset": "lax_arena_pinebrook", "variant": "mobile 1024 textures"}, ["camera_gameplay"], False, bake=False)
         rep["mobile_kb"] = em["usdz_bytes"] // 1024; rep["mobile_textures"] = em["textures"]
         e["objects"] = [o.name for o in objs if o.name in bpy.data.objects]
-        rep["lods"] = export_lods(e, "lax_arena_pinebrook", "lax_arena_content", path, (0.5, 0.2), animated=False)
+        rep["lods"] = export_lods(e, "lax_arena_pinebrook", "lax_arena_content", path, (0.5, 0.2), animated=False,
+                                  keep=("v9_tree", "v9_shore_tree", "v9_fence", "v9_foreground", "v9_shore_bushes") if globals().get("ARENA_V9") else ())
         rep["check_lod2"] = arena_origin_check(path.replace(".usdz", "_lod2.usdz"))
     return rep
 

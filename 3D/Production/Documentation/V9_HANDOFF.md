@@ -41,3 +41,15 @@ v8 arena files are unchanged and remain available as a fallback.
   - **Directional sun:** keep it warm at **7,000–9,000 lux** with shadows **on**.
   - **Shadow casting:** enable it for arena `near_field` and `midground` (trees, fence, bushes) per `lax_render_policy.json`.
   - **Grounding shadows:** keep them on the characters, sticks, ball and goal.
+
+
+## v9.2 (device screenshots 2026-09-25)
+| Device issue | Fix |
+|---|---|
+| Goalie eyes read as "C" outlines on device (solid in Blender at every LOD) | Eyes now sit clearly proud of the skin (4 mm), with the highlights, lids and brows lifted to match. Small runtime depth or skinning differences can no longer bury the eye centre |
+| Shooter hair looked like a "pumpkin" (grooves converging at the crown) | Strand grooves now flow from the centre part back into the bun (meridians around the bun), for both shooter and goalie |
+| Faceted, hexagonal trees | The arena LODs no longer decimate trees, fence, shore bushes or foreground bushes (`export_lods(keep=...)`) |
+| Ghostly pale far forest, and the lake glaring white | Soft background haze 22% → 10% with gentler smoothing; the lake is excluded from the soft copy; water is deeper blue and rougher (0.35) |
+
+**Arena v9 budget now:** `_lod1` 460k tris / 22.0 MB; `_lod2` 325k tris / 16.5 MB (trees stay full quality in both).
+Use `_lod1` on iPhone 17/18 Pro. Use `_lod2` if frame time is tight.

@@ -23,15 +23,26 @@ def _interp(table, x):
             return y0 + (y1 - y0) * t
     return table[-1][1]
 
-def hair_cap(H, boundary, base=1.045, grooves=30, depth=0.011, part=True, back_bulge=0.03, useg=96, vseg=24):
+def hair_cap(H, boundary, base=1.045, grooves=30, depth=0.011, part=True, back_bulge=0.03, useg=96, vseg=24, pole=None):
+    """pole: head-space point the strands flow into (the bun). Grooves become meridians around it, so hair reads as pulled back."""
     verts, faces = [], []
+    if pole is not None:
+        pn = (V(pole) - H.c).normalized(); e1 = pn.orthogonal().normalized(); e2 = pn.cross(e1)
+        df = (V(H.point(0, 42, 1.0)) - H.c).normalized(); phi0 = math.atan2(df.dot(e2), df.dot(e1))
     azs = [-180 + 360.0 * i / useg for i in range(useg)]
     for j in range(vseg + 1):
         for az in azs:
             el0 = boundary(az); t = j / vseg; el = el0 + (89.2 - el0) * (t ** 0.85)
-            ridge = (0.5 - 0.5 * math.cos(grooves * math.radians(az))) ** 0.7
-            fade = 1.0 - smoothstep(72, 89, el)
-            dip = (0.024 * math.exp(-(az / 6.5) ** 2) * smoothstep(el0 + 1, el0 + 8, el) * (1 - smoothstep(78, 89, el))) if part else 0.0
+            if pole is None:
+                ridge = (0.5 - 0.5 * math.cos(grooves * math.radians(az))) ** 0.7
+                fade = 1.0 - smoothstep(72, 89, el)
+                dip = (0.024 * math.exp(-(az / 6.5) ** 2) * smoothstep(el0 + 1, el0 + 8, el) * (1 - smoothstep(78, 89, el))) if part else 0.0
+            else:
+                d = (V(H.point(az, el, 1.0)) - H.c).normalized(); cz = d.dot(pn)
+                phi = math.atan2(d.dot(e2), d.dot(e1)); dphi = math.atan2(math.sin(phi - phi0), math.cos(phi - phi0))
+                ridge = (0.5 - 0.5 * math.cos(grooves * phi)) ** 0.7
+                fade = smoothstep(0.97, 0.80, cz)                   # strands merge smoothly into the bun
+                dip = (0.024 * math.exp(-(dphi / 0.09) ** 2) * smoothstep(el0 + 1, el0 + 8, el) * smoothstep(0.9, 0.5, cz)) if part else 0.0
             bulge = back_bulge * smoothstep(80, 180, abs(az)) * math.sin(math.pi * min(1.0, max(0.0, (el + 40) / 110.0)))
             verts.append(H.point(az, el, base + bulge + depth * ridge * fade - dip))
     for j in range(vseg):
@@ -57,14 +68,14 @@ def v9_face(s, H, F):
     ew, eh = 0.031, 0.046
     for side, sx in (("L", 1), ("R", -1)):
         az, el = 25.0 * sx, -11.0
-        F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.005, eh), 26, 16), az, el, -0.001), "eye_v9", "eye_" + side)
-        F.add(H.place(ellipsoid((0, 0, 0), (0.011, 0.0025, 0.014), 12, 8), az + 2.8, el + 4.0, 0.0035), "eye_hi_v9", "eye_" + side)
-        F.add(H.place(ellipsoid((0, 0, 0), (0.0055, 0.0025, 0.0055), 8, 5), az - 3.4, el - 6.0, 0.0035), "eye_hi_v9", "eye_" + side)
+        F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.008, eh), 26, 16), az, el, 0.004), "eye_v9", "eye_" + side)     # clearly proud of the skin
+        F.add(H.place(ellipsoid((0, 0, 0), (0.011, 0.0025, 0.014), 12, 8), az + 2.8, el + 4.0, 0.0125), "eye_hi_v9", "eye_" + side)
+        F.add(H.place(ellipsoid((0, 0, 0), (0.0055, 0.0025, 0.0055), 8, 5), az - 3.4, el - 6.0, 0.0125), "eye_hi_v9", "eye_" + side)
         dA = math.degrees(ew / H.r.x) * 1.3 + 2; dE = math.degrees(eh / H.r.z) + 2
         lo = s.get("lid_park_deg") or (math.degrees(eh / H.r.z) * 2 + 4)      # parked under the hairline / helmet brim when open
-        F.add(surface_patch(H, az - dA, az + dA, el - dE + lo, el + dE + lo, 0.0042), s["skin"], "lid_" + side)
+        F.add(surface_patch(H, az - dA, az + dA, el - dE + lo, el + dE + lo, 0.0135), s["skin"], "lid_" + side)
         bpts = [H.point(az + dx * sx, el + 17.5 + 1.2 - 0.03 * dx * dx) for dx in (-7, -2, 3, 8)]
-        bpts = [tuple(V(q) + (V(q) - H.c).normalized() * 0.0035) for q in bpts]
+        bpts = [tuple(V(q) + (V(q) - H.c).normalized() * 0.006) for q in bpts]
         F.add(sweep(bpts, [0.0035, 0.0052, 0.005, 0.003], 8, 0.5), "brow_v9", "brow_" + side)
         F.add(H.place(ellipsoid((0, 0, 0), (0.038, 0.004, 0.023), 14, 6), 38 * sx, -24.0, -0.0015), "blush_v9", "head")
     mw = 0.028; mel = -30.0
@@ -82,7 +93,7 @@ def v9_face(s, H, F):
 
 def v9_hair_player(s, H, Hb):
     bnd = lambda az: _interp([(0, 30), (14, 26), (34, 15), (56, 6), (80, 2), (100, -14), (130, -32), (180, -42)], az)
-    cap, rim = hair_cap(H, bnd, base=1.08, grooves=20, depth=0.046, part=True, back_bulge=0.10)
+    cap, rim = hair_cap(H, bnd, base=1.065, grooves=18, depth=0.040, part=True, back_bulge=0.08, pole=H.point(154, -20, 1.3))
     Hb.add(cap, "hair_v9", "head"); Hb.add(sweep(rim, [0.012] * len(rim), 8, 1.0, cap0=False, cap1=False), "hair_v9", "head")
     for sx in (1, -1):   # swept bangs: from the centre part down and out across the forehead to the temples
         for k_, (e0, a1, e1, rr) in enumerate(((44, 30, 24, 0.034), (40, 42, 14, 0.030))):
@@ -120,7 +131,7 @@ def v9_goggles(s, H, G):
 
 def v9_hair_goalie(s, H, Hb):
     bnd = lambda az: _interp([(0, 30), (30, 24), (60, 4), (95, -20), (140, -40), (180, -46)], az)
-    cap, rim = hair_cap(H, bnd, base=1.04, grooves=26, depth=0.018, part=True, back_bulge=0.02)
+    cap, rim = hair_cap(H, bnd, base=1.04, grooves=18, depth=0.022, part=True, back_bulge=0.02, pole=H.point(160, -52, 1.14))
     Hb.add(cap, "hair_v9", "head"); Hb.add(sweep(rim, [0.011] * len(rim), 8, 1.0, cap0=False, cap1=False), "hair_v9", "head")
     for sx in (1, -1):
         pts = [H.point(52 * sx, 18, 1.05), H.point(58 * sx, 0, 1.055), H.point(58 * sx, -18, 1.05)]
