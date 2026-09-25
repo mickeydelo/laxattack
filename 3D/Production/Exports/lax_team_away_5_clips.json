@@ -651,7 +651,7 @@
       "notes": "split dodge toward shooter-left with R->L hand switch; planted feet vs root curve",
       "dodge_commit_frame": 6,
       "switch_contact_frame": 10,
-      "travel_meters": 0.252,
+      "travel_meters": 0.246,
       "movement_direction": "shooter_left",
       "root_motion_curve": {
         "type": "smoothstep",
@@ -674,7 +674,7 @@
       "notes": "split dodge toward shooter-right with L->R hand switch",
       "dodge_commit_frame": 6,
       "switch_contact_frame": 10,
-      "travel_meters": 0.252,
+      "travel_meters": 0.246,
       "movement_direction": "shooter_right",
       "root_motion_curve": {
         "type": "smoothstep",

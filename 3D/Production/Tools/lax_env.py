@@ -58,7 +58,7 @@ def goal_geo(detail=1.0):
         rear = V(((-0.35 + 0.7 * u), -d, 0.03 + 0.05 * v))
         sag = 0.10 * math.sin(math.pi * w) * (1 - abs(2 * u - 1) * 0.5)
         return m.lerp(rear, w) + V((0, 0, -sag))
-    cords = []; rad = 0.012
+    cords = []; rad = 0.012 if detail <= 1.0 else 0.0095
     N = int(12 * detail)
     def line(pts):
         cords.append(sweep(pts, [rad] * len(pts), 5, 1.0, cap0=False, cap1=False))
@@ -67,8 +67,9 @@ def goal_geo(detail=1.0):
         line([tuple(net_pt(t, 1.0, w / 8)) for w in range(9)])
         line([tuple(net_pt(0.0, t, w / 8)) for w in range(9)])
         line([tuple(net_pt(1.0, t, w / 8)) for w in range(9)])
-    for j in range(1, 8):  # rings at constant depth
-        w = j / 8
+    NR = int(8 * detail)
+    for j in range(1, NR):  # rings at constant depth
+        w = j / NR
         ringpts = [tuple(net_pt(0.0, v / 6, w)) for v in range(0, 7)] + [tuple(net_pt(u / 8, 1.0, w)) for u in range(1, 8)] + [tuple(net_pt(1.0, v / 6, w)) for v in range(6, -1, -1)]
         line(ringpts)
     meta = dict(mouth_w=GOAL_W, mouth_h=GOAL_H, depth=d, pipe_r=r)

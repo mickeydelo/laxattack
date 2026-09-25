@@ -1,3 +1,4 @@
+MATS["cord_cream"] = ((0.91, 0.83, 0.69), 0.7, 0.0, 0.0)   # warm cream cord (props concept)
 # Lax Attack Phase 4: goal cage + animated net (lax_goal.usdz). Mouth faces the shooter (Blender +Y = game +Z).
 # Net impact regions use the SHOOTER's perspective: *_left = shooter-left = game -X = Blender +X.
 GOAL_DIR = os.path.join(PROD, "Goal")
@@ -6,7 +7,7 @@ NET_U = (0.2, 0.5, 0.8); NET_V = (0.3, 0.62, 0.95); NET_W = 0.62   # bone grid o
 def build_goal_asset(export=True):
     reset_scene("LaxAttack_Goal")
     C = coll("lax_goal")
-    frame_parts, cords, gmeta, net_pt = goal_geo()
+    frame_parts, cords, gmeta, net_pt = goal_geo(1.6)       # dense concept net
     ad = bpy.data.armatures.new("lax_goal_rig"); arm = bpy.data.objects.new("lax_goal_rig", ad); C.objects.link(arm)
     bpy.context.view_layer.objects.active = arm; arm.select_set(True)
     bpy.ops.object.mode_set(mode="EDIT")
@@ -40,7 +41,7 @@ def build_goal_asset(export=True):
         return out
     Bn = Builder("lax_goal_net")
     for gg in cords:
-        Bn.add(gg, "cord_white", weights=net_w)
+        Bn.add(gg, "cord_cream", weights=net_w)
     net = Bn.build(C, arm)
     goal_tris = {"frame": tri_count(frame), "net": tri_count(net)}
     body = atlas_character(arm, [frame, net], "lax_goal", GOAL_DIR, 1024) if "atlas_character" in globals() else [frame, net]

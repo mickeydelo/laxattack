@@ -15,10 +15,12 @@ def v9_turnaround(spec, look, name, tag="v9", res=(620, 820)):
     build_character_v9(spec, C, arm, look)
     pose_turnaround(arm, look)
     st, meta = build_stick("goalie" if look == "goalie" else "attack", C, None, name=name + "_stick_prop",
-                           frame_mat="goggle_white" if look == "player" else "cage_white", pocket_mat="cage_white")
+                           frame_mat="goggle_white", pocket_mat="cage_white")
     st.rotation_euler = (0, 0, math.radians(-80)); st.location = (-0.45, -0.75, 0.025)
     L = coll("Lookdev"); v9_studio(sc, L)
-    setup_eevee(64, res); sc.render.use_stamp = False; sc.view_settings.exposure = -0.35
+    setup_eevee(64, res); sc.render.use_stamp = False
+    if hasattr(sc, 'compositing_node_group'):
+        sc.compositing_node_group = None; sc.view_settings.exposure = -0.35
     tiles = []
     for view, loc in (("front", (0.0, -4.4, 0.95)), ("side", (-4.4, 0.0, 0.95)), ("back", (0.0, 4.4, 0.95))):
         cam = make_camera("cam_" + view, loc, (0, 0, 0.64), L, lens=58, portrait=True)

@@ -102,6 +102,6 @@
   "net_collision_reference": "empty whose scale gives the half-extents of a simple box covering the net volume",
   "tris": {
     "frame": 1168,
-    "net": 4040
+    "net": 6520
   }
 }

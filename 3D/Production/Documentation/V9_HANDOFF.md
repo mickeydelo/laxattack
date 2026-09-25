@@ -53,3 +53,15 @@ v8 arena files are unchanged and remain available as a fallback.
 
 **Arena v9 budget now:** `_lod1` 460k tris / 22.0 MB; `_lod2` 325k tris / 16.5 MB (trees stay full quality in both).
 Use `_lod1` on iPhone 17/18 Pro. Use `_lod2` if frame time is tight.
+
+
+## v9.3: new cast, palette lock, dense net (concept sheets 2026-09-25)
+| File(s) | Change |
+|---|---|
+| `lax_team_home_7.usdz` (+ LODs, clips) | **Mina #7** (v9): curly puff buns with purple headbands, goggles with purple hinges, cream/purple kit. Same name, rig, 78 clips, facing (−Z) |
+| `lax_team_away_5.usdz` (+ LODs, clips) | **Ollie #5** (v9): teal helmet with gold stripe, curls under the helmet, gold/teal kit, gloves. Same name, rig, 78 clips, facing (+Z) |
+| `lax_goal.usdz` | **Dense cream net** matching the props sheet (19 cords per side, 12 depth rings). Same 8 net clips and all sockets |
+| `lax_shooter*`, `lax_goalie*` | Re-exported with the **official palette** (navy #0D2B52, coral #FF5A3C, cyan #31D8FF, gold #FFC629, cream #FFF9F4) |
+
+All four characters validate with 0 errors, seamless loops and grip gaps of 2.5 cm or less. Preview: `Previews/RoundTrip/v9_cast_roundtrip.png`.
+**Not converted yet:** fans, the boy field player and the girl goalie variant (still the v8 look).

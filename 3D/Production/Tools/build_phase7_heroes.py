@@ -32,7 +32,7 @@ def build_variant(spec, asset, clips_src, family, kind, required, stick_kind, fr
     reset_scene("LaxAttack_" + spec["name"])
     C = coll(asset)
     arm = build_skeleton(spec, C, asset + "_rig")
-    parts = build_character(spec, C, arm)
+    parts = build_character_v9(spec, C, arm, spec.get("v9_look", "player")) if spec.get("v9") else build_character(spec, C, arm)
     stick, meta = build_stick(stick_kind, C, arm, name=asset + "_stick", frame_mat=frame_mat, pocket_mat=pocket_mat)
     socks = add_character_sockets(spec, arm, C, meta)
     ad = arm.data; ad.pose_position = "REST"; bpy.context.view_layer.update()
