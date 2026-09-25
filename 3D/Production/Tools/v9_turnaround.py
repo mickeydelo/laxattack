@@ -13,6 +13,7 @@ def v9_turnaround(spec, look, name, tag="v9", res=(620, 820)):
     reset_scene("v9_" + name); sc = bpy.context.scene; C = coll(name)
     arm = build_skeleton(spec, C, name + "_rig")
     build_character_v9(spec, C, arm, look)
+    pose_turnaround(arm, look)
     st, meta = build_stick("goalie" if look == "goalie" else "attack", C, None, name=name + "_stick_prop",
                            frame_mat="goggle_white" if look == "player" else "cage_white", pocket_mat="cage_white")
     st.rotation_euler = (0, 0, math.radians(-80)); st.location = (-0.45, -0.75, 0.025)

@@ -82,19 +82,19 @@ def v9_face(s, H, F):
 
 def v9_hair_player(s, H, Hb):
     bnd = lambda az: _interp([(0, 34), (20, 30), (42, 18), (70, 9), (92, -2), (112, -20), (150, -36), (180, -42)], az)
-    cap, rim = hair_cap(H, bnd, base=1.05, grooves=28, depth=0.022, part=True, back_bulge=0.035)
+    cap, rim = hair_cap(H, bnd, base=1.065, grooves=28, depth=0.022, part=True, back_bulge=0.06)
     Hb.add(cap, "hair_v9", "head"); Hb.add(sweep(rim, [0.012] * len(rim), 8, 1.0, cap0=False, cap1=False), "hair_v9", "head")
     for sx in (1, -1):   # flowing locks: in front of the ears and just behind them
         pts = [H.point(60 * sx, 16, 1.06), H.point(68 * sx, -4, 1.07), H.point(70 * sx, -24, 1.065), H.point(66 * sx, -40, 1.055), H.point(62 * sx, -48, 1.05)]
         Hb.add(sweep(pts, [0.030, 0.030, 0.024, 0.014, 0.004], 12, 0.5), "hair_v9", "head")
         pts = [H.point(104 * sx, 4, 1.07), H.point(108 * sx, -20, 1.075), H.point(104 * sx, -40, 1.06)]
         Hb.add(sweep(pts, [0.034, 0.028, 0.006], 12, 0.5), "hair_v9", "head")
-    c = V(H.point(138, -24, 1.16)); n = (c - H.c).normalized()
-    for off, r in (((0, 0, 0), 0.085), ((0.035, 0.03, -0.055), 0.066), ((-0.03, 0.045, -0.05), 0.060), ((0.02, 0.06, 0.03), 0.058), ((0.0, 0.02, -0.10), 0.052)):
+    c = V(H.point(140, -34, 1.2)); n = (c - H.c).normalized()
+    for off, r in (((0, 0, 0), 0.105), ((0.045, 0.035, -0.065), 0.082), ((-0.04, 0.05, -0.06), 0.076), ((0.025, 0.07, 0.035), 0.072), ((0.0, 0.025, -0.12), 0.064), ((-0.05, 0.02, 0.04), 0.066)):
         cc = c + V(off)
         Hb.add(lobe(tuple(cc), (r, r * 0.95, r * 0.9), tuple((cc - H.c).normalized()), ridges=8, depth=0.10), "hair_v9", "head")
-    tie_c = V(H.point(138, -20, 1.07))
-    Hb.add(torus(tuple(tie_c), 0.05, 0.014, 20, 8, "Y"), "tie_cream", "head")
+    tie_c = V(H.point(140, -28, 1.09))
+    Hb.add(torus(tuple(tie_c), 0.058, 0.016, 20, 8, "Y"), "tie_cream", "head")
 
 def v9_goggles(s, H, G):
     def gp(az, el, off=0.032):
@@ -205,15 +205,37 @@ def build_character_v9(s, collection, arm, look):
         G = Builder(s["name"] + "_headgear"); (v9_goggles if look == "player" else v9_helmet)(s, H, G); parts["headgear"] = G.build(collection, arm)
     finally:
         clear_proportions()
+    set_proportions(s)
+    try:
+        L = rest_layout(s); Hn = Builder(s["name"] + "_hands_v9"); hk = s.get("hand_k", 1.0); gs = s.get("glove_size", (0.1, 0.1, 0.1))
+        for side, sx in (("L", 1.0), ("R", -1.0)):
+            r = L[side]; gl, fd = r["gl"], r["fdir"]
+            M = Matrix.Translation(gl) @ V((0, 0, 1)).rotation_difference(fd).to_matrix().to_4x4()
+            if look == "player":     # chunky toy hand: palm, four fingers, thumb
+                Hn.add(xform(superellipsoid((0.058 * hk, 0.042 * hk, 0.056 * hk), 0.7, 0.8, 16, 10, (0, 0, -0.012)), M), s["skin"], "hand_" + side)
+                for k_ in range(4):
+                    x = (-0.033 + 0.022 * k_) * hk
+                    Hn.add(xform(sweep([(x, 0.004, 0.030 * hk), (x * 1.08, -0.004, 0.066 * hk), (x * 1.12, -0.018, 0.090 * hk)],
+                                       [0.0125 * hk, 0.0118 * hk, 0.0105 * hk], 10, 0.8), M), s["skin"], "fingers_" + side)
+                Hn.add(xform(sweep([(0.0, -0.030 * hk, -0.005), (0.012 * sx * 0 + 0.0, -0.050 * hk, 0.025 * hk), (0.0, -0.058 * hk, 0.048 * hk)],
+                                   [0.016 * hk, 0.014 * hk, 0.012 * hk], 10, 0.8), M), s["skin"], "thumb_" + side)
+            else:                    # white finger + thumb panels on the goalie gloves
+                Hn.add(xform(superellipsoid((gs[0] * 0.86, gs[1] * 0.35, gs[2] * 0.30), 0.6, 0.7, 16, 8, (0, gs[1] * 0.72, 0.075)), M), "sock_white_v9", "fingers_" + side)
+                Hn.add(xform(superellipsoid((0.036, 0.03, 0.05), 0.7, 0.8, 12, 8, (0.0, -0.075, 0.025)), M), "sock_white_v9", "thumb_" + side)
+        parts["hands_v9"] = Hn.build(collection, arm)
+    finally:
+        clear_proportions()
+    if look == "player" and "gloves" in parts:
+        bpy.data.objects.remove(parts.pop("gloves"), do_unlink=True)
     if look == "goalie":        # rounded protector pads under the jersey + front number
         Bp = Builder(s["name"] + "_pads"); tk = s.get("torso_k", 1.0)
         for (x, z, rx, rz) in ((0.078, 0.815, 0.082, 0.062), (-0.078, 0.815, 0.082, 0.062), (0.07, 0.60, 0.078, 0.055), (-0.07, 0.60, 0.078, 0.055)):
-            Bp.add(superellipsoid((rx * tk, 0.05, rz), 0.55, 0.6, 18, 10, (x * tk, -0.118 * tk, z)), s["kit"], "chest" if z > 0.72 else "spine")
+            Bp.add(superellipsoid((rx * tk, 0.055, rz), 0.85, 0.85, 20, 12, (x * tk, -0.116 * tk, z)), s["kit"], "chest" if z > 0.72 else "spine")
         for sx in (1, -1):
             Bp.add(superellipsoid((0.075, 0.07, 0.06), 0.55, 0.6, 16, 8, (0.17 * sx * tk, -0.01, 0.86)), s["kit"], "chest")
             Bp.add(sweep([(0.13 * sx * tk, -0.13 * tk, 0.88), (0.19 * sx * tk, -0.06, 0.90)], [0.011, 0.011], 8, 1.0), s["kit_trim"], "chest")
-        num = text_mesh("num_front", s["number"], 0.10, collection, 0.012)
-        Bp.add(xform(num, Matrix.Translation((-0.032, -0.172 * tk, 0.705)) @ Matrix.Rotation(math.radians(90), 4, "X")), s["number_mat"], "chest")
+        num = text_mesh("num_front", s["number"], 0.15, collection, 0.014)
+        Bp.add(xform(num, Matrix.Translation((-0.045, -0.178 * tk, 0.655)) @ Matrix.Rotation(math.radians(90), 4, "X")), s["number_mat"], "chest")
         parts["pads"] = Bp.build(collection, arm)
     if look == "player":
         vs = [o.matrix_world @ v.co for o in parts.values() if o.type == "MESH" for v in o.data.vertices
@@ -233,8 +255,27 @@ def build_character_v9(s, collection, arm, look):
 
 PLAYER_V9 = dict(GIRL_FIELD, name="v9_player", skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
                  number="10", number_mat="kit_red_v9", bottom="shorts_v9", bottom_mat="kit_red_v9", bottom_trim="kit_cream_v9",
-                 sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_red_v9", glove=None, glove_cuff=None, limb_k=1.34, hand_k=1.3, shoe_k=1.5, torso_k=1.14, sole="kit_red_v9")
+                 sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_red_v9", glove=None, glove_cuff=None, limb_k=1.38, hand_k=1.35, shoe_k=1.5, torso_k=1.2, sole="kit_red_v9", front_number_size=0.17, front_number_x=-0.095, front_number_z=0.68)
 GOALIE_V9 = dict(BOY_GOALIE, name="v9_goalie", skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_navy_v9", kit_trim="kit_cyan_v9",
                  number="2", number_mat="sock_white_v9", bottom="shorts_v9", bottom_mat="kit_navy_v9", bottom_trim="kit_cyan_v9",
                  sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_navy_v9",
-                 glove="kit_navy_v9", glove_cuff="sock_white_v9", body_scale=0.82, limb_k=1.34, shoe_k=1.5, torso_k=1.16, sole="kit_cyan_v9", chest_protector=False)
+                 glove="kit_navy_v9", glove_cuff="sock_white_v9", body_scale=0.82, limb_k=1.38, shoe_k=1.5, torso_k=1.2, sole="kit_cyan_v9", chest_protector=False)
+
+
+def pose_turnaround(arm, look):
+    """Concept stance for lookdev renders only: wide stance, soft knees, arms out and down (arm IK released)."""
+    pbs = arm.pose.bones
+    for pb in pbs:
+        for c in pb.constraints:
+            if c.type == "IK" and ("forearm" in pb.name):
+                c.mute = True
+    bpy.context.view_layer.update()
+    for side, sx in (("L", 1), ("R", -1)):
+        for bn, d in (("upperarm_" + side, (0.78 * sx, -0.12, -0.62)), ("forearm_" + side, (0.42 * sx, -0.30, -0.86))):
+            pb = pbs[bn]; R0 = arm.data.bones[bn].matrix_local.to_3x3()
+            q = V(R0.col[1]).rotation_difference(V(d).normalized())
+            pb.matrix = Matrix.Translation(pb.head) @ (q.to_matrix() @ R0).to_4x4()
+            bpy.context.view_layer.update()
+        set_loc_world(pbs["ik_foot_" + side], V((0.055 * sx, -0.01, 0.0)))
+    set_loc_world(pbs["pelvis"], V((0, 0.0, -0.03)))
+    bpy.context.view_layer.update()

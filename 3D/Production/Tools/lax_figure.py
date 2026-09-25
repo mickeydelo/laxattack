@@ -470,8 +470,9 @@ def _build_character(s, collection, arm):
     num_b = xform(num_b, Matrix.Translation((0, 0.128 * tk, 0.72)) @ Matrix.Rotation(math.radians(90), 4, "X") @ Matrix.Rotation(math.radians(180), 4, "Y"))
     K.add(wrap(num_b, 1, 0.128 * tk), s.get("number_mat", trim), "chest")
     if s["number"] and not s.get("chest_protector"):
-        num_f = text_mesh("num_f", s["number"], 0.09, collection, 0.01)
-        num_f = xform(num_f, Matrix.Translation((-0.07, -0.133 * tk, 0.80)) @ Matrix.Rotation(math.radians(90), 4, "X"))
+        fns = s.get("front_number_size", 0.09)
+        num_f = text_mesh("num_f", s["number"], fns, collection, 0.01)
+        num_f = xform(num_f, Matrix.Translation((s.get("front_number_x", -0.07 * fns / 0.09), -0.133 * tk, s.get("front_number_z", 0.80))) @ Matrix.Rotation(math.radians(90), 4, "X"))
         K.add(wrap(num_f, -1, -0.133 * tk), s.get("number_mat", trim), "chest")
     if s["bottom"] == "kilt":
         def pleat(q):
