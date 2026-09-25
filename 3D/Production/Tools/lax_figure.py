@@ -453,23 +453,26 @@ def _build_character(s, collection, arm):
     K = Builder(s["name"] + "_kit")
     torso = loft([(0.50, 0.135, 0.105), (0.56, 0.142, 0.108), (0.64, 0.148, 0.112), (0.72, 0.162, 0.122),
                   (0.80, 0.180, 0.130), (0.855, 0.178, 0.128), (0.895, 0.13, 0.095), (0.915, 0.07, 0.06)], 28, "flat", "flat", 2.3)
+    tk = s.get("torso_k", 1.0)
+    if tk != 1.0:
+        torso = deform(torso, lambda q: V((q.x * tk, q.y * tk, q.z)))
     K.add(torso, kit, weights=body_weights)
     K.add(torus((0, -0.005, 0.905), 0.078, 0.014, 22, 8), trim, "chest")
     for sx in (1, -1):
-        stripe = [(0.155 * sx, 0.0, 0.54), (0.165 * sx, 0.0, 0.66), (0.183 * sx, 0.0, 0.80)]
+        stripe = [(0.155 * sx * tk, 0.0, 0.54), (0.165 * sx * tk, 0.0, 0.66), (0.183 * sx * tk, 0.0, 0.80)]
         K.add(sweep(stripe, [0.022, 0.024, 0.02], 8, 0.35, up=(1, 0, 0)), trim, weights=body_weights)
     def wrap(geo, sgn, y0):
         def f(q):
-            ys = 0.124 * math.sqrt(max(0.0, 1 - (q.x / 0.172) ** 2))
+            ys = 0.124 * tk * math.sqrt(max(0.0, 1 - (q.x / (0.172 * tk)) ** 2))
             return V((q.x, sgn * (ys + 0.004) + (q.y - y0), q.z))
         return deform(geo, f)
     num_b = text_mesh("num_b", s["number"] or " ", 0.20, collection, 0.012) if s["number"] else ([], [])
-    num_b = xform(num_b, Matrix.Translation((0, 0.128, 0.72)) @ Matrix.Rotation(math.radians(90), 4, "X") @ Matrix.Rotation(math.radians(180), 4, "Y"))
-    K.add(wrap(num_b, 1, 0.128), s.get("number_mat", trim), "chest")
+    num_b = xform(num_b, Matrix.Translation((0, 0.128 * tk, 0.72)) @ Matrix.Rotation(math.radians(90), 4, "X") @ Matrix.Rotation(math.radians(180), 4, "Y"))
+    K.add(wrap(num_b, 1, 0.128 * tk), s.get("number_mat", trim), "chest")
     if s["number"] and not s.get("chest_protector"):
         num_f = text_mesh("num_f", s["number"], 0.09, collection, 0.01)
-        num_f = xform(num_f, Matrix.Translation((-0.07, -0.133, 0.80)) @ Matrix.Rotation(math.radians(90), 4, "X"))
-        K.add(wrap(num_f, -1, -0.133), s.get("number_mat", trim), "chest")
+        num_f = xform(num_f, Matrix.Translation((-0.07, -0.133 * tk, 0.80)) @ Matrix.Rotation(math.radians(90), 4, "X"))
+        K.add(wrap(num_f, -1, -0.133 * tk), s.get("number_mat", trim), "chest")
     if s["bottom"] == "kilt":
         def pleat(q):
             t = math.atan2(q.y, q.x); d = max(0.0, 0.60 - q.z) / 0.18
@@ -482,6 +485,16 @@ def _build_character(s, collection, arm):
         K.add(kilt, s["bottom_mat"], weights=kilt_w)
         K.add(deform(loft([(0.40, 0.207, 0.174), (0.425, 0.203, 0.170)], 40, None, None, 2.2), pleat), trim, weights=kilt_w)
         K.add(loft([(0.44, 0.15, 0.11), (0.58, 0.14, 0.11)], 24, "flat", None), s["bottom_mat"], "pelvis")
+    elif s["bottom"] == "shorts_v9":   # concept shorts: short flared legs, cream hem + side piping, no seat blob
+        bt = s.get("bottom_trim", trim)
+        K.add(loft([(0.61, 0.148 * tk, 0.114 * tk), (0.53, 0.172 * tk, 0.134 * tk), (0.47, 0.186 * tk, 0.142 * tk)], 32, None, "flat", 2.2), s["bottom_mat"], "pelvis")
+        K.add(superellipsoid((0.185 * tk, 0.135 * tk, 0.06), 0.6, 0.7, 24, 10, (0, 0.0, 0.465)), s["bottom_mat"], "pelvis")
+        for sx in (1, -1):
+            th = "thigh_L" if sx > 0 else "thigh_R"; cx = HIP_X * sx * 1.12 * tk
+            K.add(loft([(0.385, 0.108 * tk, 0.104 * tk, cx, -0.008), (0.43, 0.106 * tk, 0.104 * tk, cx * 0.98, -0.005), (0.50, 0.10 * tk, 0.10 * tk, HIP_X * sx * tk, 0)], 20, "flat", None), s["bottom_mat"], th)
+            K.add(loft([(0.378, 0.112 * tk, 0.108 * tk, cx, -0.008), (0.398, 0.112 * tk, 0.108 * tk, cx, -0.008)], 20, None, None), bt, th)
+            ox = cx + 0.106 * tk * sx
+            K.add(sweep([(ox, 0.0, 0.392), (ox * 0.99, 0.0, 0.47), (0.184 * tk * sx, 0.0, 0.58)], [0.011, 0.011, 0.01], 8, 0.6), bt, th)
     else:
         shorts = loft([(0.60, 0.145, 0.112), (0.52, 0.17, 0.13), (0.47, 0.19, 0.14)], 32, None, "flat", 2.2)
         K.add(shorts, s["bottom_mat"], "pelvis")
@@ -528,7 +541,7 @@ def _build_character(s, collection, arm):
             A.add(sweep([q, q + kd * 0.018], [0.062 * lk, 0.062 * lk], 16, 1.0, cap0=False, cap1=False), s["sock_stripe"], "shin_" + side)
         fx = HIP_X * sx
         kS = s.get("shoe_k", 1.0); Ms = Matrix.Translation((fx, -0.02, 0)) @ Matrix.Scale(kS, 4) @ Matrix.Translation((-fx, 0.02, 0))
-        Sh.add(xform(superellipsoid((0.135, 0.245, 0.045), 0.4, 0.5, 22, 10, (fx, -0.045, 0.0225)), Ms), "rubber_dark", "foot_" + side)
+        Sh.add(xform(superellipsoid((0.135, 0.245, 0.045), 0.4, 0.5, 22, 10, (fx, -0.045, 0.0225)), Ms), s.get("sole", "rubber_dark"), "foot_" + side)
         Sh.add(xform(superellipsoid((0.125, 0.19, 0.10), 0.6, 0.55, 22, 12, (fx, -0.02, 0.075)), Ms), s["shoe"], "foot_" + side)
         Sh.add(xform(superellipsoid((0.12, 0.10, 0.075), 0.6, 0.6, 18, 10, (fx, -0.115, 0.058)), Ms), s["shoe"], "toe_" + side)
         Sh.add(xform(superellipsoid((0.128, 0.06, 0.05), 0.6, 0.6, 14, 8, (fx, 0.07, 0.09)), Ms), s["shoe_accent"], "foot_" + side)

@@ -31,7 +31,7 @@ def hair_cap(H, boundary, base=1.045, grooves=30, depth=0.011, part=True, back_b
             el0 = boundary(az); t = j / vseg; el = el0 + (89.2 - el0) * (t ** 0.85)
             ridge = (0.5 - 0.5 * math.cos(grooves * math.radians(az))) ** 0.7
             fade = 1.0 - smoothstep(72, 89, el)
-            dip = (0.013 * math.exp(-(az / 5.0) ** 2) * smoothstep(el0 + 1, el0 + 8, el) * (1 - smoothstep(78, 89, el))) if part else 0.0
+            dip = (0.024 * math.exp(-(az / 6.5) ** 2) * smoothstep(el0 + 1, el0 + 8, el) * (1 - smoothstep(78, 89, el))) if part else 0.0
             bulge = back_bulge * smoothstep(80, 180, abs(az)) * math.sin(math.pi * min(1.0, max(0.0, (el + 40) / 110.0)))
             verts.append(H.point(az, el, base + bulge + depth * ridge * fade - dip))
     for j in range(vseg):
@@ -84,9 +84,11 @@ def v9_hair_player(s, H, Hb):
     bnd = lambda az: _interp([(0, 34), (20, 30), (42, 18), (70, 9), (92, -2), (112, -20), (150, -36), (180, -42)], az)
     cap, rim = hair_cap(H, bnd, base=1.05, grooves=28, depth=0.022, part=True, back_bulge=0.035)
     Hb.add(cap, "hair_v9", "head"); Hb.add(sweep(rim, [0.012] * len(rim), 8, 1.0, cap0=False, cap1=False), "hair_v9", "head")
-    for sx in (1, -1):   # face-framing locks in front of the ears
-        pts = [H.point(64 * sx, 12, 1.055), H.point(70 * sx, -8, 1.06), H.point(70 * sx, -26, 1.055), H.point(66 * sx, -38, 1.05)]
-        Hb.add(sweep(pts, [0.024, 0.022, 0.016, 0.005], 10, 0.55), "hair_v9", "head")
+    for sx in (1, -1):   # flowing locks: in front of the ears and just behind them
+        pts = [H.point(60 * sx, 16, 1.06), H.point(68 * sx, -4, 1.07), H.point(70 * sx, -24, 1.065), H.point(66 * sx, -40, 1.055), H.point(62 * sx, -48, 1.05)]
+        Hb.add(sweep(pts, [0.030, 0.030, 0.024, 0.014, 0.004], 12, 0.5), "hair_v9", "head")
+        pts = [H.point(104 * sx, 4, 1.07), H.point(108 * sx, -20, 1.075), H.point(104 * sx, -40, 1.06)]
+        Hb.add(sweep(pts, [0.034, 0.028, 0.006], 12, 0.5), "hair_v9", "head")
     c = V(H.point(138, -24, 1.16)); n = (c - H.c).normalized()
     for off, r in (((0, 0, 0), 0.085), ((0.035, 0.03, -0.055), 0.066), ((-0.03, 0.045, -0.05), 0.060), ((0.02, 0.06, 0.03), 0.058), ((0.0, 0.02, -0.10), 0.052)):
         cc = c + V(off)
@@ -131,13 +133,16 @@ def _oriented(H, az, el, radii, off, geo=None):
 
 def v9_helmet(s, H, G):
     bnd = lambda az: _interp([(0, 27), (46, 25), (60, -8), (78, -40), (130, -38), (180, -30)], az)
-    SH = 1.125
+    SH = 1.10
+    def shell_sc(az, el):   # elongated toward the back, slightly flattened crown
+        el0 = bnd(az); t = max(0.0, min(1.0, (el - el0) / (89.0 - el0)))
+        return SH + 0.06 * smoothstep(80, 180, abs(az)) * (1 - t) ** 0.6 - 0.03 * smoothstep(62, 89, el) + 0.012 * smoothstep(20, 60, abs(az)) * (1 - t)
     useg, vseg = 96, 22; verts, faces = [], []
     azs = [-180 + 360.0 * i / useg for i in range(useg)]
     for j in range(vseg + 1):
         for az in azs:
             el0 = bnd(az); t = j / vseg; el = el0 + (89.0 - el0) * (t ** 0.85)
-            verts.append(H.point(az, el, SH + 0.025 * smoothstep(100, 180, abs(az)) * (1 - t)))
+            verts.append(H.point(az, el, shell_sc(az, el)))
     for j in range(vseg):
         for i in range(useg):
             a = j * useg + i; b = j * useg + (i + 1) % useg; faces.append((a, b, b + useg, a + useg))
@@ -148,13 +153,13 @@ def v9_helmet(s, H, G):
     rim = [H.point(az, bnd(az) + 0.5, SH + 0.005) for az in range(-180, 181, 5)]
     G.add(sweep(rim, [0.017] * len(rim), 8, 1.0, cap0=False, cap1=False), "helmet_navy_v9", "head")
     # wide raised cyan centre band (front brow -> crown -> back)
-    def band(az_c, el0, el1, w=9.0, nu=6, nv=16):          # raised strip hugging the shell, edges tapered into it
+    def band(az_c, el0, el1, w=12.0, nu=8, nv=18):          # raised strip hugging the shell, edges tapered into it
         verts, faces = [], []
         for j in range(nv + 1):
             el = el0 + (el1 - el0) * j / nv
             for i in range(nu + 1):
                 u = -1 + 2 * i / nu
-                verts.append(H.point(az_c + u * w, el, SH + 0.004 + 0.016 * (1 - abs(u) ** 4)))
+                verts.append(H.point(az_c + u * w, el, shell_sc(az_c + u * w, el) + 0.004 + 0.026 * (1 - abs(u) ** 4)))
         for j in range(nv):
             for i in range(nu):
                 a = j * (nu + 1) + i; faces.append((a, a + 1, a + nu + 2, a + nu + 1))
@@ -162,10 +167,18 @@ def v9_helmet(s, H, G):
     G.add(band(0, 24, 88), "helmet_cyan", "head"); G.add(band(180, 88, -26), "helmet_cyan", "head")
     # vents: dark elongated insets following the surface
     for az, el in ((28, 62), (-28, 62), (40, 42), (-40, 42), (58, 60), (-58, 60), (112, 52), (-112, 52), (138, 30), (-138, 30), (92, 40), (-92, 40), (150, 58), (-150, 58)):
-        G.add(_oriented(H, az, el, (0.030, 0.006, 0.014), (SH - 1.0) * H.r.z + 0.004), "helmet_vent", "head")
+        G.add(_oriented(H, az, el, (0.052, 0.008, 0.021), (shell_sc(az, el) - 1.0) * H.r.z + 0.006), "helmet_vent", "head")
     for sx in (1, -1):
-        G.add(_oriented(H, 70 * sx, 6, (0.028, 0.012, 0.050), (SH - 1.0) * H.r.z + 0.010), "helmet_cyan", "head")
+        G.add(_oriented(H, 72 * sx, 4, (0.034, 0.014, 0.062), (shell_sc(72 * sx, 4) - 1.0) * H.r.z + 0.010), "helmet_cyan", "head")
+        for k_, el_ in enumerate((18, 0, -18)):
+            G.add(_oriented(H, 86 * sx, el_, (0.020, 0.008, 0.010), (shell_sc(86 * sx, el_) - 1.0) * H.r.z + 0.012), "helmet_vent", "head")
         G.add(_oriented(H, 62 * sx, -12, (0.017, 0.012, 0.017), (SH - 1.0) * H.r.z + 0.022), "cage_white", "head")
+    lip = [H.point(a, 27.5, shell_sc(a, 27.5) + 0.045) for a in range(-48, 49, 6)]          # front brow lip
+    chin = [H.point(a, -50 - 4 * (1 - abs(a) / 50.0), 1.17) for a in range(-50, 51, 5)]      # navy chin guard under the cage
+    G.add(sweep(chin, [0.032] * len(chin), 12, 0.6), "helmet_navy_v9", "head")
+    for k_ in (-1, 0, 1):
+        G.add(_oriented(H, 14 * k_, -52, (0.006, 0.006, 0.014), 0.05), "helmet_vent", "head")
+    G.add(sweep(lip, [0.022] * len(lip), 10, 1.0), "helmet_navy_v9", "head")
     def cp(az, el, sc):
         return H.point(az, el, sc)
     bars = [[cp(a, 25, 1.17) for a in range(-54, 55, 6)], [cp(a, -16, 1.23) for a in range(-56, 57, 7)], [cp(a, -37, 1.20) for a in range(-48, 49, 8)]]
@@ -180,7 +193,7 @@ def build_character_v9(s, collection, arm, look):
     """look: 'player' or 'goalie'. Builds the old body/kit, then replaces head/face/hair/headgear with v9 parts."""
     base = dict(s, hair_style="short", headgear="none", lash=False, freckles=False)
     parts = build_character(base, collection, arm)
-    for k in ("face", "hair", "headgear"):
+    for k in ("face", "hair", "headgear") + (("chest_protector",) if look == "goalie" else ()):
         o = parts.pop(k, None)
         if o is not None:
             bpy.data.objects.remove(o, do_unlink=True)
@@ -192,6 +205,16 @@ def build_character_v9(s, collection, arm, look):
         G = Builder(s["name"] + "_headgear"); (v9_goggles if look == "player" else v9_helmet)(s, H, G); parts["headgear"] = G.build(collection, arm)
     finally:
         clear_proportions()
+    if look == "goalie":        # rounded protector pads under the jersey + front number
+        Bp = Builder(s["name"] + "_pads"); tk = s.get("torso_k", 1.0)
+        for (x, z, rx, rz) in ((0.078, 0.815, 0.082, 0.062), (-0.078, 0.815, 0.082, 0.062), (0.07, 0.60, 0.078, 0.055), (-0.07, 0.60, 0.078, 0.055)):
+            Bp.add(superellipsoid((rx * tk, 0.05, rz), 0.55, 0.6, 18, 10, (x * tk, -0.118 * tk, z)), s["kit"], "chest" if z > 0.72 else "spine")
+        for sx in (1, -1):
+            Bp.add(superellipsoid((0.075, 0.07, 0.06), 0.55, 0.6, 16, 8, (0.17 * sx * tk, -0.01, 0.86)), s["kit"], "chest")
+            Bp.add(sweep([(0.13 * sx * tk, -0.13 * tk, 0.88), (0.19 * sx * tk, -0.06, 0.90)], [0.011, 0.011], 8, 1.0), s["kit_trim"], "chest")
+        num = text_mesh("num_front", s["number"], 0.10, collection, 0.012)
+        Bp.add(xform(num, Matrix.Translation((-0.032, -0.172 * tk, 0.705)) @ Matrix.Rotation(math.radians(90), 4, "X")), s["number_mat"], "chest")
+        parts["pads"] = Bp.build(collection, arm)
     if look == "player":
         vs = [o.matrix_world @ v.co for o in parts.values() if o.type == "MESH" for v in o.data.vertices
               if any(m and m.name == "M_kit_cream_v9" for m in o.data.materials)]
@@ -209,9 +232,9 @@ def build_character_v9(s, collection, arm, look):
     return parts
 
 PLAYER_V9 = dict(GIRL_FIELD, name="v9_player", skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
-                 number="10", number_mat="kit_red_v9", bottom="shorts", bottom_mat="kit_red_v9", bottom_trim="kit_cream_v9",
-                 sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_red_v9", glove=None, glove_cuff=None, limb_k=1.28, hand_k=1.25, shoe_k=1.45)
+                 number="10", number_mat="kit_red_v9", bottom="shorts_v9", bottom_mat="kit_red_v9", bottom_trim="kit_cream_v9",
+                 sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_red_v9", glove=None, glove_cuff=None, limb_k=1.34, hand_k=1.3, shoe_k=1.5, torso_k=1.14, sole="kit_red_v9")
 GOALIE_V9 = dict(BOY_GOALIE, name="v9_goalie", skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_navy_v9", kit_trim="kit_cyan_v9",
-                 number="2", number_mat="sock_white_v9", bottom="shorts", bottom_mat="kit_navy_v9", bottom_trim="kit_cyan_v9",
+                 number="2", number_mat="sock_white_v9", bottom="shorts_v9", bottom_mat="kit_navy_v9", bottom_trim="kit_cyan_v9",
                  sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_navy_v9",
-                 glove="kit_navy_v9", glove_cuff="sock_white_v9", body_scale=0.82, limb_k=1.28, shoe_k=1.45)
+                 glove="kit_navy_v9", glove_cuff="sock_white_v9", body_scale=0.82, limb_k=1.34, shoe_k=1.5, torso_k=1.16, sole="kit_cyan_v9", chest_protector=False)
