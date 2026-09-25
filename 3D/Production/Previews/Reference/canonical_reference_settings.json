@@ -1,0 +1,94 @@
+{
+  "resolution": [
+    1206,
+    2622
+  ],
+  "engine": "BLENDER_EEVEE",
+  "samples": 64,
+  "view_transform": "AgX",
+  "look": "None",
+  "exposure": 0.6,
+  "camera": {
+    "marker": "camera_gameplay",
+    "position_game": [
+      -0.3,
+      4.3,
+      7.0
+    ],
+    "target_marker": "gameplay_focus_center",
+    "target_game": [
+      -0.15,
+      0.4,
+      -3.5
+    ],
+    "vertical_fov_deg": 50,
+    "native_dof": false
+  },
+  "mode": "dof_fallback",
+  "hidden_groups": [
+    "ambient_twins",
+    "collision_only",
+    "far_background",
+    "foreground_framing",
+    "camera_markers",
+    "crowd_markers",
+    "shadow_only"
+  ],
+  "visible_arena_groups": [
+    "gameplay",
+    "near_field",
+    "midground",
+    "far_background_soft",
+    "foreground_framing_soft"
+  ],
+  "layers": [
+    "lax_arena_pinebrook_mobile",
+    "lax_arena_ambient (frame 70)",
+    "lax_arena_life (frame 70)",
+    "lax_goal",
+    "lax_shooter (cradle frame 70)",
+    "lax_goalie (goalie_ready frame 20)",
+    "6 fans lod1 on bleacher seats (crowd_idle frame 10)",
+    "reference_ball r=0.07 at pocket_socket"
+  ],
+  "lights": [
+    {
+      "name": "key_sun",
+      "type": "SUN",
+      "energy": 6.6,
+      "color": [
+        1.0,
+        0.84,
+        0.62
+      ],
+      "rotation_deg": [
+        48.6,
+        0.0,
+        34.1
+      ]
+    },
+    {
+      "name": "rim_area",
+      "type": "AREA",
+      "energy": 900.0,
+      "color": [
+        0.8,
+        0.88,
+        1.0
+      ],
+      "rotation_deg": [
+        61.8,
+        0.0,
+        26.6
+      ]
+    }
+  ],
+  "world": "procedural sky gradient, strength 0.8 (horizon warm to zenith blue)",
+  "render_s": 10.9,
+  "scene_frame": 70,
+  "ball_position_blender": [
+    0.33,
+    1.596,
+    1.042
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "asset": "lax_arena_ambient_skinned",
+  "fps": 30,
+  "timeline_end": 340,
+  "left_right_convention": "n/a",
+  "clips": [
+    {
+      "name": "ambient_loop",
+      "start": 0,
+      "end": 240,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "seamless 8 s breeze; per-object phase/amplitude variation"
+    },
+    {
+      "name": "ambient_gust",
+      "start": 250,
+      "end": 340,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "gust wave travels across the foliage (x -15 -> +15 m); starts/ends on the ambient_loop frame-0 pose"
+    }
+  ],
+  "hierarchy": "transform animation only (no skeleton): each amb_* Xform is a local pivot; meshes are local to their pivot",
+  "pivots": {
+    "tree": "amb_tree_NN at the trunk base; amb_tree_NN_canopy on the trunk",
+    "hedge": "amb_hedge_NN at the base",
+    "flag": "amb_flag_NN at the pole base; amb_flag_NN_seg1..3 chain",
+    "boat": "amb_boat_NN at the waterline",
+    "cloud": "amb_cloud_NN"
+  },
+  "static_twins": "hide the static arena group 'ambient_twins' while this asset is shown (identical rest placement)",
+  "tris": 53762,
+  "fallback_of": "lax_arena_ambient",
+  "animation_mode": "skinned: one mesh, one skeleton, one SkelAnimation (contingency; same clip ranges)"
+}

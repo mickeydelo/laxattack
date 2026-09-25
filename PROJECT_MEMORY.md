@@ -165,6 +165,8 @@ Pocket Lax is a portrait iPhone 3D arcade lacrosse game: immediate swipe-based p
 
 - 2026-09-24 (v8 whimsy): lax_arena_life.usdz (fence songbirds hop/peck/tilt + birds_startle 490-610, butterflies, duck, lake glints; life_loop 0-480 seamless), lax_fx_confetti.usdz (confetti_burst 0-105, 90 pieces land flat), flower beds in the arena (near_field + soft foreground clumps). Preview renders: AgX no look +0.85 (Punchy was ~0.7 stop dark). See WHIMSY_NOTES.md.
 
+- 2026-09-24 (v8.1): RealityKit probe (macOS Swift) confirms transform-animated USDZs expose one root 'global scene animation'; skinned contingency alternates *_skinned.usdz (ambient 47 joints, life 36, confetti 91; equivalent within 0.006 mm); lax_render_policy.json schema v1; canonical reference render (1206x2622) + settings; perf audit (character 2K texture memory is the main risk); contact verified (no offsets). Finding: far_background_soft haze too strong (v8.2).
+
 # 2026-09-22: Competitive feel and art direction
 
 - Product name is **Lax Attack**. The runtime remains SwiftUI + RealityKit in portrait orientation.

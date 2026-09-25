@@ -1,0 +1,20 @@
+{
+  "asset": "lax_fx_confetti_skinned",
+  "fps": 30,
+  "timeline_end": 105,
+  "left_right_convention": "n/a",
+  "clips": [
+    {
+      "name": "confetti_burst",
+      "start": 0,
+      "end": 105,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "cannon pop from the origin: pieces rise 1-2.3 m, flutter down and settle flat on the turf by ~frame 90"
+    }
+  ],
+  "placement": "place at a goal-side or crowd position on a goal; hide ~2 s after the clip ends",
+  "pieces": 90,
+  "fallback_of": "lax_fx_confetti",
+  "animation_mode": "skinned: one mesh, one skeleton, one SkelAnimation (contingency; same clip ranges)"
+}

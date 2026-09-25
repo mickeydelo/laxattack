@@ -1,0 +1,233 @@
+{
+  "schema": "lax_render_policy",
+  "schema_version": 1,
+  "units": "meters, game space (Y-up, gameplay forward -Z)",
+  "defaults": {
+    "visible": true,
+    "ibl": true,
+    "cast_shadow": true,
+    "receive_shadow": true,
+    "unlit": false,
+    "tier": "all",
+    "optional": false,
+    "animated": false
+  },
+  "modes": {
+    "native_dof": {
+      "description": "RealityKit native depth of field available",
+      "show": [
+        "far_background",
+        "foreground_framing"
+      ],
+      "hide": [
+        "far_background_soft",
+        "foreground_framing_soft"
+      ],
+      "camera": {
+        "focus_marker": "gameplay_focus_center",
+        "focus_distance_m": 9.6,
+        "f_stop_fullframe_equiv": 2.8,
+        "focal_length_fullframe_equiv_mm": 38.6
+      }
+    },
+    "dof_fallback": {
+      "description": "no native DOF (current RealityView path): authored pre-softened groups",
+      "show": [
+        "far_background_soft",
+        "foreground_framing_soft"
+      ],
+      "hide": [
+        "far_background",
+        "foreground_framing"
+      ]
+    }
+  },
+  "exclusive_pairs": [
+    [
+      "far_background",
+      "far_background_soft"
+    ],
+    [
+      "foreground_framing",
+      "foreground_framing_soft"
+    ]
+  ],
+  "pair_rule": "exactly one member of each exclusive pair is visible at any time",
+  "assets": {
+    "lax_arena_pinebrook_mobile": {
+      "groups": {
+        "gameplay": {
+          "cast_shadow": false,
+          "receive_shadow": true,
+          "note": "turf, markings, hero tufts: receive grounding shadows"
+        },
+        "near_field": {
+          "cast_shadow": true
+        },
+        "midground": {
+          "cast_shadow": true,
+          "tier_low": {
+            "cast_shadow": false
+          }
+        },
+        "ambient_twins": {
+          "visible_when": "lax_arena_ambient NOT loaded",
+          "cast_shadow": true,
+          "note": "static twins; hide while lax_arena_ambient is shown"
+        },
+        "far_background": {
+          "pair": "far_background_soft",
+          "cast_shadow": false,
+          "receive_shadow": false
+        },
+        "far_background_soft": {
+          "pair": "far_background",
+          "cast_shadow": false,
+          "receive_shadow": false
+        },
+        "foreground_framing": {
+          "pair": "foreground_framing_soft",
+          "cast_shadow": false
+        },
+        "foreground_framing_soft": {
+          "pair": "foreground_framing",
+          "cast_shadow": false
+        },
+        "shadow_only": {
+          "visible": false,
+          "note": "reserved, empty"
+        },
+        "collision_only": {
+          "visible": false,
+          "always_hidden": true
+        },
+        "camera_markers": {
+          "visible": false,
+          "markers_only": true
+        },
+        "crowd_markers": {
+          "visible": false,
+          "markers_only": true
+        }
+      }
+    },
+    "lax_arena_ambient": {
+      "optional": true,
+      "animated": true,
+      "tier": "mid+",
+      "clips": [
+        "ambient_loop",
+        "ambient_gust"
+      ],
+      "play": "root 'global scene animation' only"
+    },
+    "lax_arena_life": {
+      "optional": true,
+      "animated": true,
+      "tier": "mid+",
+      "clips": [
+        "life_loop",
+        "birds_startle"
+      ],
+      "play": "root 'global scene animation' only"
+    },
+    "lax_fx_confetti": {
+      "optional": true,
+      "animated": true,
+      "tier": "all",
+      "clips": [
+        "confetti_burst"
+      ],
+      "cast_shadow": true,
+      "tier_low": {
+        "cast_shadow": false
+      },
+      "hide_after_s": 2.0,
+      "note": "hide the entity ~2 s after confetti_burst ends"
+    }
+  },
+  "entity_patterns": [
+    {
+      "match": "sky_backdrop",
+      "ibl": false,
+      "unlit": true,
+      "cast_shadow": false,
+      "receive_shadow": false,
+      "exclude_from_post": true
+    },
+    {
+      "match": "amb_cloud_*",
+      "cast_shadow": false,
+      "receive_shadow": false
+    },
+    {
+      "match": "twin_cloud_*",
+      "cast_shadow": false,
+      "receive_shadow": false
+    },
+    {
+      "match": "life_glint_*",
+      "cast_shadow": false,
+      "receive_shadow": false
+    },
+    {
+      "match": "collision_ground",
+      "visible": false
+    },
+    {
+      "match": "far_shore*",
+      "cast_shadow": false
+    },
+    {
+      "match": "mountains*",
+      "cast_shadow": false
+    }
+  ],
+  "grounding_shadows": {
+    "enabled_for": [
+      "lax_shooter*",
+      "lax_goalie*",
+      "lax_boy_field*",
+      "lax_girl_goalie*",
+      "lax_team_*",
+      "lax_fan_*",
+      "lax_stick_*",
+      "ball",
+      "lax_goal"
+    ],
+    "disabled_for": "everything else"
+  },
+  "tiers": {
+    "low": {
+      "arena": "lax_arena_pinebrook_lod1",
+      "heroes": "_lod1",
+      "fans": "_lod2 (max 6)",
+      "ambient": false,
+      "life": false,
+      "confetti": true,
+      "shadows": "key light only; midground off"
+    },
+    "mid": {
+      "arena": "lax_arena_pinebrook_mobile",
+      "heroes": "_lod1 except shooter/goalie LOD0",
+      "fans": "_lod1 (<=6) + _lod2",
+      "ambient": true,
+      "life": true,
+      "confetti": true
+    },
+    "high": {
+      "arena": "lax_arena_pinebrook_mobile",
+      "heroes": "LOD0",
+      "fans": "LOD0 front row, _lod1 rest",
+      "ambient": true,
+      "life": true,
+      "confetti": true
+    }
+  },
+  "skinned_fallbacks": {
+    "lax_arena_ambient": "lax_arena_ambient_skinned",
+    "lax_arena_life": "lax_arena_life_skinned",
+    "lax_fx_confetti": "lax_fx_confetti_skinned",
+    "note": "contingency only; same clips, ranges, placement; 1 entity model + 1 SkelAnimation each"
+  }
+}

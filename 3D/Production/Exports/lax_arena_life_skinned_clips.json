@@ -1,0 +1,35 @@
+{
+  "asset": "lax_arena_life_skinned",
+  "fps": 30,
+  "timeline_end": 610,
+  "left_right_convention": "n/a",
+  "clips": [
+    {
+      "name": "life_loop",
+      "start": 0,
+      "end": 480,
+      "loop": true,
+      "transition_seconds": 0.12,
+      "notes": "16 s seamless: birds hop/peck/tilt on the fence, butterflies flutter over the hedges, duck glides and dips, lake glints twinkle"
+    },
+    {
+      "name": "birds_startle",
+      "start": 490,
+      "end": 610,
+      "loop": false,
+      "transition_seconds": 0.12,
+      "notes": "both birds flutter up, circle and land back on their perch (use on goal / crowd roar); starts and ends on the loop rest pose"
+    }
+  ],
+  "placement": "scene origin, together with lax_arena_pinebrook",
+  "toggleable": true,
+  "critters": [
+    "life_bird_00",
+    "life_bird_01",
+    "life_butterfly_00..02",
+    "life_duck_00",
+    "life_glint_00..15"
+  ],
+  "fallback_of": "lax_arena_life",
+  "animation_mode": "skinned: one mesh, one skeleton, one SkelAnimation (contingency; same clip ranges)"
+}
