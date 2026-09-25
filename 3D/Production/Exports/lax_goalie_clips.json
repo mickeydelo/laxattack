@@ -23,7 +23,7 @@
       "plant_frame": 9,
       "trail_plant_frame": 14,
       "settle_frame": 15,
-      "travel_meters": 0.1848,
+      "travel_meters": 0.1804,
       "movement_direction": "shooter_left",
       "root_motion_curve": {
         "type": "smoothstep",
@@ -43,7 +43,7 @@
       "plant_frame": 9,
       "trail_plant_frame": 14,
       "settle_frame": 15,
-      "travel_meters": 0.1848,
+      "travel_meters": 0.1804,
       "movement_direction": "shooter_right",
       "root_motion_curve": {
         "type": "smoothstep",
@@ -203,7 +203,7 @@
       "plant_frame": 9,
       "trail_plant_frame": 14,
       "settle_frame": 15,
-      "travel_meters": 0.2856,
+      "travel_meters": 0.2788,
       "movement_direction": "shooter_left",
       "root_motion_curve": {
         "type": "smoothstep",
@@ -223,7 +223,7 @@
       "plant_frame": 9,
       "trail_plant_frame": 14,
       "settle_frame": 15,
-      "travel_meters": 0.2856,
+      "travel_meters": 0.2788,
       "movement_direction": "shooter_right",
       "root_motion_curve": {
         "type": "smoothstep",

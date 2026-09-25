@@ -1,0 +1,30 @@
+# v9 Handoff: concept-matched characters + environment (first device test)
+
+## What changed
+| File(s) | Change |
+|---|---|
+| `lax_shooter.usdz` (+ `_lod1`, `_lod2`, `_clips.json`) | **v9 look** matching the concept turnaround: cream #10 jersey with red trim and V-neck, red shorts with cream piping, white goggles with dark strap, sculpted brown hair with a bun, tall glossy toy eyes, bare hands. **Same file name, rig, 78 clips, frame ranges, events, sockets and facing (−Z).** 6.6 MB, 1 material |
+| `lax_goalie.usdz` (+ `_lod1`, `_lod2`, `_clips.json`) | **v9 look: now the female #2 goalie** (navy/cyan helmet with cyan stripe and white cage, bun, navy #2 kit with rounded pads, navy/white gloves). **Same file name, rig, 38 clips, frame ranges, root-motion metadata, sockets and facing (+Z).** 6.1 MB, 1 material |
+| **NEW** `lax_arena_pinebrook_v9.usdz`, `_v9_lod1`, `_v9_lod2`, `_v9_mobile` | v9 environment: bubbly trees, pine forest across a wide blue lake, rocky shore, split-rail fence with flowering bushes, lush tufts, clouds. **Same root and group names as v8** (`/lax_arena_pinebrook/lax_arena_content/...`, same markers), so it is a drop-in swap |
+
+v8 arena files are unchanged and remain available as a fallback.
+
+## Arena v9 budget
+| File | Tris | Size |
+|---|---|---|
+| `lax_arena_pinebrook_v9.usdz` | 685k (includes hidden sharp/soft pairs) | 37.7 MB |
+| **`lax_arena_pinebrook_v9_lod1.usdz` (use for the first device test)** | **343k** | 18.7 MB |
+| `lax_arena_pinebrook_v9_lod2.usdz` | 137k | 10.6 MB |
+| `lax_arena_pinebrook_v9_mobile.usdz` | LOD0 geometry, 1K textures | 29.2 MB |
+
+## Runtime notes
+- **Ambient layer:** with the v9 arena, **do not load `lax_arena_ambient`**. Its v8 trees and boats would overlap the new scenery, and v9 has no `ambient_twins` content.
+- **Life layer:** `lax_arena_life` still works (the fence line is unchanged). Keep it.
+- **Sharp/soft groups:** same rules as before. The v9 far background is still hazy in the soft group; this is a known polish item.
+- **Not yet in the v9 look:** teammates, fans, the boy field player and the girl goalie variant. Only the shooter and goalie heroes changed.
+- **Look targets:** `Previews/V9/v9_behind_shooter.png` (gameplay) and `Previews/RoundTrip/v9_packaged_roundtrip.png` (packaged files, re-imported).
+
+## Validation
+- **Shooter:** 78 clips; 0 errors; no hand-grip gap over 2.5 cm; loops seamless.
+- **Goalie:** 38 clips; 0 errors; no hand-grip gap over 2.5 cm; loops seamless.
+- **Arena v9:** 0 meshes near the origin; 4 materials.

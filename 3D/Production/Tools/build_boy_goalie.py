@@ -146,12 +146,13 @@ BG_CLIPS = [
 ]
 
 def build_goalie(export=True):
+    V9 = bool(globals().get("V9_HEROES")); S_ = GOALIE_V9 if V9 else BOY_GOALIE
     reset_scene("LaxAttack_BoyGoalie")
     C = coll("lax_goalie")
-    arm = build_skeleton(BOY_GOALIE, C, "lax_goalie_rig")
-    parts = build_character(BOY_GOALIE, C, arm)
-    stick, meta = build_stick("goalie", C, arm, name="lax_goalie_stick", frame_mat="helmet_teal", pocket_mat="cord_white")
-    socks = add_character_sockets(BOY_GOALIE, arm, C, meta)
+    arm = build_skeleton(S_, C, "lax_goalie_rig")
+    parts = build_character_v9(S_, C, arm, "goalie") if V9 else build_character(S_, C, arm)
+    stick, meta = build_stick("goalie", C, arm, name="lax_goalie_stick", frame_mat="cage_white" if V9 else "helmet_teal", pocket_mat="cage_white" if V9 else "cord_white")
+    socks = add_character_sockets(S_, arm, C, meta)
     ad = arm.data; ad.pose_position = "REST"; bpy.context.view_layer.update()
     Ms = ad.bones["stick"].matrix_local.copy()
     socks["ball_contact_socket"] = add_socket("ball_contact_socket", arm, "pocket_01", Ms @ Matrix.Translation(meta["ball_contact"]), C, 0.03)
@@ -162,7 +163,7 @@ def build_goalie(export=True):
     rep = {"poles": poles, "validation": validate_character(arm, BG_CLIPS, meshes, meta, REQUIRED_SOCKETS, GOALIE_CLIPS)}
     os.makedirs(BG_DIR, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(BG_DIR, "LaxAttack_BoyGoalie.blend"), compress=True)
-    man = manifest("lax_goalie", BG_CLIPS, perspective="goalie", body_scale=BOY_GOALIE.get("body_scale", 1.0), extra={
+    man = manifest("lax_goalie", BG_CLIPS, perspective="goalie", body_scale=S_.get("body_scale", 1.0), extra={
         "facing": "+Z (toward the shooter); root identity at field level between the feet",
         "required_sockets": REQUIRED_SOCKETS, "extra_sockets": ["ball_contact_socket"],
         "runtime_note": "the procedural goalie used a 0.625 m base height; this asset's origin is at field level (y = 0)"})

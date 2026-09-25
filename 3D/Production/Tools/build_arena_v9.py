@@ -27,26 +27,26 @@ def popcorn_tree(C, name, loc, h, seed):
         subs.append(((math.cos(a) * 0.26 * h, math.sin(a) * 0.22 * h, rnd.uniform(0.52, 0.86) * h), (0.24 * h, 0.23 * h, 0.2 * h)))
     for c, r in subs:
         B.add(ellipsoid(c, (r[0] * 0.9, r[1] * 0.9, r[2] * 0.9), 14, 9), "leaf_dark_v9")
-        n = int(18 + 60 * (r[0] / (0.36 * h)) ** 2)
+        n = int(10 + 30 * (r[0] / (0.36 * h)) ** 2)
         for d in _fib(n):
             if d.z < -0.55:
                 continue
-            p = V(c) + V((d.x * r[0], d.y * r[1], d.z * r[2])); rs = h * rnd.uniform(0.075, 0.105)
+            p = V(c) + V((d.x * r[0], d.y * r[1], d.z * r[2])); rs = h * rnd.uniform(0.095, 0.13)
             m = "leaf_light_v9" if d.z > 0.35 else ("leaf_mid_v9" if d.z > -0.2 else "leaf_dark_v9")
-            B.add(ellipsoid(tuple(p), (rs, rs, rs * 0.92), 10, 7), m)
+            B.add(ellipsoid(tuple(p), (rs, rs, rs * 0.92), 7, 5), m)
     o = B.build(C); o.location = loc; o.rotation_euler = (0, 0, rnd.uniform(0, 6.28))
     return o
 
 def pine_forest(C, seed=21):
     rnd = random.Random(seed); B = Builder("v9_pine_forest")
-    for row, (y0, hmin, hmax) in enumerate(((-77.0, 7.0, 10.0), (-81.5, 8.0, 12.0), (-86.0, 9.0, 13.5), (-91.0, 10.0, 15.0), (-96.0, 11.0, 16.0))):
+    for row, (y0, hmin, hmax) in enumerate(((-77.0, 7.0, 10.0), (-82.0, 8.0, 12.5), (-87.5, 9.5, 14.0), (-93.0, 10.5, 16.0))):
         x = -75.0 + rnd.uniform(0, 1.5)
         while x < 75.0:
             h = rnd.uniform(hmin, hmax) * 0.62; y = y0 + rnd.uniform(-1.4, 1.4); z0 = -0.45 + 0.6 * row
             B.add(sweep([(x, y, z0), (x, y, z0 + 0.25 * h)], [0.07 * h, 0.05 * h], 6, 1.0), "bark_v9")
             for i in range(4):
                 t = i / 4; zb = z0 + h * (0.14 + 0.62 * t); rb = h * (0.24 - 0.15 * t)
-                B.add(loft([(zb, rb, rb, x, y), (zb + 0.06 * h, rb * 0.92, rb * 0.92, x, y), (zb + h * (0.30 - 0.06 * t), 0.02, 0.02, x, y)], 10, "flat", "pole"),
+                B.add(loft([(zb, rb, rb, x, y), (zb + 0.06 * h, rb * 0.92, rb * 0.92, x, y), (zb + h * (0.30 - 0.06 * t), 0.02, 0.02, x, y)], 7, "flat", "pole"),
                       "pine_dark_v9" if (i + row) % 2 == 0 else "pine_mid_v9")
             x += rnd.uniform(1.0, 1.7)
     return B.build(C)
@@ -76,7 +76,7 @@ def fence_bushes(C, seed=9, y=-13.0):
 
 def field_tufts(C, seed=13):
     rnd = random.Random(seed); B = Builder("v9_field_tufts"); n = 0
-    while n < 420:
+    while n < 260:
         x, y = rnd.uniform(-6.6, 6.6), rnd.uniform(-12.0, 5.5)
         if (abs(x) < 1.1 and -5.2 < y < 2.5) or (abs(x) < 2.6 and -7.2 < y < -4.2):
             continue
@@ -84,7 +84,7 @@ def field_tufts(C, seed=13):
         for k in range(9):
             a = rnd.uniform(0, 6.28); lean = rnd.uniform(0.15, 0.45)
             tip = (x + math.cos(a) * lean * s, y + math.sin(a) * lean * s, s * rnd.uniform(0.8, 1.25))
-            B.add(sweep([(x, y, 0), (x + (tip[0] - x) * 0.4, y + (tip[1] - y) * 0.4, tip[2] * 0.5), tip], [s * 0.15, s * 0.09, 0.004], 5, 0.5),
+            B.add(sweep([(x, y, 0), (x + (tip[0] - x) * 0.4, y + (tip[1] - y) * 0.4, tip[2] * 0.5), tip], [s * 0.15, s * 0.09, 0.004], 4, 0.5),
                   "tuft_tip_v9" if k % 3 == 0 else "tuft_v9")
     return B.build(C)
 
@@ -241,3 +241,27 @@ def build_v9_gameplay_scene(cam_preset="behind_shooter"):
         bpy.context.view_layer.update(); ball.location = sh.matrix_world @ sh.pose.bones["pocket_01"].head + V((0, 0, 0.05))
     cam = make_camera("cam_" + cam_preset, loc, tgt, L, vfov_deg=fov)
     return cam, fd
+
+
+def build_env_v9_export(Dio):
+    """Game export version of the v9 scenery (no characters, lighter leaf balls / tufts)."""
+    for o in [o for o in bpy.data.objects if o.name.startswith(("twin_",))]:
+        bpy.data.objects.remove(o, do_unlink=True)
+    build_env_v9(Dio)
+    for o in [o for o in bpy.data.objects if o.name.startswith(("goal_frame", "goal_net"))]:      # the goal is its own game asset
+        bpy.data.objects.remove(o, do_unlink=True)
+    for o in [o for o in bpy.data.objects if o.name.startswith(("field_fence", "v9_shore_rocks", "v9_clouds"))]:
+        bpy.data.objects.remove(o, do_unlink=True)
+    carpet_tufts(Dio, n=500); split_rail_fence(Dio); rock_stacks(Dio)
+    Bc = Builder("v9_clouds"); rnd = random.Random(4)
+    for (x, y, z, s) in ((-46, -165, 19, 5.0), (-12, -180, 23, 6.0), (22, -170, 20, 5.5), (56, -185, 24, 6.5), (-80, -180, 22, 5.5), (6, -155, 17, 3.6), (84, -175, 20, 5.0)):
+        for k in range(10):
+            r = s * rnd.uniform(0.45, 0.8); c = (x + rnd.uniform(-1.8, 1.8) * s, y + rnd.uniform(-0.3, 0.3) * s, z + rnd.uniform(0, 0.8) * s)
+            Bc.add(deform(ellipsoid(c, (r, r * 0.7, r * 0.72), 10, 7), lambda q, z0=z - 0.1 * s: V((q.x, q.y, max(q.z, z0)))), "cloud_v9")
+    Bc.build(Dio)
+    for i, (x, y, h) in enumerate(((-12.5, -19.6, 3.4), (-9.6, -20.2, 2.9), (-6.8, -19.8, 3.0), (7.0, -20.1, 2.8), (9.8, -19.6, 3.5), (12.8, -20.3, 3.0))):
+        popcorn_tree(Dio, "v9_shore_tree_%02d" % i, (x, y, -0.45), h, 300 + i)
+    Bs = Builder("v9_shore_bushes")
+    for k in [k_ for k_ in range(18) if abs(-14 + 28 * k_ / 17.0) > 4.5]:
+        leafy_bush(Bs, (-14 + 28 * k / 17.0 + random.Random(k).uniform(-0.5, 0.5), -19.0 + random.Random(k + 50).uniform(-0.6, 0.4), -0.2), 0.55, 700 + k)
+    Bs.build(Dio)

@@ -257,10 +257,10 @@ def build_character_v9(s, collection, arm, look):
             parts["collar"] = Bc.build(collection, arm)
     return parts
 
-PLAYER_V9 = dict(GIRL_FIELD, name="v9_player", head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
+PLAYER_V9 = dict(GIRL_FIELD, name="lax_shooter_v9", eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
                  number="10", number_mat="kit_red_v9", bottom="shorts_v9", bottom_mat="kit_red_v9", bottom_trim="kit_cream_v9",
                  sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_red_v9", glove=None, glove_cuff=None, limb_k=1.5, hand_k=1.4, shoe_k=1.5, torso_k=1.22, sole="kit_red_v9", front_number_size=0.17, front_number_x=-0.095, front_number_z=0.68)
-GOALIE_V9 = dict(BOY_GOALIE, name="v9_goalie", head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_navy_v9", kit_trim="kit_cyan_v9",
+GOALIE_V9 = dict(BOY_GOALIE, name="lax_goalie_v9", eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_navy_v9", kit_trim="kit_cyan_v9",
                  number="2", number_mat="sock_white_v9", bottom="shorts_v9", bottom_mat="kit_navy_v9", bottom_trim="kit_cyan_v9",
                  sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_navy_v9",
                  glove="kit_navy_v9", glove_cuff="sock_white_v9", body_scale=0.82, limb_k=1.5, shoe_k=1.5, torso_k=1.22, sole="kit_cyan_v9", chest_protector=False)

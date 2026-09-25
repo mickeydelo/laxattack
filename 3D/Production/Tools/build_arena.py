@@ -181,6 +181,8 @@ def build_arena(export=True):
     Dio = bpy.data.collections["Diorama"]
     twins = make_twins(Dio)                                        # static twins of lax_arena_ambient (identical rest placement)
     flower_beds(Dio)
+    if globals().get("ARENA_V9"):
+        build_env_v9_export(Dio)
     bleacher(Dio, (5.2, -14.4, -0.45), 3.4, 3); bench(Dio, (6.0, -1.5, 0), 2.2, math.radians(-90))
     plat = bpy.data.objects["field_platform"]                   # keep the soil skirt only: drop old flat-colour turf faces
     me = plat.data
@@ -199,6 +201,10 @@ def build_arena(export=True):
         e = bpy.data.objects.new(g, None); Dio.objects.link(e); e.parent = root; groups[g] = e
     fg = {o.name for o in bpy.data.collections["Foreground"].objects}
     def group_of(n):
+        if n.startswith(("v9_pine_forest", "v9_rock_stacks", "v9_lake", "v9_clouds", "v9_boat")): return "far_background"
+        if n.startswith(("v9_tree", "v9_shore_tree", "v9_shore_bushes")): return "midground"
+        if n.startswith(("v9_fence", "v9_field_tufts", "v9_carpet_tufts")): return "near_field"
+        if n.startswith("v9_foreground_bushes"): return "foreground_framing"
         if n in fg: return "foreground_framing"
         if n.startswith(("field_platform", "field_markings", "field_turf", "hero_tufts")): return "gameplay"
         if n.startswith("twin_"): return "ambient_twins"   # static twins of lax_arena_ambient: hide when ambient is shown
@@ -253,19 +259,19 @@ def build_arena(export=True):
     rep_markers.update({n: {"position_game": [round(-l[0], 3), round(l[2], 3), round(l[1], 3)]} for n, l in refs.items()})
     bpy.context.view_layer.update()
     if "palette_materials" in globals():         # one shared palette material for every flat-colour surface
-        palette_materials(meshes, "arena", os.path.join(PROD, "Arena", "Textures"))
+        palette_materials(meshes, "arena_v9" if globals().get("ARENA_V9") else "arena", os.path.join(PROD, "Arena", "Textures"))
     for o in meshes + marks:                     # unique ASCII names (no .001 nodes)
         if "." in o.name:
             o.name = o.name.replace(".", "_")
     tris = sum(tri_count(o) for o in meshes)
-    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(PROD, "Arena", "LaxAttack_Arena.blend"), compress=True)
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(PROD, "Arena", "LaxAttack_Arena_v9.blend" if globals().get("ARENA_V9") else "LaxAttack_Arena.blend"), compress=True)
     rep = {"tris": tris, "markers": rep_markers}
     with open(os.path.join(EXP, "lax_arena_pinebrook_markers.json"), "w") as fh:
         json.dump({"asset": "lax_arena_pinebrook", "coordinates": "game space (meters, Y-up, gameplay forward -Z)",
                    "fan_root_offset_below_seat_m": {"lax_fan_a": 0.086, "lax_fan_b": 0.082, "lax_fan_c": 0.07},   # measured seated hip contact
                    "markers": rep_markers}, fh, indent=2)
     if export:
-        path = os.path.join(PROD, "Exports", "lax_arena_pinebrook.usdz")
+        path = os.path.join(PROD, "Exports", "lax_arena_pinebrook_v9.usdz" if globals().get("ARENA_V9") else "lax_arena_pinebrook.usdz")
         objs = [root] + list(groups.values()) + meshes + marks
         e = export_asset(objs, "lax_arena_pinebrook", "lax_arena_content", path, 30, 0, False, {"asset": "lax_arena_pinebrook"},
                          ["camera_gameplay"], animated=False)

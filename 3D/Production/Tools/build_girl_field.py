@@ -234,12 +234,13 @@ CLIPS = [
 ]
 
 def build_girl(export=True):
+    V9 = bool(globals().get("V9_HEROES")); S_ = PLAYER_V9 if V9 else GIRL_FIELD
     reset_scene("LaxAttack_GirlField")
     C = coll("lax_shooter")
-    arm = build_skeleton(GIRL_FIELD, C, "lax_shooter_rig")
-    parts = build_character(GIRL_FIELD, C, arm)
-    stick, meta = build_stick("attack", C, arm, name="lax_shooter_stick", frame_mat="helmet_cream", pocket_mat="cord_navy")
-    socks = add_character_sockets(GIRL_FIELD, arm, C, meta)
+    arm = build_skeleton(S_, C, "lax_shooter_rig")
+    parts = build_character_v9(S_, C, arm, "player") if V9 else build_character(S_, C, arm)
+    stick, meta = build_stick("attack", C, arm, name="lax_shooter_stick", frame_mat="goggle_white" if V9 else "helmet_cream", pocket_mat="cage_white" if V9 else "cord_navy")
+    socks = add_character_sockets(S_, arm, C, meta)
     ad = arm.data; ad.pose_position = "REST"; bpy.context.view_layer.update()
     Ms = ad.bones["stick"].matrix_local.copy()
     socks["ball_contact_socket"] = add_socket("ball_contact_socket", arm, "pocket_01", Ms @ Matrix.Translation(meta["ball_contact"]), C, 0.03)
@@ -251,7 +252,7 @@ def build_girl(export=True):
     rep = {"poles": poles, "validation": validate_character(arm, CLIPS, meshes, meta, REQUIRED_SOCKETS, REQUIRED_CLIPS)}
     os.makedirs(GF_DIR, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(GF_DIR, "LaxAttack_GirlField.blend"), compress=True)
-    man = manifest("lax_shooter", CLIPS, body_scale=GIRL_FIELD.get("body_scale", 1.0), extra={
+    man = manifest("lax_shooter", CLIPS, body_scale=S_.get("body_scale", 1.0), extra={
         "required_sockets": REQUIRED_SOCKETS, "extra_sockets": ["ball_contact_socket"],
         "legacy_ranges_unchanged": {"idle": [0, 48], "cradle": [60, 88], "release_overhand": [100, 133], "celebrate": [150, 186]},
         "ball_visual_radius_recommended_m": BALL_R, "stick_axes_blender": "shaft +Y, pocket open face +Z, origin = top-hand grip"})
