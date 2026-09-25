@@ -494,21 +494,21 @@ def _build_character(s, collection, arm):
     parts["kit"] = K.build(collection, arm)
     # ---- limbs, gloves, shoes
     A = Builder(s["name"] + "_limbs"); Gl = Builder(s["name"] + "_gloves"); Sh = Builder(s["name"] + "_shoes")
-    gs = s["glove_size"]
+    gs = s["glove_size"]; lk = s.get("limb_k", 1.0); hk = s.get("hand_k", 1.0)
     for side, sx in (("L", 1.0), ("R", -1.0)):
         r = L[side]; sh, el, gl, fd = r["sh"], r["el"], r["gl"], r["fdir"]
         ud = (el - sh).normalized()
-        A.add(ellipsoid(sh, (0.072, 0.07, 0.07), 16, 10), kit, "upperarm_" + side)
-        A.add(sweep([sh, sh + ud * 0.12], [0.066, 0.064], 16, 1.0, cap0=False), kit, "upperarm_" + side)
-        A.add(sweep([sh + ud * 0.10, sh + ud * 0.125], [0.067, 0.066], 16, 1.0, cap0=False, cap1=False), trim, "upperarm_" + side)
-        A.add(sweep([sh + ud * 0.11, el], [0.050, 0.047], 14, 1.0, cap0=False, cap1=False), skin, "upperarm_" + side)
-        A.add(ellipsoid(el, (0.049, 0.049, 0.049), 14, 8), skin, "forearm_" + side)
-        A.add(sweep([el, gl - fd * (0.06 if s["glove"] else 0.035)], [0.046, 0.041], 14, 1.0, cap0=False, cap1=False), skin, "forearm_" + side)
+        A.add(ellipsoid(sh, (0.072 * lk, 0.07 * lk, 0.07 * lk), 16, 10), kit, "upperarm_" + side)
+        A.add(sweep([sh, sh + ud * 0.12], [0.066 * lk, 0.064 * lk], 16, 1.0, cap0=False), kit, "upperarm_" + side)
+        A.add(sweep([sh + ud * 0.10, sh + ud * 0.125], [0.067 * lk, 0.066 * lk], 16, 1.0, cap0=False, cap1=False), trim, "upperarm_" + side)
+        A.add(sweep([sh + ud * 0.11, el], [0.050 * lk, 0.047 * lk], 14, 1.0, cap0=False, cap1=False), skin, "upperarm_" + side)
+        A.add(ellipsoid(el, (0.049 * lk, 0.049 * lk, 0.049 * lk), 14, 8), skin, "forearm_" + side)
+        A.add(sweep([el, gl - fd * (0.06 if s["glove"] else 0.035)], [0.046 * lk, 0.041 * lk], 14, 1.0, cap0=False, cap1=False), skin, "forearm_" + side)
         M = Matrix.Translation(gl) @ V((0, 0, 1)).rotation_difference(fd).to_matrix().to_4x4()
         if s["glove"] is None:   # bare toy hand (spectators)
-            Gl.add(xform(superellipsoid((0.075, 0.06, 0.085), 0.7, 0.8, 14, 8, (0, 0, -0.02)), M), skin, "hand_" + side)
-            Gl.add(xform(superellipsoid((0.07, 0.055, 0.06), 0.7, 0.8, 12, 8, (0, 0, 0.04)), M), skin, "fingers_" + side)
-            Gl.add(xform(ellipsoid((0, -0.035, 0.0), (0.02, 0.02, 0.03), 8, 6), M), skin, "thumb_" + side)
+            Gl.add(xform(superellipsoid((0.075 * hk, 0.06 * hk, 0.085 * hk), 0.7, 0.8, 14, 8, (0, 0, -0.02)), M), skin, "hand_" + side)
+            Gl.add(xform(superellipsoid((0.07 * hk, 0.055 * hk, 0.06 * hk), 0.7, 0.8, 12, 8, (0, 0, 0.04)), M), skin, "fingers_" + side)
+            Gl.add(xform(ellipsoid((0, -0.035, 0.0), (0.02 * hk, 0.02 * hk, 0.03 * hk), 8, 6), M), skin, "thumb_" + side)
         else:
           # cuff (flared), palm block, curled finger block, thumb
           Gl.add(xform(loft([(-0.13, 0.058, 0.058), (-0.085, 0.074, 0.072), (-0.05, 0.08, 0.078)], 18, "flat", None), M), s["glove_cuff"], "forearm_" + side)
@@ -519,13 +519,13 @@ def _build_character(s, collection, arm):
           Gl.add(xform(superellipsoid((0.05, 0.05, 0.07), 0.7, 0.8, 12, 8, (0.0, -0.06, 0.02)), M), s["glove"], "thumb_" + side)
         # legs
         hip, knee, ank = r["hip"], r["knee"], r["ank"]
-        A.add(sweep([hip + V((0, 0, 0.03)), knee], [0.070, 0.058], 16, 1.0), skin, "thigh_" + side)
-        A.add(ellipsoid(knee, (0.059, 0.059, 0.059), 14, 8), skin, "shin_" + side)
+        A.add(sweep([hip + V((0, 0, 0.03)), knee], [0.070 * lk, 0.058 * lk], 16, 1.0), skin, "thigh_" + side)
+        A.add(ellipsoid(knee, (0.059 * lk, 0.059 * lk, 0.059 * lk), 14, 8), skin, "shin_" + side)
         kd = (ank - knee).normalized()
-        A.add(sweep([knee + kd * 0.035, ank + V((0, 0, 0.01))], [0.060, 0.052], 16, 1.0, cap0=False), s["sock"], "shin_" + side)
+        A.add(sweep([knee + kd * 0.035, ank + V((0, 0, 0.01))], [0.060 * lk, 0.052 * lk], 16, 1.0, cap0=False), s["sock"], "shin_" + side)
         for t in (0.10, 0.22):
             q = knee + kd * (0.035 + t * 0.2)
-            A.add(sweep([q, q + kd * 0.018], [0.062, 0.062], 16, 1.0, cap0=False, cap1=False), s["sock_stripe"], "shin_" + side)
+            A.add(sweep([q, q + kd * 0.018], [0.062 * lk, 0.062 * lk], 16, 1.0, cap0=False, cap1=False), s["sock_stripe"], "shin_" + side)
         fx = HIP_X * sx
         kS = s.get("shoe_k", 1.0); Ms = Matrix.Translation((fx, -0.02, 0)) @ Matrix.Scale(kS, 4) @ Matrix.Translation((-fx, 0.02, 0))
         Sh.add(xform(superellipsoid((0.135, 0.245, 0.045), 0.4, 0.5, 22, 10, (fx, -0.045, 0.0225)), Ms), "rubber_dark", "foot_" + side)
