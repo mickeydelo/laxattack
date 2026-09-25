@@ -61,7 +61,7 @@ def v9_face(s, H, F):
         F.add(H.place(ellipsoid((0, 0, 0), (0.011, 0.0025, 0.014), 12, 8), az + 2.8, el + 4.0, 0.0035), "eye_hi_v9", "eye_" + side)
         F.add(H.place(ellipsoid((0, 0, 0), (0.0055, 0.0025, 0.0055), 8, 5), az - 3.4, el - 6.0, 0.0035), "eye_hi_v9", "eye_" + side)
         dA = math.degrees(ew / H.r.x) * 1.3 + 2; dE = math.degrees(eh / H.r.z) + 2
-        lo = math.degrees(eh / H.r.z) * 2 + 4
+        lo = s.get("lid_park_deg") or (math.degrees(eh / H.r.z) * 2 + 4)      # parked under the hairline / helmet brim when open
         F.add(surface_patch(H, az - dA, az + dA, el - dE + lo, el + dE + lo, 0.0042), s["skin"], "lid_" + side)
         bpts = [H.point(az + dx * sx, el + 17.5 + 1.2 - 0.03 * dx * dx) for dx in (-7, -2, 3, 8)]
         bpts = [tuple(V(q) + (V(q) - H.c).normalized() * 0.0035) for q in bpts]
@@ -257,10 +257,10 @@ def build_character_v9(s, collection, arm, look):
             parts["collar"] = Bc.build(collection, arm)
     return parts
 
-PLAYER_V9 = dict(GIRL_FIELD, name="lax_shooter_v9", eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
+PLAYER_V9 = dict(GIRL_FIELD, name="lax_shooter_v9", lid_park_deg=40.0, eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
                  number="10", number_mat="kit_red_v9", bottom="shorts_v9", bottom_mat="kit_red_v9", bottom_trim="kit_cream_v9",
                  sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_red_v9", glove=None, glove_cuff=None, limb_k=1.5, hand_k=1.4, shoe_k=1.5, torso_k=1.22, sole="kit_red_v9", front_number_size=0.17, front_number_x=-0.095, front_number_z=0.68)
-GOALIE_V9 = dict(BOY_GOALIE, name="lax_goalie_v9", eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_navy_v9", kit_trim="kit_cyan_v9",
+GOALIE_V9 = dict(BOY_GOALIE, name="lax_goalie_v9", lid_park_deg=40.0, eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_navy_v9", kit_trim="kit_cyan_v9",
                  number="2", number_mat="sock_white_v9", bottom="shorts_v9", bottom_mat="kit_navy_v9", bottom_trim="kit_cyan_v9",
                  sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_navy_v9",
                  glove="kit_navy_v9", glove_cuff="sock_white_v9", body_scale=0.82, limb_k=1.5, shoe_k=1.5, torso_k=1.22, sole="kit_cyan_v9", chest_protector=False)

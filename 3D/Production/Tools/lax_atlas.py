@@ -116,7 +116,7 @@ def atlas_character(arm, meshes, asset, out_dir, res=2048):
     for ax in (0, 1):                                   # separable blur (denoise), radius ~4 px
         o = sum(np.roll(o, s, axis=ax) * w for s, w in zip(range(-4, 5), (1, 2, 4, 6, 8, 6, 4, 2, 1))) / 34.0
     o = np.clip((o - 0.35) / 0.65, 0.0, 1.0)            # interpenetrating toy segments never go black
-    a[..., :3] *= (0.87 + 0.13 * o)[..., None]          # gentle baked contact shading in creases (colour stays saturated)
+    a[..., :3] *= (0.76 + 0.24 * o)[..., None]      # stronger baked contact shading (grounding / contrast)          # gentle baked contact shading in creases (colour stays saturated)
     imgs["albedo"].pixels = a.ravel()
     paths = {}
     sc.render.image_settings.quality = 90

@@ -221,9 +221,9 @@ def build_arena(export=True):
     for o in meshes:
         g = group_of(o.name)
         if g == "far_background" and not o.name.startswith("sky_"):
-            soft.append(soft_copy(o, groups["far_background_soft"], 0.55, (0.72, 0.80, 0.90)))
+            soft.append(soft_copy(o, groups["far_background_soft"], 0.22, (0.72, 0.80, 0.90)))
         elif g == "foreground_framing":
-            soft.append(soft_copy(o, groups["foreground_framing_soft"], 0.25, (0.55, 0.62, 0.45)))
+            soft.append(soft_copy(o, groups["foreground_framing_soft"], 0.12, (0.55, 0.62, 0.45)))
     meshes += soft
     col = obj_from_geo("collision_ground", superellipsoid((14, 19, 0.1), 0.05, 0.05, 8, 4, (0, -3.5, -0.05)), "clay", Dio)
     col.parent = groups["collision_only"]; meshes.append(col)

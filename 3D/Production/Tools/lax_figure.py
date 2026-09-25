@@ -256,7 +256,7 @@ def build_skeleton(s, collection, name):
     bone("ik_hand_R", g0, g0 + V((0, 0, 0.05)), "stick", deform=False)
     bone("ik_hand_L", g0 + V((0, 0, -GRIP_SPREAD)), g0 + V((0, 0, -GRIP_SPREAD + 0.05)), "stick", deform=False)
     bpy.ops.object.mode_set(mode="OBJECT")
-    arm["lid_open_deg"] = math.degrees(s["eye_size"][1] * EYE_K / s["head_r"][2]) * 2 + 4; arm["mouth_open_deg"] = 15.0
+    arm["lid_open_deg"] = s.get("lid_park_deg") or (math.degrees(s["eye_size"][1] * EYE_K / s["head_r"][2]) * 2 + 4); arm["mouth_open_deg"] = 15.0
     arm["body_scale"] = s.get("body_scale", 1.0); arm["head_k"] = s.get("head_k", 1.0); arm["family"] = s["family"]
     pb = arm.pose.bones
     for side in ("L", "R"):

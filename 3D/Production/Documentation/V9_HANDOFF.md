@@ -28,3 +28,16 @@ v8 arena files are unchanged and remain available as a fallback.
 - **Shooter:** 78 clips; 0 errors; no hand-grip gap over 2.5 cm; loops seamless.
 - **Goalie:** 38 clips; 0 errors; no hand-grip gap over 2.5 cm; loops seamless.
 - **Arena v9:** 0 meshes near the origin; 4 materials.
+
+
+## v9.1 (device review follow-up)
+- **Goalie eyes:** the packaged file shows the eyes **open in every `goalie_ready` frame** (`Previews/RoundTrip/v9_goalie_eye_check.png`). Auto-blinks run
+  every 2–3.5 s, so a still can land on a blink. The parked eyelids now sit 40° up, under the hairline and helmet brim, so the forehead no longer
+  shows pale rectangles. If eyes still look closed in a Ready capture, please report the clip name and time.
+- **Contrast and grounding:** stronger baked contact shading on the shooter and goalie; the far background soft haze is reduced from 55% to 22%
+  (`lax_arena_pinebrook_v9*`); the foreground soft haze is reduced from 25% to 12%.
+- **Lighting (washed-out fix):** the image-based light EXR was brightened 2.2× for the earlier "night" issue, and it now over-fills alongside the sun.
+  - **Image-based light intensity exponent:** 1.0 → **0.0** (try −0.5 if still flat).
+  - **Directional sun:** keep it warm at **7,000–9,000 lux** with shadows **on**.
+  - **Shadow casting:** enable it for arena `near_field` and `midground` (trees, fence, bushes) per `lax_render_policy.json`.
+  - **Grounding shadows:** keep them on the characters, sticks, ball and goal.
