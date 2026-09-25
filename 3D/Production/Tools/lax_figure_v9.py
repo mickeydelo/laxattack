@@ -76,7 +76,24 @@ def v9_face(s, H, F):
         F.add(H.place(ellipsoid((0, 0, 0), (0.0055, 0.0025, 0.0055), 8, 5), az - 3.4, el - 6.0, 0.0125), "eye_hi_v9", "eye_" + side)
         dA = math.degrees(ew / H.r.x) * 1.3 + 2; dE = math.degrees(eh / H.r.z) + 2
         lo = s.get("lid_park_deg") or (math.degrees(eh / H.r.z) * 2 + 4)      # parked under the hairline / helmet brim when open
-        F.add(surface_patch(H, az - dA, az + dA, el - dE + lo, el + dE + lo, 0.0135), s["skin"], "lid_" + side)
+        lc = el + lo; nr, ns = 6, 20                        # oval eyelid (parked above the eye; closes onto it)
+        lv, lf = [tuple(V(H.point(az, lc)) + (V(H.point(az, lc)) - H.c).normalized() * 0.0135)], []
+        for rI in range(1, nr + 1):
+            rr = rI / nr
+            for k_ in range(ns):
+                t_ = 2 * math.pi * k_ / ns
+                q_ = V(H.point(az + math.cos(t_) * dA * 1.25 * rr, lc + math.sin(t_) * dE * 1.2 * rr))
+                lv.append(tuple(q_ + (q_ - H.c).normalized() * (0.0135 - 0.004 * rr ** 6)))
+        for k_ in range(ns):
+            lf.append((0, 1 + (k_ + 1) % ns, 1 + k_))
+        for rI in range(1, nr):
+            a0 = 1 + (rI - 1) * ns; a1 = 1 + rI * ns
+            for k_ in range(ns):
+                lf.append((a0 + k_, a0 + (k_ + 1) % ns, a1 + (k_ + 1) % ns, a1 + k_))
+        F.add((lv, lf), s["skin"], "lid_" + side)
+        arc = [H.point(az + t * dA * 0.72, lc - 1.5 + 4.0 * (1 - t * t)) for t in (-1, -0.5, 0, 0.5, 1)]     # happy "^" closed-eye arc on the lid
+        arc = [tuple(V(q_) + (V(q_) - H.c).normalized() * 0.0150) for q_ in arc]
+        F.add(sweep(arc, [0.0030, 0.0046, 0.0050, 0.0046, 0.0030], 8, 0.5), "eye_v9", "lid_" + side)
         bpts = [H.point(az + dx * sx, el + 17.5 + 1.2 - 0.03 * dx * dx) for dx in (-7, -2, 3, 8)]
         bpts = [tuple(V(q) + (V(q) - H.c).normalized() * 0.006) for q in bpts]
         F.add(sweep(bpts, [0.0035, 0.0052, 0.005, 0.003], 8, 0.5), "brow_v9", "brow_" + side)
@@ -306,10 +323,10 @@ def build_character_v9(s, collection, arm, look):
             parts["collar"] = Bc.build(collection, arm)
     return parts
 
-PLAYER_V9 = dict(GIRL_FIELD, name="lax_shooter_v9", lid_park_deg=40.0, eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
+PLAYER_V9 = dict(GIRL_FIELD, name="lax_shooter_v9", lid_park_deg=55.0, eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
                  number="10", number_mat="kit_red_v9", bottom="shorts_v9", bottom_mat="kit_red_v9", bottom_trim="kit_cream_v9",
                  sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_red_v9", glove=None, glove_cuff=None, limb_k=1.5, hand_k=1.4, shoe_k=1.5, torso_k=1.22, sole="kit_red_v9", front_number_size=0.17, front_number_x=-0.095, front_number_z=0.68)
-GOALIE_V9 = dict(BOY_GOALIE, name="lax_goalie_v9", lid_park_deg=40.0, eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_navy_v9", kit_trim="kit_cyan_v9",
+GOALIE_V9 = dict(BOY_GOALIE, name="lax_goalie_v9", lid_park_deg=55.0, eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_navy_v9", kit_trim="kit_cyan_v9",
                  number="2", number_mat="sock_white_v9", bottom="shorts_v9", bottom_mat="kit_navy_v9", bottom_trim="kit_cyan_v9",
                  sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_navy_v9",
                  glove="kit_navy_v9", glove_cuff="sock_white_v9", body_scale=0.82, limb_k=1.5, shoe_k=1.5, torso_k=1.22, sole="kit_cyan_v9", chest_protector=False)

@@ -65,3 +65,13 @@ Use `_lod1` on iPhone 17/18 Pro. Use `_lod2` if frame time is tight.
 
 All four characters validate with 0 errors, seamless loops and grip gaps of 2.5 cm or less. Preview: `Previews/RoundTrip/v9_cast_roundtrip.png`.
 **Not converted yet:** fans, the boy field player and the girl goalie variant (still the v8 look).
+
+
+## v9.4: expressions (from the expression sheet)
+- **Delighted** (preset `big_smile`, used by every celebration clip): eyes close into happy "^" arcs, the mouth opens and the brows lift.
+- **Sheepish** (preset `disappointed`, used by the miss reactions): worried brows, a small frown and the eyes glancing aside.
+- **Blinks** now read as cute closed eyes (oval lids with the "^" arc) instead of skin rectangles.
+- **Parked lids** sit 55° up, fully under the hair and helmet, so there are no forehead artifacts at rest.
+- **Rig:** new joints `happy_L` / `happy_R` (reserved, in the head-protected set) and `lid_open_deg` = 55 on all v9 characters.
+- **Re-exported:** `lax_shooter*`, `lax_goalie*`, `lax_team_home_7*` (Mina), `lax_team_away_5*` (Ollie). Clip names, frame ranges and sockets are unchanged.
+- **Preview:** `Previews/V9/v9_expressions.png`.

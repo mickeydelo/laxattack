@@ -38,7 +38,7 @@ GRIP_SPREAD = 0.22
 # ------------------------------------------------------------------ proportions (v2)
 # Figures are designed in a 1.5 m "design space" and transformed at build time: body segments scale uniformly about the
 # ground (body_scale), everything driven by head bones scales up about the neck top (head_k). Sticks are never scaled.
-HEAD_BONES = {"head", "jaw", "eye_L", "eye_R", "lid_L", "lid_R", "brow_L", "brow_R", "mouth_L", "mouth_R",
+HEAD_BONES = {"head", "jaw", "eye_L", "eye_R", "lid_L", "lid_R", "brow_L", "brow_R", "mouth_L", "mouth_R", "happy_L", "happy_R",
               "hair_01", "hair_02", "hair_03", "throat_guard"}
 STICK_BONES = {"stick", "pocket_01", "pocket_02", "ik_hand_L", "ik_hand_R"}
 NECK_TOP = V((0.0, 0.0, 0.965))
@@ -215,6 +215,7 @@ def build_skeleton(s, collection, name):
         p, tx, n, tu = H.frame(az, s["eye_el"])
         ctr = p - n * 0.10
         bone("eye_" + side, ctr, ctr + n * 0.04, "head", roll_z=(0, 0, 1))
+        bone("happy_" + side, p, p + n * 0.03, "head", roll_z=(0, 0, 1))      # slides the happy-eye arc out along the face normal
         top = p + tu * (s["eye_size"][1] * EYE_K + 0.004) + n * 0.004
         bone("lid_" + side, hc, hc + (p - hc).normalized() * 0.1, "head", roll_z=(0, 0, 1))   # lid hinge about head centre
         bp = H.point(az * 1.02, s["eye_el"] + 23.0)
@@ -694,10 +695,10 @@ FACE = {
     "focused":     dict(lid=0.13, jaw=0.12, mouth=(0.0, 0.0), brow=(-0.006, 9.0), eye=(0, 0)),
     "determined":  dict(lid=0.15, jaw=0.18, mouth=(-0.004, 0.0), brow=(-0.009, 15.0), eye=(0, 0)),
     "smile":       dict(lid=0.12, jaw=0.34, mouth=(0.013, 0.006), brow=(0.009, -6.0), eye=(0, 0)),
-    "big_smile":   dict(lid=0.20, jaw=1.00, mouth=(0.016, 0.009), brow=(0.017, -10.0), eye=(0, 0)),
+    "big_smile":   dict(lid=1.00, jaw=1.00, mouth=(0.016, 0.009), brow=(0.018, -10.0), eye=(0, 0), happy=1.0),   # delighted: happy closed eyes
     "strain":      dict(lid=0.40, jaw=0.50, mouth=(-0.012, 0.010), brow=(-0.013, 22.0), eye=(0, 0)),
     "surprise":    dict(lid=0.02, jaw=0.90, mouth=(-0.004, -0.010), brow=(0.026, -8.0), eye=(0, 0)),
-    "disappointed":dict(lid=0.28, jaw=0.24, mouth=(-0.005, -0.002), brow=(0.010, -22.0), eye=(0, -7)),
+    "disappointed":dict(lid=0.22, jaw=0.10, mouth=(-0.007, 0.0), brow=(0.006, -14.0), eye=(0, 0), look=(14.0, -6.0)),   # sheepish
     "smirk":       dict(lid=0.20, jaw=0.18, mouth=(0.016, 0.0), brow=(0.006, 10.0), eye=(5, 0), asym=True),
 }
 

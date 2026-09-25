@@ -89,6 +89,8 @@ def face_values(p):
     return dict(lid=L(a["lid"], b["lid"]), jaw=L(a["jaw"], b["jaw"]),
                 mouth=(L(a["mouth"][0], b["mouth"][0]), L(a["mouth"][1], b["mouth"][1])),
                 brow=(L(a["brow"][0], b["brow"][0]), L(a["brow"][1], b["brow"][1])),
+                happy=L(a.get("happy", 0.0), b.get("happy", 0.0)),
+                look=(L(a.get("look", (0, 0))[0], b.get("look", (0, 0))[0]), L(a.get("look", (0, 0))[1], b.get("look", (0, 0))[1])),
                 asym=a.get("asym") if t < 0.5 else b.get("asym"))
 
 def set_loc_world(pb, delta):
@@ -135,8 +137,10 @@ def apply_pose(arm, p, family="field", blink=None):
         pbs["brow_" + side].rotation_euler = (0, math.radians(fv["brow"][1] * -sx), 0)
         k = 1.0 if not fv["asym"] or side == "L" else 0.0
         pbs["mouth_" + side].location = (-fv["mouth"][1] * sx * k, 0, fv["mouth"][0] * k)
-        ex, ez = p["eye"]
+        ex, ez = p["eye"]; ex += fv["look"][0]; ez += fv["look"][1]
         pbs["eye_" + side].rotation_euler = (math.radians(ez), 0, math.radians(-ex))
+        if "happy_" + side in pbs:
+            pbs["happy_" + side].location = (0, 0.024 * fv["happy"], 0)
     pbs["jaw"].rotation_euler = jaw_rot(arm, fv["jaw"])
 
 def calibrate_poles(arm, poses, family):
