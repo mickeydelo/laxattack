@@ -98,8 +98,12 @@ def export_lods(rep, root_name, content_name, out_usdz, ratios, fps=30, end_fram
     for i, r in enumerate(ratios, 1):
         hb = globals().get("HEAD_BONES", set()) if protect else set()
         for o in objs:
+            if protect and not globals().get("CHAR_LOD_DECIMATE", False):
+                continue      # v9.6: head-protected decimation crushed character bodies into shards (see V9_HANDOFF root cause); character LODs = full mesh + 1K textures
             if o.type == "MESH" and len(o.data.polygons) > 60 and not any(o.name.startswith(k) for k in keep):
                 m = o.modifiers.new("lod", "DECIMATE"); m.ratio = r / prev
+                if hasattr(m, "use_collapse_triangulate"):
+                    m.use_collapse_triangulate = True
                 idx = {vg.index for vg in o.vertex_groups if vg.name in hb}
                 if idx:                                   # never decimate the head/face (eyes, mouth, lids, hair, headgear)
                     prot = o.vertex_groups.get("lod_protect") or o.vertex_groups.new(name="lod_protect")
@@ -109,6 +113,7 @@ def export_lods(rep, root_name, content_name, out_usdz, ratios, fps=30, end_fram
                 while o.modifiers.find("lod") > 0:
                     bpy.ops.object.modifier_move_up(modifier="lod")
                 bpy.ops.object.modifier_apply(modifier="lod")
+                _lod_repair(o)      # v9.6: RealityKit culls back faces; collapse decimation flips windings on overlapping toy shells
         prev = r
         tris = sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in objs if o.type == "MESH")
         path = out_usdz.replace(".usdz", "_lod%d.usdz" % i)
@@ -245,3 +250,21 @@ def _cleanup_scratch(keep_latest=0):
             os.remove(f)
         except Exception:
             pass
+
+
+def _lod_repair(o):
+    """After decimation: consistent outward winding per shell, drop stale custom split normals, smooth shading.
+    Root cause of the v9 teammate 'triangular shards': flipped triangles that Blender draws double-sided but RealityKit culls."""
+    import bmesh as _bm
+    me = o.data; bm = _bm.new(); bm.from_mesh(me)
+    _bm.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    bm.to_mesh(me); bm.free()
+    try:
+        if getattr(me, "has_custom_normals", False):
+            bpy.context.view_layer.objects.active = o
+            bpy.ops.mesh.customdata_custom_splitnormals_clear()
+    except Exception:
+        pass
+    for poly in me.polygons:
+        poly.use_smooth = True
+    me.update()

@@ -288,7 +288,7 @@ def build_arena(export=True):
                           {"asset": "lax_arena_pinebrook", "variant": "mobile 1024 textures"}, ["camera_gameplay"], False, bake=False)
         rep["mobile_kb"] = em["usdz_bytes"] // 1024; rep["mobile_textures"] = em["textures"]
         e["objects"] = [o.name for o in objs if o.name in bpy.data.objects]
-        rep["lods"] = export_lods(e, "lax_arena_pinebrook", "lax_arena_content", path, (0.5, 0.2), animated=False,
+        rep["lods"] = export_lods(e, "lax_arena_pinebrook", "lax_arena_content", path, (0.5, 0.2), animated=False, protect=False,
                                   keep=("v9_tree", "v9_shore_tree", "v9_fence", "v9_foreground", "v9_shore_bushes") if globals().get("ARENA_V9") else ())
         rep["check_lod2"] = arena_origin_check(path.replace(".usdz", "_lod2.usdz"))
     return rep

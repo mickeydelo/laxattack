@@ -112,3 +112,45 @@ on characters and goal, from `camera_gameplay`. Captures are in `Previews/Realit
 Filenames, skeletons, clips, frame ranges, events, root motion, sockets, arena root, groups and markers are unchanged.
 
 **Pending:** `lax_team_home_7` / `lax_team_away_5` (Mina, Ollie) still carry the old clear coat and will be re-exported next.
+
+
+## v9.6: teammate "triangular shards", root cause and fix (release blocker)
+**Reproduced** in RealityKit (`Tools/rkbatch.swift`, captures in `Previews/RealityKit/v96/`, with the before state in
+`v96_BEFORE_teammates_lods_shards.png`). The **base** teammate files were correct; **every `_lod1` / `_lod2` file** shattered, even at rest
+with no animation. The app loads teammates at LOD1, which is why only Mina and Ollie showed it. Hero LODs had the same defect but are
+loaded at LOD0.
+
+**Root cause:**
+- `export_lods()` protected every head/face-weighted vertex from decimation (for readable faces) while still demanding a global target
+  of 60% / 30%.
+- The v9 heads (curls, puffs, lids, goggles, cage) hold most of each mesh's vertices, so the decimator pushed **all of the reduction onto
+  the torso and legs**. Those collapsed into a few huge triangles spanning unrelated atlas islands: multicoloured, disconnected shards.
+- Collapse decimation also flipped windings on the overlapping toy shells. Blender draws both sides of every face; RealityKit culls back
+  faces. That's why Blender-side checks, which also framed only the faces, missed it.
+- A USD audit of skinning, joint order, bind/rest, animation samples, subsets, n-gons and vertex counts found nothing wrong: the defect
+  was purely geometric.
+
+**Fix and exporter guard:**
+- Character LODs no longer decimate geometry (`CHAR_LOD_DECIMATE = False`). They carry the full mesh with **1024 textures** (lower
+  memory); about 40–47k tris per character is well within budget.
+- Any future LOD decimation runs `_lod_repair()` (consistent outward winding, custom normals cleared, smooth shading).
+- The arena keeps its (correct) tree-protected decimation via `protect=False`.
+- **Guard for future characters:** validate every LOD full-body in RealityKit (`rkbatch`), never just the face.
+
+**Re-exported with the fixed LOD step and the v9.1 material fix** (clear coat 0, roughness floor 0.35):
+- `lax_team_home_7*` (Mina) and `lax_team_away_5*` (Ollie): base, `_lod1`, `_lod2`, clips.
+- `lax_shooter*` and `lax_goalie*`: LODs repaired.
+
+Filenames, skeletons, joint order, 78 / 38 clips, frame ranges, events, sockets, facing, scale and origin are unchanged. All four
+validate with 0 errors and grip gaps of 2.5 cm or less.
+
+**RealityKit validation** (image-based light exponent 0.0, 8,000 lux sun with shadows, grounding shadows):
+- `v96_teammates_lods_and_clips.png`: Mina and Ollie base / LOD1 / LOD2 at rest, plus LOD1 in `idle_relaxed` (730), `idle_competitive`
+  (810), cradle (68), aim (210), release (214), celebrate (168), disappointed (540). All full-body intact.
+- `v96_heroes_lods.png`: Rae and Kit base / LOD1 / LOD2.
+
+**Validation workflow:** `Tools/rkbatch.swift` renders any list of packaged characters, LODs, frames and cameras from a JSON config
+(examples `rk_val.json`, `rk_heroes.json`). Build: `swiftc -O -parse-as-library -o rkbatch rkbatch.swift`; run: `./rkbatch config.json`.
+
+**Still to deliver (next pass):** expression and blink frame tables with close-ups, a held-stick readability pass at `camera_gameplay`,
+and the `camera_result_goal` / `_miss` / `_save` / `camera_cast_review` markers with reference captures.
