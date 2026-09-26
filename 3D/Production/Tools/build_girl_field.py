@@ -239,7 +239,7 @@ def build_girl(export=True):
     C = coll("lax_shooter")
     arm = build_skeleton(S_, C, "lax_shooter_rig")
     parts = build_character_v9(S_, C, arm, "player") if V9 else build_character(S_, C, arm)
-    stick, meta = build_stick("attack", C, arm, name="lax_shooter_stick", frame_mat="goggle_white" if V9 else "helmet_cream", pocket_mat="cage_white" if V9 else "cord_navy")
+    stick, meta = build_stick("attack", C, arm, name="lax_shooter_stick", frame_mat=S_.get("stick_frame", "helmet_cream"), pocket_mat=S_.get("stick_pocket", "cord_navy"), shaft_mat=S_.get("stick_shaft", "plastic_dark"), grip_mat=S_.get("stick_grip", "rubber_dark"), strings_mat=S_.get("stick_strings", "kit_white"), bag_mat=S_.get("stick_bag", "pocket_bag"))
     socks = add_character_sockets(S_, arm, C, meta)
     ad = arm.data; ad.pose_position = "REST"; bpy.context.view_layer.update()
     Ms = ad.bones["stick"].matrix_local.copy()

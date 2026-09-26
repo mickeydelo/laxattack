@@ -34,8 +34,40 @@ def popcorn_tree(C, name, loc, h, seed):
             p = V(c) + V((d.x * r[0], d.y * r[1], d.z * r[2])); rs = h * rnd.uniform(0.095, 0.13)
             m = "leaf_light_v9" if d.z > 0.35 else ("leaf_mid_v9" if d.z > -0.2 else "leaf_dark_v9")
             B.add(ellipsoid(tuple(p), (rs, rs, rs * 0.92), 7, 5), m)
+    for k in range(6):                                   # ground foliage + flowers + a rock around the base (environment kit)
+        a = k * 1.05 + rnd.uniform(0, 0.4); rr = 0.16 * h * rnd.uniform(0.8, 1.2); c = (math.cos(a) * rr, math.sin(a) * rr, 0.035 * h)
+        B.add(ellipsoid(c, (0.06 * h, 0.055 * h, 0.04 * h), 10, 7), "bush_v9")
+        B.add(ellipsoid((c[0], c[1], c[2] + 0.04 * h), (0.012 * h, 0.012 * h, 0.006 * h), 6, 4), "flower_yellow_v9" if k % 2 else "flower_white_v9")
+    B.add(ellipsoid((0.2 * h, -0.1 * h, 0.02 * h), (0.05 * h, 0.04 * h, 0.03 * h), 10, 6), "rock_v9")
     o = B.build(C); o.location = loc; o.rotation_euler = (0, 0, rnd.uniform(0, 6.28))
     return o
+
+def lakeside_cabin(C, loc=(-14.5, -76.0, -0.45), s=1.6):
+    MATS.setdefault("log_v9", (_lin3((0.55, 0.34, 0.18)), 0.8, 0.0, 0.0)); MATS.setdefault("roof_v9", (_lin3((0.32, 0.36, 0.42)), 0.7, 0.0, 0.0))
+    MATS.setdefault("window_v9", (_lin3((1.0, 0.86, 0.55)), 0.4, 0.0, 0.0)); MATS.setdefault("stone_v9", (_lin3((0.62, 0.62, 0.60)), 0.8, 0.0, 0.0))
+    B = Builder("v9_cabin")
+    for k in range(7):
+        B.add(sweep([(-2.2 * s, 0, (0.2 + 0.32 * k) * s), (2.2 * s, 0, (0.2 + 0.32 * k) * s)], [0.17 * s] * 2, 10, 1.0), "log_v9")
+        B.add(sweep([(-2.2 * s, -2.8 * s, (0.2 + 0.32 * k) * s), (2.2 * s, -2.8 * s, (0.2 + 0.32 * k) * s)], [0.17 * s] * 2, 10, 1.0), "log_v9")
+    for sx in (-1, 1):
+        B.add(superellipsoid((0.12 * s, 1.45 * s, 1.15 * s), 0.3, 0.3, 8, 6, (2.2 * s * sx, -1.4 * s, 1.15 * s)), "log_v9")
+        B.add(xform(superellipsoid((2.6 * s, 0.12 * s, 1.9 * s), 0.25, 0.25, 8, 4, (0, 0, 0)),
+                    Matrix.Translation((0, -1.4 * s + sx * 0.95 * s, 2.95 * s)) @ Matrix.Rotation(sx * 0.95, 4, "X")), "roof_v9")
+    for wx in (-1.1, 1.1):
+        B.add(superellipsoid((0.38 * s, 0.05 * s, 0.34 * s), 0.3, 0.3, 8, 4, (wx * s, 0.16 * s, 1.1 * s)), "window_v9")
+    B.add(superellipsoid((0.42 * s, 0.42 * s, 2.3 * s), 0.3, 0.3, 10, 6, (1.5 * s, -2.2 * s, 2.3 * s)), "stone_v9")
+    o = B.build(C); o.location = loc; o.rotation_euler = (0, 0, math.radians(8))
+    return o
+
+def far_mountains(C, seed=12):
+    MATS.setdefault("mountain_v9", (_lin3((0.36, 0.50, 0.46)), 0.9, 0.0, 0.0)); MATS.setdefault("snow_v9", (_lin3((0.96, 0.97, 1.0)), 0.8, 0.0, 0.0))
+    rnd = random.Random(seed); B = Builder("v9_mountains"); x = -140.0
+    while x < 140.0:
+        h = rnd.uniform(13, 22); w = rnd.uniform(26, 40); y = -165 + rnd.uniform(-10, 10)
+        B.add(loft([(-0.5, w * 0.5, w * 0.35, x, y), (h * 0.62, w * 0.2, w * 0.14, x, y), (h, 0.5, 0.5, x, y)], 9, "flat", "pole"), "mountain_v9")
+        B.add(loft([(h * 0.66, w * 0.185, w * 0.13, x, y), (h, 0.6, 0.6, x, y)], 9, "flat", "pole"), "snow_v9")
+        x += w * rnd.uniform(0.55, 0.8)
+    return B.build(C)
 
 def pine_forest(C, seed=21):
     rnd = random.Random(seed); B = Builder("v9_pine_forest")
@@ -81,6 +113,14 @@ def field_tufts(C, seed=13):
         if (abs(x) < 1.1 and -5.2 < y < 2.5) or (abs(x) < 2.6 and -7.2 < y < -4.2):
             continue
         s = rnd.uniform(0.12, 0.24); n += 1
+        if n % 4 == 0:                                   # daisy tufts (props sheet)
+            for f_ in range(2):
+                fx, fy, fz = x + rnd.uniform(-0.3, 0.3) * s, y + rnd.uniform(-0.3, 0.3) * s, s * rnd.uniform(0.9, 1.2)
+                B.add(sweep([(fx, fy, 0), (fx, fy, fz)], [0.004, 0.003], 4, 1.0), "tuft_v9")
+                for pk in range(5):
+                    pa = pk * 1.2566
+                    B.add(ellipsoid((fx + math.cos(pa) * 0.018, fy + math.sin(pa) * 0.018, fz), (0.014, 0.014, 0.004), 6, 3), "flower_white_v9")
+                B.add(ellipsoid((fx, fy, fz + 0.003), (0.009, 0.009, 0.006), 6, 4), "flower_yellow_v9")
         for k in range(9):
             a = rnd.uniform(0, 6.28); lean = rnd.uniform(0.15, 0.45)
             tip = (x + math.cos(a) * lean * s, y + math.sin(a) * lean * s, s * rnd.uniform(0.8, 1.25))
@@ -148,13 +188,20 @@ def carpet_tufts(C, seed=17, n=1400):
     return B.build(C)
 
 def split_rail_fence(C, y=-12.55, x0=-14.0, x1=14.0):
+    """Props-sheet fence: chunky plank rails, square posts with bolts, stone footings."""
+    MATS.setdefault("stone_v9", (_lin3((0.62, 0.62, 0.60)), 0.8, 0.0, 0.0)); MATS.setdefault("bolt_v9", (_lin3((0.35, 0.36, 0.38)), 0.4, 0.6, 0.0))
+    MATS.setdefault("plank_v9", (_lin3((0.62, 0.40, 0.22)), 0.75, 0.0, 0.0))
     B = Builder("v9_fence"); x = x0
     while x <= x1 + 1e-3:
-        B.add(superellipsoid((0.075, 0.075, 0.58), 0.25, 0.35, 10, 6, (x, y, 0.56)), "bark_v9")
-        B.add(superellipsoid((0.085, 0.085, 0.04), 0.3, 0.4, 10, 4, (x, y, 1.15)), "bark_v9")
+        B.add(superellipsoid((0.16, 0.16, 0.07), 0.35, 0.4, 12, 6, (x, y, 0.07)), "stone_v9")
+        B.add(superellipsoid((0.085, 0.085, 0.56), 0.22, 0.3, 10, 6, (x, y, 0.66)), "bark_v9")
+        B.add(superellipsoid((0.095, 0.095, 0.035), 0.3, 0.4, 10, 4, (x, y, 1.23)), "bark_v9")
+        for z in (0.55, 0.93):
+            for dz in (-0.04, 0.04):
+                B.add(ellipsoid((x, y + 0.155, z + dz), (0.018, 0.012, 0.018), 8, 5), "bolt_v9")
         x += 2.2
-    for z in (0.52, 0.92):
-        B.add(superellipsoid(((x1 - x0) / 2 + 0.1, 0.05, 0.065), 0.25, 0.3, 40, 6, ((x0 + x1) / 2, y + 0.07, z)), "bark_v9")
+    for z in (0.55, 0.93):
+        B.add(superellipsoid(((x1 - x0) / 2 + 0.12, 0.055, 0.085), 0.2, 0.25, 48, 6, ((x0 + x1) / 2, y + 0.10, z)), "plank_v9")
     return B.build(C)
 
 def rock_stacks(C, seed=8, y0=-75.0):
@@ -178,7 +225,7 @@ def build_v9_gameplay_scene(cam_preset="behind_shooter"):
     build_env_v9(Dio)
     for o in [o for o in bpy.data.objects if o.name.startswith(("field_fence", "v9_shore_rocks"))]:
         bpy.data.objects.remove(o, do_unlink=True)
-    carpet_tufts(Dio); split_rail_fence(Dio); rock_stacks(Dio)
+    carpet_tufts(Dio); split_rail_fence(Dio); rock_stacks(Dio); lakeside_cabin(Dio); far_mountains(Dio)
     for o in [o for o in bpy.data.objects if o.name == "v9_clouds"]:
         bpy.data.objects.remove(o, do_unlink=True)
     Bc = Builder("v9_clouds"); rnd = random.Random(4)
@@ -252,7 +299,7 @@ def build_env_v9_export(Dio):
         bpy.data.objects.remove(o, do_unlink=True)
     for o in [o for o in bpy.data.objects if o.name.startswith(("field_fence", "v9_shore_rocks", "v9_clouds"))]:
         bpy.data.objects.remove(o, do_unlink=True)
-    carpet_tufts(Dio, n=500); split_rail_fence(Dio); rock_stacks(Dio)
+    carpet_tufts(Dio, n=500); split_rail_fence(Dio); rock_stacks(Dio); lakeside_cabin(Dio); far_mountains(Dio)
     Bc = Builder("v9_clouds"); rnd = random.Random(4)
     for (x, y, z, s) in ((-46, -165, 19, 5.0), (-12, -180, 23, 6.0), (22, -170, 20, 5.5), (56, -185, 24, 6.5), (-80, -180, 22, 5.5), (6, -155, 17, 3.6), (84, -175, 20, 5.0)):
         for k in range(10):

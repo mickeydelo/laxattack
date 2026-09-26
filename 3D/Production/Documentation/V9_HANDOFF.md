@@ -75,3 +75,16 @@ All four characters validate with 0 errors, seamless loops and grip gaps of 2.5 
 - **Rig:** new joints `happy_L` / `happy_R` (reserved, in the head-protected set) and `lid_open_deg` = 55 on all v9 characters.
 - **Re-exported:** `lax_shooter*`, `lax_goalie*`, `lax_team_home_7*` (Mina), `lax_team_away_5*` (Ollie). Clip names, frame ranges and sockets are unchanged.
 - **Preview:** `Previews/V9/v9_expressions.png`.
+
+
+## v9.5: props + environment kit
+- **Sticks** (props sheet): cream heads and pockets, silver shafts, wrapped grips, on all v9 characters.
+  - Rae: dark wrap. Kit: navy wrap. Mina: purple strings and wrap. Ollie: teal strings.
+  - The standalone `lax_stick_attack` / `lax_stick_goalie` match.
+- **Arena v9 (`lax_arena_pinebrook_v9*`):**
+  - plank fence with bolts and stone footings;
+  - ground foliage, flowers and a rock at every tree base;
+  - daisy tufts;
+  - a lakeside log cabin with glowing windows, and distant snow-capped mountains (both in `far_background`).
+  - `_lod1` is now 495k tris; use `_lod2` (352k) if frame time is tight.
+- **Re-exported:** `lax_shooter*`, `lax_goalie*`, `lax_team_home_7*`, `lax_team_away_5*`, `lax_stick_attack*`, `lax_stick_goalie*`, `lax_arena_pinebrook_v9*`.

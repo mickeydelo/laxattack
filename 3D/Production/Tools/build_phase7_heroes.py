@@ -33,7 +33,7 @@ def build_variant(spec, asset, clips_src, family, kind, required, stick_kind, fr
     C = coll(asset)
     arm = build_skeleton(spec, C, asset + "_rig")
     parts = build_character_v9(spec, C, arm, spec.get("v9_look", "player")) if spec.get("v9") else build_character(spec, C, arm)
-    stick, meta = build_stick(stick_kind, C, arm, name=asset + "_stick", frame_mat=frame_mat, pocket_mat=pocket_mat)
+    stick, meta = build_stick(stick_kind, C, arm, name=asset + "_stick", frame_mat=spec.get("stick_frame", frame_mat), pocket_mat=spec.get("stick_pocket", pocket_mat), shaft_mat=spec.get("stick_shaft", "plastic_dark"), grip_mat=spec.get("stick_grip", "rubber_dark"), strings_mat=spec.get("stick_strings", "kit_white"), bag_mat=spec.get("stick_bag", "pocket_bag"))
     socks = add_character_sockets(spec, arm, C, meta)
     ad = arm.data; ad.pose_position = "REST"; bpy.context.view_layer.update()
     Ms = ad.bones["stick"].matrix_local.copy()

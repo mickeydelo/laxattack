@@ -44,7 +44,7 @@ def build_stick_asset(kind="attack", asset="lax_stick_attack", folder="AttackSti
     for n, y in (("pocket_01", yb), ("pocket_02", yb + 0.10)):
         c = ad.edit_bones.new(n); c.head = (0, y, 0); c.tail = (0, y + 0.04, 0); c.roll = 0; c.parent = ad.edit_bones["stick"]
     bpy.ops.object.mode_set(mode="OBJECT")
-    stick, meta = build_stick(kind, C, arm, name=asset + "_mesh", frame_mat=frame_mat, pocket_mat=pocket_mat)
+    stick, meta = build_stick(kind, C, arm, name=asset + "_mesh", frame_mat="stick_cream_v9" if globals().get("V9_STICKS") else frame_mat, pocket_mat="cord_cream" if globals().get("V9_STICKS") else pocket_mat, shaft_mat="metal_silver_v9" if globals().get("V9_STICKS") else "plastic_dark", grip_mat=("kit_navy_v9" if kind == "goalie" else "grip_dark_v9") if globals().get("V9_STICKS") else "rubber_dark", strings_mat="cord_cream" if globals().get("V9_STICKS") else "kit_white", bag_mat="cord_cream_dark" if globals().get("V9_STICKS") else "pocket_bag")
     stick_tris = tri_count(stick)
     if "atlas_character" in globals():
         stick = atlas_character(arm, [stick], asset, sdir, 1024)[0]

@@ -202,7 +202,7 @@ def build_arena(export=True):
     fg = {o.name for o in bpy.data.collections["Foreground"].objects}
     def group_of(n):
         if n.startswith("v9_lake"): return "midground"          # no hazed soft copy (it glared white on device)
-        if n.startswith(("v9_pine_forest", "v9_rock_stacks", "v9_clouds", "v9_boat")): return "far_background"
+        if n.startswith(("v9_pine_forest", "v9_rock_stacks", "v9_clouds", "v9_boat", "v9_cabin", "v9_mountains")): return "far_background"
         if n.startswith(("v9_tree", "v9_shore_tree", "v9_shore_bushes")): return "midground"
         if n.startswith(("v9_fence", "v9_field_tufts", "v9_carpet_tufts")): return "near_field"
         if n.startswith("v9_foreground_bushes"): return "foreground_framing"

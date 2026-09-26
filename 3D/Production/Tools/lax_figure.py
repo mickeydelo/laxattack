@@ -629,7 +629,8 @@ def stick_geo(kind="attack"):
                      grip=(0.0, 0.0, 0.0), effect=(0.0, y1 + 0.02, 0.0))
     return g
 
-def build_stick(kind, collection, arm=None, bone="stick", name=None, frame_mat="plastic_white", pocket_mat="cord_navy"):
+def build_stick(kind, collection, arm=None, bone="stick", name=None, frame_mat="plastic_white", pocket_mat="cord_navy",
+                shaft_mat="plastic_dark", grip_mat="rubber_dark", strings_mat="kit_white", bag_mat="pocket_bag"):
     g = stick_geo(kind)
     B = Builder(name or ("stick_" + kind))
     M = arm.data.bones[bone].matrix_local.copy() if arm is not None else Matrix.Identity(4)
@@ -642,13 +643,13 @@ def build_stick(kind, collection, arm=None, bone="stick", name=None, frame_mat="
         v = (p.y - y0) / L
         w2 = d * smoothstep(0.55, 0.8, v); w1 = d * (1 - smoothstep(0.55, 0.8, v))
         return {"stick": max(0.0, 1 - w1 - w2), "pocket_01": w1, "pocket_02": w2}
-    for key, m in (("frame", frame_mat), ("shaft", "plastic_dark"), ("grip", "rubber_dark"), ("strings", "kit_white")):
+    for key, m in (("frame", frame_mat), ("shaft", shaft_mat), ("grip", grip_mat), ("strings", strings_mat)):
         for geo in g[key]:
             B.add(xform(geo, M), m, bone)
     for geo in g["pocket"]:
         B.add(xform(geo, M), pocket_mat, weights=pocket_w if arm is not None else None)
     for geo in g.get("bag", []):
-        B.add(xform(geo, M), "pocket_bag", weights=pocket_w if arm is not None else None, smooth=False)
+        B.add(xform(geo, M), bag_mat, weights=pocket_w if arm is not None else None, smooth=False)
     ob = B.build(collection, arm)
     return ob, g["meta"]
 

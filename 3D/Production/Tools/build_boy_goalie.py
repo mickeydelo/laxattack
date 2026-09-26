@@ -151,7 +151,7 @@ def build_goalie(export=True):
     C = coll("lax_goalie")
     arm = build_skeleton(S_, C, "lax_goalie_rig")
     parts = build_character_v9(S_, C, arm, "goalie") if V9 else build_character(S_, C, arm)
-    stick, meta = build_stick("goalie", C, arm, name="lax_goalie_stick", frame_mat="cage_white" if V9 else "helmet_teal", pocket_mat="cage_white" if V9 else "cord_white")
+    stick, meta = build_stick("goalie", C, arm, name="lax_goalie_stick", frame_mat=S_.get("stick_frame", "helmet_teal"), pocket_mat=S_.get("stick_pocket", "cord_white"), shaft_mat=S_.get("stick_shaft", "plastic_dark"), grip_mat=S_.get("stick_grip", "rubber_dark"), strings_mat=S_.get("stick_strings", "kit_white"), bag_mat=S_.get("stick_bag", "pocket_bag"))
     socks = add_character_sockets(S_, arm, C, meta)
     ad = arm.data; ad.pose_position = "REST"; bpy.context.view_layer.update()
     Ms = ad.bones["stick"].matrix_local.copy()
