@@ -70,17 +70,30 @@ def far_mountains(C, seed=12):
     return B.build(C)
 
 def pine_forest(C, seed=21):
+    """Natural far shoreline: mixed pines + round trees, varied heights, irregular spacing with gaps, undulating ground."""
     rnd = random.Random(seed); B = Builder("v9_pine_forest")
     for row, (y0, hmin, hmax) in enumerate(((-77.0, 7.0, 10.0), (-82.0, 8.0, 12.5), (-87.5, 9.5, 14.0), (-93.0, 10.5, 16.0))):
         x = -75.0 + rnd.uniform(0, 1.5)
         while x < 75.0:
-            h = rnd.uniform(hmin, hmax) * 0.62; y = y0 + rnd.uniform(-1.4, 1.4); z0 = -0.45 + 0.6 * row
+            x += rnd.uniform(0.8, 2.8)
+            if rnd.random() < 0.10:
+                continue                                           # gaps
+            h = rnd.uniform(hmin, hmax) * 0.62 * rnd.choice((0.55, 0.75, 0.9, 1.0, 1.0, 1.2))
+            y = y0 + rnd.uniform(-1.8, 1.8); z0 = -0.45 + 0.6 * row + 0.8 * math.sin(x * 0.07 + row) + rnd.uniform(-0.2, 0.4)
+            if rnd.random() < 0.2:                                 # round deciduous tree
+                r = h * rnd.uniform(0.22, 0.3)
+                B.add(sweep([(x, y, z0), (x, y, z0 + 0.35 * h)], [0.05 * h, 0.035 * h], 6, 1.0), "bark_v9")
+                for k in range(3):
+                    B.add(ellipsoid((x + rnd.uniform(-0.4, 0.4) * r, y + rnd.uniform(-0.3, 0.3) * r, z0 + 0.45 * h + rnd.uniform(0, 0.35) * r), (r, r * 0.9, r * 0.85), 9, 7),
+                          rnd.choice(("leaf_mid_v9", "leaf_dark_v9", "pine_mid_v9")))
+                continue
+            tiers = rnd.choice((3, 4, 4, 5))
             B.add(sweep([(x, y, z0), (x, y, z0 + 0.25 * h)], [0.07 * h, 0.05 * h], 6, 1.0), "bark_v9")
-            for i in range(4):
-                t = i / 4; zb = z0 + h * (0.14 + 0.62 * t); rb = h * (0.24 - 0.15 * t)
-                B.add(loft([(zb, rb, rb, x, y), (zb + 0.06 * h, rb * 0.92, rb * 0.92, x, y), (zb + h * (0.30 - 0.06 * t), 0.02, 0.02, x, y)], 7, "flat", "pole"),
-                      "pine_dark_v9" if (i + row) % 2 == 0 else "pine_mid_v9")
-            x += rnd.uniform(1.0, 1.7)
+            lean = rnd.uniform(-0.03, 0.03) * h
+            for i in range(tiers):
+                t = i / tiers; zb = z0 + h * (0.14 + 0.62 * t); rb = h * (0.24 - 0.15 * t) * rnd.uniform(0.85, 1.15)
+                B.add(loft([(zb, rb, rb, x + lean * t, y), (zb + 0.06 * h, rb * 0.92, rb * 0.92, x + lean * t, y), (zb + h * (0.30 - 0.06 * t), 0.02, 0.02, x + lean * (t + 0.2), y)], 7, "flat", "pole"),
+                      "pine_dark_v9" if (i + row + int(x)) % 3 else "pine_mid_v9")
     return B.build(C)
 
 def shore_rocks(C, seed=5):
@@ -208,9 +221,9 @@ def rock_stacks(C, seed=8, y0=-75.0):
     rnd = random.Random(seed); B = Builder("v9_rock_stacks"); x = -72.0
     while x < 72.0:
         for k in range(rnd.randint(2, 4)):
-            s = rnd.uniform(0.5, 1.4); c = (x + rnd.uniform(-1.0, 1.0), y0 + rnd.uniform(-1.2, 1.0), -0.45 + s * rnd.uniform(0.2, 0.5) + k * 0.15)
+            s = rnd.uniform(0.35, 1.8) * rnd.choice((0.6, 1.0, 1.0, 1.4)); c = (x + rnd.uniform(-1.4, 1.4), y0 + rnd.uniform(-1.6, 1.2), -0.45 + s * rnd.uniform(0.15, 0.5) + k * 0.12)
             B.add(ellipsoid(c, (s * rnd.uniform(1.0, 1.5), s * rnd.uniform(0.7, 1.0), s * rnd.uniform(0.55, 0.8)), 12, 8), rnd.choice(("rock_v9", "rock_v9", "rock_dark_v9")))
-        x += rnd.uniform(1.6, 2.6)
+        x += rnd.uniform(1.0, 3.6)
     return B.build(C)
 
 def build_v9_gameplay_scene(cam_preset="behind_shooter"):

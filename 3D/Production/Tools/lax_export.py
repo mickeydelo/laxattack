@@ -235,3 +235,13 @@ def verify_usd(path, root_name, sockets, end_frame, animated):
                         y = M.Transform(Gf.Vec3d(*pts[i]))[1]; ymin = min(ymin, y); ymax = max(ymax, y)
         rep["baked_y_range"] = [round(ymin, 3), round(ymax, 3)]
     return rep
+
+
+def _cleanup_scratch(keep_latest=0):
+    """Remove export scratch (multi-GB *_fixed_bake.usdc etc.). Called after each packaged export."""
+    import glob as _g
+    for f in _g.glob("/tmp/laxattack_export/*"):
+        try:
+            os.remove(f)
+        except Exception:
+            pass

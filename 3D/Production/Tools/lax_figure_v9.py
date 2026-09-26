@@ -15,7 +15,7 @@ _SRGB = {   # concept colours (sRGB) -> linear shader values
     "kit_purple_v9": ((0.66, 0.49, 0.88), 0.45, 0.1), "kit_lilac_v9": ((0.88, 0.83, 0.98), 0.45, 0.1),
     "skin_v9_deep": ((0.70, 0.46, 0.31), 0.36, 0.25), "hair_v9_dark": ((0.20, 0.11, 0.07), 0.30, 0.35),
     "stick_cream_v9": ((0.96, 0.93, 0.87), 0.25, 0.3), "cord_cream": ((0.96, 0.92, 0.85), 0.7, 0.0), "cord_cream_dark": ((0.80, 0.74, 0.64), 0.8, 0.0),
-    "grip_dark_v9": ((0.12, 0.13, 0.16), 0.75, 0.0),
+    "grip_dark_v9": ((0.12, 0.13, 0.16), 0.75, 0.0), "cord_tan_v9": ((0.74, 0.57, 0.38), 0.75, 0.0), "cord_tan_dark_v9": ((0.52, 0.38, 0.25), 0.8, 0.0),
 }
 V9_MATS = {k: (_lin(c), r, 0.0, co) for k, (c, r, co) in _SRGB.items()}
 V9_MATS["metal_silver_v9"] = (_lin((0.80, 0.82, 0.84)), 0.30, 0.85, 0.2)
@@ -326,7 +326,7 @@ def build_character_v9(s, collection, arm, look):
             parts["collar"] = Bc.build(collection, arm)
     return parts
 
-PLAYER_V9 = dict(GIRL_FIELD, name="lax_shooter_v9", lid_park_deg=55.0, stick_frame="stick_cream_v9", stick_pocket="cord_cream", stick_bag="cord_cream_dark", stick_shaft="metal_silver_v9", stick_strings="cord_cream", stick_grip="grip_dark_v9", eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
+PLAYER_V9 = dict(GIRL_FIELD, name="lax_shooter_v9", lid_park_deg=55.0, stick_frame="stick_cream_v9", stick_pocket="cord_tan_v9", stick_bag="cord_tan_dark_v9", stick_shaft="metal_silver_v9", stick_strings="cord_tan_v9", stick_grip="grip_dark_v9", eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
                  number="10", number_mat="kit_red_v9", bottom="shorts_v9", bottom_mat="kit_red_v9", bottom_trim="kit_cream_v9",
                  sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_red_v9", glove=None, glove_cuff=None, limb_k=1.5, hand_k=1.4, shoe_k=1.5, torso_k=1.22, sole="kit_red_v9", front_number_size=0.17, front_number_x=-0.095, front_number_z=0.68)
 GOALIE_V9 = dict(BOY_GOALIE, name="lax_goalie_v9", lid_park_deg=55.0, stick_frame="stick_cream_v9", stick_pocket="cord_cream", stick_bag="cord_cream_dark", stick_shaft="metal_silver_v9", stick_strings="cord_cream", stick_grip="kit_navy_v9", eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_navy_v9", kit_trim="kit_cyan_v9",

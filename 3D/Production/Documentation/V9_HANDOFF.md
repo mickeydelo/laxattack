@@ -88,3 +88,27 @@ All four characters validate with 0 errors, seamless loops and grip gaps of 2.5 
   - a lakeside log cabin with glowing windows, and distant snow-capped mountains (both in `far_background`).
   - `_lod1` is now 495k tris; use `_lod2` (352k) if frame time is tight.
 - **Re-exported:** `lax_shooter*`, `lax_goalie*`, `lax_team_home_7*`, `lax_team_away_5*`, `lax_stick_attack*`, `lax_stick_goalie*`, `lax_arena_pinebrook_v9*`.
+
+
+## v9.1 corrective export (Codex device review of `dda6ac2`), validated in **RealityKit**
+Validation uses Apple RealityKit's offscreen `RealityRenderer` on macOS 27 (`Tools/rkcap.swift`): the packaged USDZs are loaded
+with `Entity.load`, lit by the kit EXR as image-based light plus a warm directional sun with shadows, with `GroundingShadowComponent`
+on characters and goal, from `camera_gameplay`. Captures are in `Previews/RealityKit/`.
+
+| Device issue | Root cause (found in RealityKit, not Blender) | Fix |
+|---|---|---|
+| Pale, washed out; skin grey-green; weak whites and navy | Atlas materials had a **clear coat (0.12) at near-mirror roughness (0.03)**. RealityKit renders it as a mirror film reflecting the bright sky and grass over every surface. The EXR was also 2.2× brighter than intended | Clear coat 0; roughness floored at 0.35 in every character atlas; **EXR restored to its original brightness** |
+| Eyes look closed or narrow | Near-mirror glossy eyes reflected the grey sky, so only the dark rims read | Roughness floor; the eyes now read as open, dark and glossy with white highlights (`v91_ready_face_*.png`) |
+| Faint grounding | Over-bright image-based fill washed out the sun and grounding shadows | Dimmer EXR, so shadows read at the same sun intensity |
+| Distant shore reads as a wall of pale spikes | Uniform cones plus the hazed, smoothed soft copy | Mixed pines and round trees, varied heights and tier counts, irregular spacing with gaps, undulating ground, varied rocks; the shoreline is now in `midground` (no haze copy) |
+| Thin, low-contrast stick pocket | Cream on cream against a white ball | Warm tan pocket and backing under the cream rim (shooter) |
+
+**Recommended RealityKit lighting** (see `v91_game_recommended.png`):
+- image-based light intensity exponent **0.5** (1.0 also works now that the EXR is corrected);
+- warm directional sun at **8,000–9,000 lux** with shadows;
+- `GroundingShadowComponent` on the characters, sticks, ball and goal.
+
+**Re-exported:** `lax_shooter*`, `lax_goalie*`, `lax_arena_pinebrook_v9*` (`_lod1` now 422k tris) and `Lighting/lax_env_pinebrook_1k.exr`.
+Filenames, skeletons, clips, frame ranges, events, root motion, sockets, arena root, groups and markers are unchanged.
+
+**Pending:** `lax_team_home_7` / `lax_team_away_5` (Mina, Ollie) still carry the old clear coat and will be re-exported next.

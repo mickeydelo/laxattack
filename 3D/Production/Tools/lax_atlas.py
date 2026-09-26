@@ -118,6 +118,7 @@ def atlas_character(arm, meshes, asset, out_dir, res=2048):
     o = np.clip((o - 0.35) / 0.65, 0.0, 1.0)            # interpenetrating toy segments never go black
     a[..., :3] *= (0.76 + 0.24 * o)[..., None]      # stronger baked contact shading (grounding / contrast)          # gentle baked contact shading in creases (colour stays saturated)
     imgs["albedo"].pixels = a.ravel()
+    rp = np.array(imgs["rough"].pixels[:], np.float32).reshape(-1, 4); rp[:, :3] = np.maximum(rp[:, :3], 0.35); imgs["rough"].pixels = rp.ravel()   # no mirror-like surfaces in RealityKit
     paths = {}
     sc.render.image_settings.quality = 90
     for k, ext, fmt in (("albedo", "jpg", "JPEG"), ("rough", "jpg", "JPEG"), ("normal", "png", "PNG")):   # mobile-sized atlas files
@@ -137,7 +138,7 @@ def atlas_character(arm, meshes, asset, out_dir, res=2048):
     nm = nt.nodes.new("ShaderNodeNormalMap"); nt.links.new(tn.outputs["Color"], nm.inputs["Color"]); nt.links.new(nm.outputs["Normal"], b.inputs["Normal"])
     for k_ in ("Coat Weight", "Coat"):
         if k_ in b.inputs:
-            b.inputs[k_].default_value = 0.12; break
+            b.inputs[k_].default_value = 0.0; break      # v9.1c: RealityKit rendered the coat as a mirror film (grey, washed-out look)
     ob.data.materials.clear(); ob.data.materials.append(am)
     for p_ in ob.data.polygons:
         p_.material_index = 0
