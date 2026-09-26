@@ -1,0 +1,398 @@
+{
+ "field_timeline (Rae, Mina, Ollie)": {
+  "idle": {
+   "start": 0,
+   "end": 48,
+   "loop": true,
+   "blinks_local": [
+    30
+   ],
+   "blinks_timeline": [
+    30
+   ],
+   "non_blink_validation_local": 17,
+   "non_blink_validation_timeline": 17
+  },
+  "cradle": {
+   "start": 60,
+   "end": 88,
+   "loop": true,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "non_blink_validation_local": 14,
+   "non_blink_validation_timeline": 74
+  },
+  "celebrate": {
+   "start": 150,
+   "end": 186,
+   "loop": false,
+   "blinks_local": [
+    22
+   ],
+   "blinks_timeline": [
+    172
+   ],
+   "delighted_peak_local": 9,
+   "delighted_peak_timeline": 159
+  },
+  "aim_overhand": {
+   "start": 200,
+   "end": 230,
+   "loop": true,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "non_blink_validation_local": 15,
+   "non_blink_validation_timeline": 215
+  },
+  "aim_bounce": {
+   "start": 240,
+   "end": 270,
+   "loop": true,
+   "blinks_local": [
+    20
+   ],
+   "blinks_timeline": [
+    260
+   ]
+  },
+  "disappointed": {
+   "start": 520,
+   "end": 560,
+   "loop": false,
+   "blinks_local": [
+    27
+   ],
+   "blinks_timeline": [
+    547
+   ],
+   "sheepish_peak_local": 10,
+   "sheepish_peak_timeline": 530
+  },
+  "near_miss_reaction": {
+   "start": 570,
+   "end": 600,
+   "loop": false,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "sheepish_peak_local": 20,
+   "sheepish_peak_timeline": 590
+  },
+  "pipe_reaction": {
+   "start": 610,
+   "end": 634,
+   "loop": false,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "sheepish_peak_local": 18,
+   "sheepish_peak_timeline": 628
+  },
+  "save_reaction": {
+   "start": 645,
+   "end": 675,
+   "loop": false,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "sheepish_peak_local": 6,
+   "sheepish_peak_timeline": 651
+  },
+  "idle_relaxed": {
+   "start": 720,
+   "end": 792,
+   "loop": true,
+   "blinks_local": [
+    22,
+    57
+   ],
+   "blinks_timeline": [
+    742,
+    777
+   ],
+   "non_blink_validation_local": 36,
+   "non_blink_validation_timeline": 756
+  },
+  "idle_competitive": {
+   "start": 800,
+   "end": 848,
+   "loop": true,
+   "blinks_local": [
+    30
+   ],
+   "blinks_timeline": [
+    830
+   ],
+   "non_blink_validation_local": 17,
+   "non_blink_validation_timeline": 817
+  },
+  "idle_nervous": {
+   "start": 860,
+   "end": 920,
+   "loop": true,
+   "blinks_local": [
+    12,
+    33,
+    47
+   ],
+   "blinks_timeline": [
+    872,
+    893,
+    907
+   ],
+   "non_blink_validation_local": 23,
+   "non_blink_validation_timeline": 883
+  },
+  "celebrate_fist_pump": {
+   "start": 1080,
+   "end": 1110,
+   "loop": false,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "delighted_peak_local": 10,
+   "delighted_peak_timeline": 1090
+  },
+  "celebrate_stick_twirl": {
+   "start": 1120,
+   "end": 1160,
+   "loop": false,
+   "blinks_local": [
+    21
+   ],
+   "blinks_timeline": [
+    1141
+   ],
+   "delighted_peak_local": 5,
+   "delighted_peak_timeline": 1125
+  },
+  "celebrate_jump_tuck": {
+   "start": 1170,
+   "end": 1200,
+   "loop": false,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "delighted_peak_local": 6,
+   "delighted_peak_timeline": 1176
+  },
+  "celebrate_knee_slide": {
+   "start": 1210,
+   "end": 1250,
+   "loop": false,
+   "blinks_local": [
+    33
+   ],
+   "blinks_timeline": [
+    1243
+   ],
+   "delighted_peak_local": 6,
+   "delighted_peak_timeline": 1216
+  },
+  "celebrate_point": {
+   "start": 1260,
+   "end": 1284,
+   "loop": false,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "delighted_peak_local": 6,
+   "delighted_peak_timeline": 1266
+  },
+  "celebrate_clutch": {
+   "start": 1335,
+   "end": 1389,
+   "loop": false,
+   "blinks_local": [
+    17
+   ],
+   "blinks_timeline": [
+    1352
+   ],
+   "delighted_peak_local": 9,
+   "delighted_peak_timeline": 1344
+  },
+  "weak_miss": {
+   "start": 1400,
+   "end": 1424,
+   "loop": false,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "sheepish_peak_local": 6,
+   "sheepish_peak_timeline": 1406
+  },
+  "goal_glance_back": {
+   "start": 1435,
+   "end": 1465,
+   "loop": false,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "delighted_peak_local": 8,
+   "delighted_peak_timeline": 1443
+  }
+ },
+ "goalie_timeline (Kit)": {
+  "goalie_ready": {
+   "start": 0,
+   "end": 40,
+   "loop": true,
+   "blinks_local": [
+    28
+   ],
+   "blinks_timeline": [
+    28
+   ],
+   "non_blink_validation_local": 13,
+   "non_blink_validation_timeline": 13
+  },
+  "goalie_goal_against": {
+   "start": 240,
+   "end": 285,
+   "loop": false,
+   "blinks_local": [
+    15
+   ],
+   "blinks_timeline": [
+    255
+   ],
+   "sheepish_peak_local": 16,
+   "sheepish_peak_timeline": 256
+  },
+  "goalie_celebrate": {
+   "start": 520,
+   "end": 556,
+   "loop": false,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "delighted_peak_local": 5,
+   "delighted_peak_timeline": 525
+  },
+  "goalie_scan": {
+   "start": 570,
+   "end": 618,
+   "loop": true,
+   "blinks_local": [
+    18
+   ],
+   "blinks_timeline": [
+    588
+   ],
+   "non_blink_validation_local": 30,
+   "non_blink_validation_timeline": 600
+  },
+  "goalie_tap_pipes": {
+   "start": 628,
+   "end": 668,
+   "loop": false,
+   "blinks_local": [
+    22
+   ],
+   "blinks_timeline": [
+    650
+   ]
+  },
+  "goalie_desperation_dive_left": {
+   "start": 960,
+   "end": 996,
+   "loop": false,
+   "blinks_local": [
+    30
+   ],
+   "blinks_timeline": [
+    990
+   ]
+  },
+  "goalie_frustrated_tap": {
+   "start": 1092,
+   "end": 1122,
+   "loop": false,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "sheepish_peak_local": 6,
+   "sheepish_peak_timeline": 1098
+  },
+  "goalie_reset": {
+   "start": 1166,
+   "end": 1196,
+   "loop": false,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "sheepish_peak_local": 0,
+   "sheepish_peak_timeline": 1166
+  },
+  "goalie_stick_raise": {
+   "start": 1206,
+   "end": 1236,
+   "loop": false,
+   "blinks_local": [],
+   "blinks_timeline": [],
+   "delighted_peak_local": 8,
+   "delighted_peak_timeline": 1214
+  },
+  "goalie_small_dance": {
+   "start": 1280,
+   "end": 1328,
+   "loop": false,
+   "blinks_local": [
+    19
+   ],
+   "blinks_timeline": [
+    1299
+   ],
+   "delighted_peak_local": 5,
+   "delighted_peak_timeline": 1285
+  },
+  "goalie_big_clutch_save": {
+   "start": 1338,
+   "end": 1398,
+   "loop": false,
+   "blinks_local": [
+    36
+   ],
+   "blinks_timeline": [
+    1374
+   ],
+   "delighted_peak_local": 35,
+   "delighted_peak_timeline": 1373
+  },
+  "goalie_center_taps": {
+   "start": 1410,
+   "end": 1458,
+   "loop": false,
+   "blinks_local": [
+    29
+   ],
+   "blinks_timeline": [
+    1439
+   ]
+  },
+  "goalie_stick_spin": {
+   "start": 1468,
+   "end": 1508,
+   "loop": false,
+   "blinks_local": [
+    32
+   ],
+   "blinks_timeline": [
+    1500
+   ],
+   "sheepish_peak_local": 0,
+   "sheepish_peak_timeline": 1468
+  },
+  "goalie_ready_lively": {
+   "start": 1518,
+   "end": 1566,
+   "loop": true,
+   "blinks_local": [
+    20
+   ],
+   "blinks_timeline": [
+    1538
+   ],
+   "non_blink_validation_local": 30,
+   "non_blink_validation_timeline": 1548
+  }
+ },
+ "notes": {
+  "blink_duration_frames": "blink = lids fully closed at the listed frame, ramping over +/-2 frames (about 0.13 s total)",
+  "expression_presets": {
+   "delighted": "face 'big_smile' (lid 1.0 + happy arcs, jaw open)",
+   "sheepish": "face 'disappointed' (worried brows, look 14 deg aside, small frown)"
+  },
+  "character_differences": "Rae, Mina and Ollie share the field timeline (identical frames); Kit uses the goalie timeline. Personality layers do not move blink frames."
+ }
+}

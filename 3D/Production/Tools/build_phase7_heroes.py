@@ -24,7 +24,7 @@ def personality(fn, kind, period=24.0):
             p["pelvis_off"] = (p["pelvis_off"][0], p["pelvis_off"][1], p["pelvis_off"][2] - 0.012 * abs(math.sin(ph)))
             p["head_rot"] = (p["head_rot"][0], p["head_rot"][1] + 3 * math.sin(ph), p["head_rot"][2])
             if p.get("face") == "smile":
-                p["face"] = "big_smile"
+                p["face"] = "smile"      # v9.6: big_smile now means delighted (eyes closed); personality idles keep open, smiling eyes
         return finalize(p)
     return g
 

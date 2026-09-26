@@ -1,0 +1,94 @@
+{
+  "schema": "lax_review_cameras",
+  "version": 1,
+  "units": "metres, game space (Y-up, goal toward -Z); same space as camera_gameplay",
+  "note": "Authored review/result cameras. camera_gameplay is unchanged. Positions assume the standard placements: shooter root (-0.72, 0, 1.72) facing -Z, goalie root (0, 0, -4.95) facing +Z.",
+  "cameras": {
+    "camera_result_goal": {
+      "position": [
+        -0.2,
+        1.25,
+        0.1
+      ],
+      "target": [
+        -0.72,
+        1.0,
+        1.72
+      ],
+      "vertical_fov_deg": 38,
+      "focus_distance_m": 1.75,
+      "subject": "Rae delighted",
+      "shooter_clip_frame": 159,
+      "reference": "Previews/RealityKit/v96/v96_camera_result_goal.png"
+    },
+    "camera_result_miss": {
+      "position": [
+        -1.45,
+        0.82,
+        -0.35
+      ],
+      "target": [
+        -0.72,
+        0.85,
+        1.72
+      ],
+      "vertical_fov_deg": 40,
+      "focus_distance_m": 2.2,
+      "subject": "Rae sheepish",
+      "shooter_clip_frame": 530,
+      "reference": "Previews/RealityKit/v96/v96_camera_result_miss.png"
+    },
+    "camera_result_save": {
+      "position": [
+        0.9,
+        1.3,
+        -2.3
+      ],
+      "target": [
+        0.05,
+        0.95,
+        -4.95
+      ],
+      "vertical_fov_deg": 42,
+      "focus_distance_m": 2.8,
+      "subject": "Kit save",
+      "goalie_clip_frame": 597,
+      "reference": "Previews/RealityKit/v96/v96_camera_result_save.png"
+    },
+    "camera_cast_review": {
+      "position": [
+        0.0,
+        0.95,
+        3.6
+      ],
+      "target": [
+        0.0,
+        0.62,
+        -1.0
+      ],
+      "vertical_fov_deg": 36,
+      "focus_distance_m": 4.6,
+      "subject": "Mina + Ollie head to toe",
+      "staging": {
+        "lax_team_home_7": {
+          "position": [
+            -0.7,
+            0,
+            -1.0
+          ],
+          "yaw_deg": 180
+        },
+        "lax_team_away_5": {
+          "position": [
+            0.7,
+            0,
+            -1.0
+          ],
+          "yaw_deg": 0
+        }
+      },
+      "clip_frame": 756,
+      "reference": "Previews/RealityKit/v96/v96_camera_cast_review.png"
+    }
+  }
+}

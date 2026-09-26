@@ -74,28 +74,28 @@ def v9_face(s, H, F):
     ew, eh = 0.031, 0.046
     for side, sx in (("L", 1), ("R", -1)):
         az, el = 25.0 * sx, -11.0
-        F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.008, eh), 26, 16), az, el, 0.004), "eye_v9", "eye_" + side)     # clearly proud of the skin
-        F.add(H.place(ellipsoid((0, 0, 0), (0.011, 0.0025, 0.014), 12, 8), az + 2.8, el + 4.0, 0.0125), "eye_hi_v9", "eye_" + side)
-        F.add(H.place(ellipsoid((0, 0, 0), (0.0055, 0.0025, 0.0055), 8, 5), az - 3.4, el - 6.0, 0.0125), "eye_hi_v9", "eye_" + side)
+        F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.004, eh), 26, 16), az, el, 0.001), "eye_v9", "eye_" + side)     # proud of the skin, front 5 mm (v9.6b layer stack)
+        F.add(H.place(ellipsoid((0, 0, 0), (0.011, 0.0025, 0.014), 12, 8), az + 2.8, el + 4.0, 0.0065), "eye_hi_v9", "eye_" + side)
+        F.add(H.place(ellipsoid((0, 0, 0), (0.0055, 0.0025, 0.0055), 8, 5), az - 3.4, el - 6.0, 0.0065), "eye_hi_v9", "eye_" + side)
         dA = math.degrees(ew / H.r.x) * 1.3 + 2; dE = math.degrees(eh / H.r.z) + 2
         lo = s.get("lid_park_deg") or (math.degrees(eh / H.r.z) * 2 + 4)      # parked under the hairline / helmet brim when open
         lc = el + lo; nr, ns = 6, 20                        # oval eyelid (parked above the eye; closes onto it)
-        lv, lf = [tuple(V(H.point(az, lc)) + (V(H.point(az, lc)) - H.c).normalized() * 0.0135)], []
+        lv, lf = [tuple(V(H.point(az, lc)) + (V(H.point(az, lc)) - H.c).normalized() * 0.0155)], []
         for rI in range(1, nr + 1):
             rr = rI / nr
             for k_ in range(ns):
                 t_ = 2 * math.pi * k_ / ns
-                q_ = V(H.point(az + math.cos(t_) * dA * 1.25 * rr, lc + math.sin(t_) * dE * 1.2 * rr))
-                lv.append(tuple(q_ + (q_ - H.c).normalized() * (0.0135 - 0.004 * rr ** 6)))
+                q_ = V(H.point(az + math.cos(t_) * dA * 1.55 * rr, lc + math.sin(t_) * dE * 1.5 * rr))
+                lv.append(tuple(q_ + (q_ - H.c).normalized() * (0.0155 - 0.002 * rr ** 6)))
         for k_ in range(ns):
-            lf.append((0, 1 + (k_ + 1) % ns, 1 + k_))
+            lf.append((0, 1 + k_, 1 + (k_ + 1) % ns))          # CCW seen from outside (RealityKit culls back faces)
         for rI in range(1, nr):
             a0 = 1 + (rI - 1) * ns; a1 = 1 + rI * ns
             for k_ in range(ns):
-                lf.append((a0 + k_, a0 + (k_ + 1) % ns, a1 + (k_ + 1) % ns, a1 + k_))
+                lf.append((a0 + k_, a1 + k_, a1 + (k_ + 1) % ns, a0 + (k_ + 1) % ns))
         F.add((lv, lf), s["skin"], "lid_" + side)
         arc = [H.point(az + t * dA * 0.72, lc - 1.5 + 4.0 * (1 - t * t)) for t in (-1, -0.5, 0, 0.5, 1)]     # happy "^" closed-eye arc on the lid
-        arc = [tuple(V(q_) + (V(q_) - H.c).normalized() * 0.0150) for q_ in arc]
+        arc = [tuple(V(q_) + (V(q_) - H.c).normalized() * 0.0170) for q_ in arc]
         F.add(sweep(arc, [0.0030, 0.0046, 0.0050, 0.0046, 0.0030], 8, 0.5), "eye_v9", "lid_" + side)
         bpts = [H.point(az + dx * sx, el + 17.5 + 1.2 - 0.03 * dx * dx) for dx in (-7, -2, 3, 8)]
         bpts = [tuple(V(q) + (V(q) - H.c).normalized() * 0.006) for q in bpts]

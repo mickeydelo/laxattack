@@ -154,3 +154,74 @@ validate with 0 errors and grip gaps of 2.5 cm or less.
 
 **Still to deliver (next pass):** expression and blink frame tables with close-ups, a held-stick readability pass at `camera_gameplay`,
 and the `camera_result_goal` / `_miss` / `_save` / `camera_cast_review` markers with reference captures.
+
+
+## v9.6 part 2: expressions, blinks, sticks, review cameras (RealityKit-validated)
+All captures were rendered with `Tools/rkbatch.swift` from the packaged USDZs (image-based light exponent 0.0, 8,000 lux sun with shadows,
+grounding shadows). Close-ups aim from the **eye joints along the face normal** (`"track": "face"`), so they follow head tilt.
+
+### Two more RealityKit-only defects found and fixed
+1. **Closed eyes showed the eye rim and highlights (blink and delighted read as "open rings").** The v9.4 oval eyelid was wound clockwise
+   as seen from outside, so its normals pointed into the head. Blender draws both sides of every face; RealityKit culls back faces, so the
+   closed lid was mostly invisible.
+   - **Fix:** outward winding (`lax_figure_v9.py`), plus a safer layer stack: eye front at 5 mm, highlights at 9 mm, closed lid at 15.5 mm
+     (50% larger oval), happy arc at 17 mm.
+   - **Guard:** any hand-built open sheet must be counter-clockwise as seen from outside.
+2. **Mina's eyes were shut throughout her idles.** The "bouncy" personality layer upgraded `smile` → `big_smile`, and since v9.4
+   `big_smile` means delighted (eyes closed).
+   - **Fix:** the personality layer keeps `smile` (`build_phase7_heroes.py`). Celebrations still use delighted.
+
+### Expression and blink frames (`Exports/lax_expression_frames.json`, full table)
+**Rae, Mina and Ollie share the field timeline, with identical frames.**
+
+| Loop | Frames | Blinks (local) | Validation frame (no blink) |
+|---|---|---|---|
+| `idle_relaxed` | 720–792 | 22, 57 | **756** |
+| `idle_competitive` | 800–848 | 30 | **817** |
+| `idle` | 0–48 | 30 | 17 |
+| `idle_nervous` | 860–920 | 12, 33, 47 | 883 |
+| `cradle` / `aim_*` | — | none (focused loops never blink) | any |
+
+**Kit uses the goalie timeline.**
+
+| Loop | Frames | Blinks (local) | Validation frame (no blink) |
+|---|---|---|---|
+| `goalie_ready` | 0–40 | **28** (lids closed about 26–30) | **13** |
+| `goalie_ready_lively` | 1518–1566 | 20 | 1548 |
+| `goalie_scan` | 570–618 | 18 | 600 |
+
+**Kit's "narrow or closed" Ready frames were the authored blink at 28.** It is a real blink, not an export problem. Use frame 13 for
+Ready validation. A blink ramps over ±2 frames (about 0.13 s).
+
+**Expression peaks (timeline frames):**
+- **Delighted:** `celebrate` **159**, `celebrate_fist_pump` 1090, `celebrate_stick_twirl` 1125, `celebrate_jump_tuck` 1176,
+  `celebrate_knee_slide` 1216, `celebrate_point` 1266, `celebrate_clutch` 1344 · Kit: `goalie_celebrate` **525**, `goalie_stick_raise` 1214,
+  `goalie_small_dance` 1285, `goalie_big_clutch_save` 1373.
+- **Sheepish:** `disappointed` **530**, `near_miss_reaction` 590, `pipe_reaction` 628, `save_reaction` 651, `weak_miss` 1406 ·
+  Kit: `goalie_goal_against` **256**, `goalie_frustrated_tap` 1098.
+
+Captures: `v96_expressions_closeups.png` (rows Rae / Mina / Ollie / Kit; columns Ready / blink / delighted / sheepish).
+
+### Held-stick readability: pass, no asset change
+- `v96_gameplay_tele_pocket.png` is a telephoto from the `camera_gameplay` position onto Rae's held pocket: cream rim against the grass, a
+  thick head, and a tan woven pocket that separates from a white ball.
+- `v96_held_sticks.png`: Rae dark wrap, Mina purple strings and wrap, Ollie teal strings, Kit navy wrap with a cream head.
+- The 3619b60 sticks are kept, and hand contacts are unchanged (grip gaps of 2.5 cm or less in every build).
+
+### Review cameras (`Exports/lax_review_cameras.json`)
+Game space, metres. `camera_gameplay` is unchanged.
+
+| Marker | Position | Target | vFOV | Focus | Shows |
+|---|---|---|---|---|---|
+| `camera_result_goal` | (−0.20, 1.25, 0.10) | (−0.72, 1.00, 1.72) | 38° | 1.75 m | Rae delighted (frame 159) |
+| `camera_result_miss` | (−1.45, 0.82, −0.35) | (−0.72, 0.85, 1.72) | 40° | 2.2 m | Rae sheepish (frame 530) |
+| `camera_result_save` | (0.90, 1.30, −2.30) | (0.05, 0.95, −4.95) | 42° | 2.8 m | Kit face, stick, save (frame 597) |
+| `camera_cast_review` | (0.00, 0.95, 3.60) | (0.00, 0.62, −1.00) | 36° | 4.6 m | Mina at (−0.7, 0, −1.0) yaw 180 and Ollie at (0.7, 0, −1.0), head to toe |
+
+References: `v96_camera_result_goal.png`, `v96_camera_result_miss.png`, `v96_camera_result_save.png`, `v96_camera_cast_review.png`
+(sheet `v96_review_cameras.png`).
+
+### Re-exported (final v9.6)
+`lax_shooter*`, `lax_goalie*`, `lax_team_home_7*`, `lax_team_away_5*` (base, `_lod1`, `_lod2`, clips). Filenames, skeletons, joint order,
+clips, frame ranges, events, sockets, facing, scale, origin and root motion are unchanged. The arena, goal, sticks and palette are
+untouched since 3619b60 / 9a35009.

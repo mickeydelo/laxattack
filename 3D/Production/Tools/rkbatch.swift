@@ -6,7 +6,7 @@ import CoreGraphics
 import ImageIO
 import UniformTypeIdentifiers
 struct Ent: Decodable { let file: String; let pos: [Float]; let yaw: Float?; let frame: Double?; let ground: Bool? }
-struct Shot: Decodable { let out: String; let w: Int; let h: Int; let cam: [Float]; let target: [Float]; let vfov: Float; let sun_from: [Float]?; let hide: [String]?; let entities: [Ent] }
+struct Shot: Decodable { let out: String; let w: Int; let h: Int; let cam: [Float]; let target: [Float]; let vfov: Float; let sun_from: [Float]?; let hide: [String]?; let entities: [Ent]; let track: String?; let offset: [Float]? }
 struct Cfg: Decodable { let exports: String; let ibl_exponent: Float; let sun_lux: Float; let shots: [Shot] }
 @MainActor func renderShot(_ cfg: Cfg, _ s: Shot, _ env: EnvironmentResource?, _ dev: MTLDevice) throws {
     let renderer = try RealityRenderer(); let root = Entity()
@@ -27,6 +27,52 @@ struct Cfg: Decodable { let exports: String; let ibl_exponent: Float; let sun_lu
     let cam = PerspectiveCamera(); cam.camera.fieldOfViewInDegrees = s.vfov
     cam.look(at: SIMD3<Float>(s.target[0], s.target[1], s.target[2]), from: SIMD3<Float>(s.cam[0], s.cam[1], s.cam[2]), relativeTo: nil)
     root.addChild(cam); renderer.activeCamera = cam
+    if let jn = s.track, let off = s.offset {        // aim at a skeleton joint (e.g. "head") after the pose is applied
+        let td0 = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm_srgb, width: 64, height: 64, mipmapped: false)
+        td0.usage = [.renderTarget]; td0.storageMode = .private
+        let t0 = dev.makeTexture(descriptor: td0)!; let o0 = try RealityRenderer.CameraOutput(.singleProjection(colorTexture: t0))
+        try renderer.updateAndRender(deltaTime: 0.0, cameraOutput: o0, onComplete: { _ in })
+        var found: SIMD3<Float>? = nil
+        func walk(_ e: Entity) {
+            if let m = e as? ModelEntity, !m.jointNames.isEmpty, found == nil {
+                var mats: [String: simd_float4x4] = [:]
+                for (i, path) in m.jointNames.enumerated() {
+                    let parent = (path as NSString).deletingLastPathComponent
+                    let pm = mats[parent] ?? matrix_identity_float4x4
+                    mats[path] = pm * m.jointTransforms[i].matrix
+                    if path == jn || path.hasSuffix("/" + jn) {
+                        let w = m.transformMatrix(relativeTo: nil) * mats[path]!
+                        found = SIMD3<Float>(w.columns.3.x, w.columns.3.y, w.columns.3.z)
+                    }
+                }
+            }
+            e.children.forEach(walk)
+        }
+        walk(root)
+        if jn == "face" {       // eye-centre + face normal from the eye joints (bone axis = face normal)
+            var pts: [SIMD3<Float>] = []; var nrm = SIMD3<Float>(0, 0, 0)
+            func walk2(_ e: Entity) {
+                if let m = e as? ModelEntity, !m.jointNames.isEmpty, pts.isEmpty {
+                    var mats: [String: simd_float4x4] = [:]
+                    for (i, path) in m.jointNames.enumerated() {
+                        let parent = (path as NSString).deletingLastPathComponent
+                        mats[path] = (mats[parent] ?? matrix_identity_float4x4) * m.jointTransforms[i].matrix
+                        if path.hasSuffix("/eye_L") || path.hasSuffix("/eye_R") {
+                            let w = m.transformMatrix(relativeTo: nil) * mats[path]!
+                            pts.append(SIMD3<Float>(w.columns.3.x, w.columns.3.y, w.columns.3.z))
+                            nrm += simd_normalize(SIMD3<Float>(w.columns.1.x, w.columns.1.y, w.columns.1.z))
+                        }
+                    }
+                }
+                e.children.forEach(walk2)
+            }
+            walk2(root)
+            if pts.count == 2 {
+                let c = (pts[0] + pts[1]) * 0.5; let n = simd_normalize(nrm)
+                cam.look(at: c + SIMD3<Float>(0, off[0], 0), from: c + n * off[2] + SIMD3<Float>(0, off[1], 0), relativeTo: nil)
+            }
+        } else if let h = found { cam.look(at: h + SIMD3<Float>(0, 0.04, 0), from: h + SIMD3<Float>(off[0], off[1], off[2]), relativeTo: nil) }
+    }
     let td = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm_srgb, width: s.w, height: s.h, mipmapped: false)
     td.usage = [.renderTarget, .shaderRead, .shaderWrite]; td.storageMode = .shared
     let tex = dev.makeTexture(descriptor: td)!; let output = try RealityRenderer.CameraOutput(.singleProjection(colorTexture: tex))
