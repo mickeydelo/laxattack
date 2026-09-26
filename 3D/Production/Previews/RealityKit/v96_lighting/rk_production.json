@@ -1,0 +1,367 @@
+{
+ "exports": "<repo>/3D/Production/Exports",
+ "ibl_exponent": 0.0,
+ "sun_lux": 8000,
+ "shots": [
+  {
+   "out": "/tmp/prod_A_rkbatch_sun_gameplay.png",
+   "w": 585,
+   "h": 1268,
+   "cam": [
+    -0.3,
+    4.3,
+    7.0
+   ],
+   "target": [
+    -0.15,
+    0.4,
+    -3.5
+   ],
+   "vfov": 50,
+   "sun_from": [
+    -4.2,
+    6.6,
+    6.2
+   ],
+   "hide": [
+    "collision_only",
+    "far_background",
+    "foreground_framing",
+    "camera_markers",
+    "crowd_markers",
+    "shadow_only"
+   ],
+   "entities": [
+    {
+     "file": "lax_arena_pinebrook_v9_lod1.usdz",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "frame": -1
+    },
+    {
+     "file": "lax_goal.usdz",
+     "pos": [
+      0,
+      0,
+      -5.7
+     ],
+     "frame": 0,
+     "ground": true
+    },
+    {
+     "file": "lax_shooter.usdz",
+     "pos": [
+      -0.72,
+      0,
+      1.72
+     ],
+     "frame": 70,
+     "ground": true
+    },
+    {
+     "file": "lax_goalie.usdz",
+     "pos": [
+      0,
+      0,
+      -4.95
+     ],
+     "frame": 13,
+     "ground": true
+    },
+    {
+     "file": "lax_lighting_reference.usdz",
+     "pos": [
+      0.55,
+      0,
+      2.2
+     ],
+     "frame": -1,
+     "ground": true
+    },
+    {
+     "file": "lax_lighting_reference.usdz",
+     "pos": [
+      1.9,
+      0,
+      -5.0
+     ],
+     "frame": -1,
+     "ground": true
+    }
+   ]
+  },
+  {
+   "out": "/tmp/prod_A_rkbatch_sun_refs.png",
+   "w": 700,
+   "h": 360,
+   "cam": [
+    0.55,
+    0.55,
+    3.6
+   ],
+   "target": [
+    0.55,
+    0.15,
+    2.2
+   ],
+   "vfov": 34,
+   "sun_from": [
+    -4.2,
+    6.6,
+    6.2
+   ],
+   "hide": [
+    "collision_only",
+    "far_background",
+    "foreground_framing",
+    "camera_markers",
+    "crowd_markers",
+    "shadow_only"
+   ],
+   "entities": [
+    {
+     "file": "lax_arena_pinebrook_v9_lod1.usdz",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "frame": -1
+    },
+    {
+     "file": "lax_goal.usdz",
+     "pos": [
+      0,
+      0,
+      -5.7
+     ],
+     "frame": 0,
+     "ground": true
+    },
+    {
+     "file": "lax_shooter.usdz",
+     "pos": [
+      -0.72,
+      0,
+      1.72
+     ],
+     "frame": 70,
+     "ground": true
+    },
+    {
+     "file": "lax_goalie.usdz",
+     "pos": [
+      0,
+      0,
+      -4.95
+     ],
+     "frame": 13,
+     "ground": true
+    },
+    {
+     "file": "lax_lighting_reference.usdz",
+     "pos": [
+      0.55,
+      0,
+      2.2
+     ],
+     "frame": -1,
+     "ground": true
+    },
+    {
+     "file": "lax_lighting_reference.usdz",
+     "pos": [
+      1.9,
+      0,
+      -5.0
+     ],
+     "frame": -1,
+     "ground": true
+    }
+   ]
+  },
+  {
+   "out": "/tmp/prod_B_flipped_sun_gameplay.png",
+   "w": 585,
+   "h": 1268,
+   "cam": [
+    -0.3,
+    4.3,
+    7.0
+   ],
+   "target": [
+    -0.15,
+    0.4,
+    -3.5
+   ],
+   "vfov": 50,
+   "sun_from": [
+    -4.2,
+    6.6,
+    -6.2
+   ],
+   "hide": [
+    "collision_only",
+    "far_background",
+    "foreground_framing",
+    "camera_markers",
+    "crowd_markers",
+    "shadow_only"
+   ],
+   "entities": [
+    {
+     "file": "lax_arena_pinebrook_v9_lod1.usdz",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "frame": -1
+    },
+    {
+     "file": "lax_goal.usdz",
+     "pos": [
+      0,
+      0,
+      -5.7
+     ],
+     "frame": 0,
+     "ground": true
+    },
+    {
+     "file": "lax_shooter.usdz",
+     "pos": [
+      -0.72,
+      0,
+      1.72
+     ],
+     "frame": 70,
+     "ground": true
+    },
+    {
+     "file": "lax_goalie.usdz",
+     "pos": [
+      0,
+      0,
+      -4.95
+     ],
+     "frame": 13,
+     "ground": true
+    },
+    {
+     "file": "lax_lighting_reference.usdz",
+     "pos": [
+      0.55,
+      0,
+      2.2
+     ],
+     "frame": -1,
+     "ground": true
+    },
+    {
+     "file": "lax_lighting_reference.usdz",
+     "pos": [
+      1.9,
+      0,
+      -5.0
+     ],
+     "frame": -1,
+     "ground": true
+    }
+   ]
+  },
+  {
+   "out": "/tmp/prod_B_flipped_sun_refs.png",
+   "w": 700,
+   "h": 360,
+   "cam": [
+    0.55,
+    0.55,
+    3.6
+   ],
+   "target": [
+    0.55,
+    0.15,
+    2.2
+   ],
+   "vfov": 34,
+   "sun_from": [
+    -4.2,
+    6.6,
+    -6.2
+   ],
+   "hide": [
+    "collision_only",
+    "far_background",
+    "foreground_framing",
+    "camera_markers",
+    "crowd_markers",
+    "shadow_only"
+   ],
+   "entities": [
+    {
+     "file": "lax_arena_pinebrook_v9_lod1.usdz",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "frame": -1
+    },
+    {
+     "file": "lax_goal.usdz",
+     "pos": [
+      0,
+      0,
+      -5.7
+     ],
+     "frame": 0,
+     "ground": true
+    },
+    {
+     "file": "lax_shooter.usdz",
+     "pos": [
+      -0.72,
+      0,
+      1.72
+     ],
+     "frame": 70,
+     "ground": true
+    },
+    {
+     "file": "lax_goalie.usdz",
+     "pos": [
+      0,
+      0,
+      -4.95
+     ],
+     "frame": 13,
+     "ground": true
+    },
+    {
+     "file": "lax_lighting_reference.usdz",
+     "pos": [
+      0.55,
+      0,
+      2.2
+     ],
+     "frame": -1,
+     "ground": true
+    },
+    {
+     "file": "lax_lighting_reference.usdz",
+     "pos": [
+      1.9,
+      0,
+      -5.0
+     ],
+     "frame": -1,
+     "ground": true
+    }
+   ]
+  }
+ ]
+}

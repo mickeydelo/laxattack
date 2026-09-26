@@ -225,3 +225,53 @@ References: `v96_camera_result_goal.png`, `v96_camera_result_miss.png`, `v96_cam
 `lax_shooter*`, `lax_goalie*`, `lax_team_home_7*`, `lax_team_away_5*` (base, `_lod1`, `_lod2`, clips). Filenames, skeletons, joint order,
 clips, frame ranges, events, sockets, facing, scale, origin and root motion are unchanged. The arena, goal, sticks and palette are
 untouched since 3619b60 / 9a35009.
+
+
+## v9.6 lighting parity: device vs RealityKit reference
+**No asset changes.** Checksums (first 16 hex of SHA-256) of the exact files used by the reference captures, identical to `29bcd10`:
+`lax_arena_pinebrook_v9_lod1.usdz` 5387ce2efafc06e1 · `lax_shooter.usdz` 31effeed3015dc58 · `lax_goalie.usdz` a29ac3dc787e8009 ·
+`Lighting/lax_env_pinebrook_1k.exr` ad1cb39d11b11ccd. The captures use the same LOD0 files that ship.
+
+### 1. Exact lighting in `Tools/rkbatch.swift`
+| Item | Value |
+|---|---|
+| Sun | One `DirectionalLight` entity; `sun.look(at: [0,0,0], from: [-4.2, 6.6, 6.2], relativeTo: nil)` |
+| **Light travel direction (entity forward, −Z)** | **normalize(0.42, −0.66, −0.62)**: from high behind the camera and slightly left, shining **toward the goal (−Z)** |
+| Colour / intensity | RGB (1.0, 0.84, 0.62), 8,000 lux |
+| Shadow | `DirectionalLightComponent.Shadow(maximumDistance: 25, depthBias: 2)` |
+| Image-based light | `RealityRenderer.lighting.resource = EnvironmentResource(equirectangular: <CGImage of lax_env_pinebrook_1k.exr>)`, `intensityExponent = 0.0`. This is renderer-global, so **every** entity (arena, lake, sky, characters) receives it, equivalent to `ImageBasedLightReceiverComponent` on every model entity |
+| Other lights | None: no ambient, fill or rim |
+| Camera and post | `PerspectiveCamera` with vertical `fieldOfViewInDegrees`; RealityRenderer defaults (no explicit exposure, tone-mapping or post settings); `bgra8Unorm_srgb` output |
+| Grounding | `GroundingShadowComponent(castsShadow: true)` on every model entity of the characters and goal |
+| Groups | `dof_fallback`: `far_background`, `foreground_framing`, `collision_only` and marker groups hidden. The sky backdrop lives in `far_background`, so it is not drawn (black sky in captures) |
+
+### 2. Isolation experiment (`Previews/RealityKit/v96_lighting/`, config `rk_production.json`)
+Same files, camera, exponent and 8,000 lux, with **only the sun direction** changed; reference spheres sit near the shooter and the goal.
+- **A: travel direction (0.42, −0.66, −0.62)** (reference): warm skin, clean whites, correct mid-grey sphere.
+- **B: travel direction (0.42, −0.66, +0.62)** (sun behind the goal, shining at the camera): grey, desaturated faces, a muddy mid-grey
+  sphere, dull whites, dark flat scenery, and a field that stays bright because it is top-lit. **This reproduces the device symptoms.**
+- The LIGHTING_KIT wording "key from (0.42, −0.66, 0.62)" was ambiguous. The intended **travel** vector is **(0.42, −0.66, −0.62)**.
+
+### 3. White lake
+- **Material:** palette PBR (`M_arena_v9_palette`, UsdPreviewSurface), not unlit. The lake UVs sample one swatch at (0.281, 0.094) =
+  `water_v9` sRGB (0.08, 0.38, 0.80). Roughness 0.35 (palette roughness map, raw), metallic 0, opacity 1, no emissive; colour texture sRGB.
+- **It renders blue in RealityKit** with the exact `29bcd10` arena under both sun directions.
+- **Device white is most likely image-based-light coverage.** In RealityView only entities with `ImageBasedLightReceiverComponent`
+  receive the custom environment; others fall back to the default environment, whose bright reflection on a 0.35-roughness surface reads
+  white. **Please confirm that every arena model entity (lake included) has the receiver component**, or put it on the arena root if
+  your RealityKit version propagates it.
+
+### 4. Skin and hair (packaged values RealityKit reads)
+- `clearcoat` 0.0; `metallic` 0.0; `ior` 1.5; `opacity` 1.0.
+- Roughness comes from `*_rough.jpg` (raw colour space), floored at 0.35; albedo `*_albedo.jpg` is sRGB; normal `*_normal.png` is raw
+  with scale 2 and bias −1.
+- The hair's large highlight is the specular hotspot of a sun facing the camera. With the reference sun direction it stays small (see A).
+
+### 5. Kit non-blink Ready
+`goalie_ready` spans timeline frames 0–40 (blink at local frame 28). **Timeline frame 13 = clip-local frame 13 = 13 / 30 = 0.4333 s** into
+`goalie_ready`. Pause there, e.g. `controller.time = 0.4333` on a paused `goalie_ready` slice, or 0.4333 s from the timeline start.
+
+### 6. Lighting reference asset
+`Exports/lax_lighting_reference.usdz` holds six 12 cm spheres on the ground, 0.3 m apart along +X: 18% grey, white diffuse (0.9),
+chrome (metallic 1, roughness 0.05), and skin, hair and lake swatches (the v9 material colours and roughness). Place it at game
+(0.55, 0, 2.2) near the shooter and (1.9, 0, −5.0) near the goal, as in the captures.
