@@ -57,6 +57,18 @@ def lakeside_cabin(C, loc=(-14.5, -76.0, -0.45), s=1.6):
         B.add(superellipsoid((0.38 * s, 0.05 * s, 0.34 * s), 0.3, 0.3, 8, 4, (wx * s, 0.16 * s, 1.1 * s)), "window_v9")
     B.add(superellipsoid((0.42 * s, 0.42 * s, 2.3 * s), 0.3, 0.3, 10, 6, (1.5 * s, -2.2 * s, 2.3 * s)), "stone_v9")
     o = B.build(C); o.location = loc; o.rotation_euler = (0, 0, math.radians(8))
+    gm = bpy.data.materials.get("M_glow_window_v9") or bpy.data.materials.new("M_glow_window_v9")     # true emissive (kept out of the palette)
+    gm.use_nodes = True; bsdf = gm.node_tree.nodes.get("Principled BSDF")
+    bsdf.inputs["Base Color"].default_value = (1.0, 0.72, 0.38, 1.0)
+    for k_, v_ in (("Emission Color", (1.0, 0.66, 0.30, 1.0)), ("Emission", (1.0, 0.66, 0.30, 1.0))):
+        if k_ in bsdf.inputs: bsdf.inputs[k_].default_value = v_
+    if "Emission Strength" in bsdf.inputs: bsdf.inputs["Emission Strength"].default_value = 1.0
+    parts = [superellipsoid((0.36 * s, 0.012, 0.31 * s), 0.3, 0.3, 8, 4, (wx * s, 0.25 * s, 1.1 * s)) for wx in (-1.1, 1.1)]
+    g = obj_from_geo("v9_glow_cabin_windows", merge_geo(parts) if "merge_geo" in globals() else parts[0], "window_v9", C)
+    if "merge_geo" not in globals():
+        g2 = obj_from_geo("v9_glow_cabin_windows_b", parts[1], "window_v9", C); g2.data.materials.clear(); g2.data.materials.append(gm)
+        g2.location = loc; g2.rotation_euler = (0, 0, math.radians(8))
+    g.data.materials.clear(); g.data.materials.append(gm); g.location = loc; g.rotation_euler = (0, 0, math.radians(8))
     return o
 
 def far_mountains(C, seed=12):
@@ -236,6 +248,42 @@ def flower_border(C, seed=31):
     out.append(Bs.build(C))
     return out
 
+BENCH_SEATS_GAME = [(-3.65, -10.0), (-3.10, -10.0), (-2.55, -10.0), (2.55, -10.0), (3.10, -10.0), (3.65, -10.0)]   # game (x, z); seat top y 0.42
+def cozy_benches(C):
+    """Two warm toy benches with backrests behind the goal, flanking it, facing the field (+Z game). Blender x = -game x, y = game z."""
+    MATS.setdefault("plank_v9", (_lin3((0.72, 0.46, 0.24)), 0.75, 0.0, 0.0))
+    B = Builder("v9_benches")
+    for sx in (-1, 1):
+        cx = -sx * 3.10; cy = -10.0                        # Blender coords of bench centre
+        B.add(superellipsoid((0.98, 0.20, 0.045), 0.25, 0.3, 24, 6, (cx, cy, 0.40)), "plank_v9")
+        B.add(superellipsoid((0.98, 0.035, 0.11), 0.25, 0.3, 24, 6, (cx, cy - 0.21, 0.70)), "plank_v9")
+        for lx in (-0.82, 0.82):
+            B.add(superellipsoid((0.05, 0.16, 0.19), 0.3, 0.3, 8, 6, (cx + lx, cy, 0.19)), "bark_v9")
+            B.add(superellipsoid((0.04, 0.035, 0.30), 0.3, 0.3, 8, 6, (cx + lx, cy - 0.21, 0.55)), "bark_v9")
+    return B.build(C)
+
+def lakeside_details(C, seed=41):
+    """Near-shore dock with posts + reed clusters (lakeside detail pass)."""
+    MATS.setdefault("reed_v9", (_lin3((0.42, 0.58, 0.22)), 0.8, 0.0, 0.0)); MATS.setdefault("cattail_v9", (_lin3((0.45, 0.28, 0.14)), 0.8, 0.0, 0.0))
+    rnd = random.Random(seed); B = Builder("v9_lakeside")
+    dx, y0 = 7.5, -19.6
+    for k in range(9):
+        B.add(superellipsoid((0.75, 0.17, 0.04), 0.2, 0.3, 12, 4, (dx, y0 - 0.38 * k, -0.22)), "plank_v9")
+    for k in (0, 4, 8):
+        for sx in (-1, 1):
+            B.add(sweep([(dx + sx * 0.68, y0 - 0.38 * k, -0.6), (dx + sx * 0.68, y0 - 0.38 * k, -0.05)], [0.06, 0.055], 8, 1.0), "bark_v9")
+    x = -30.0
+    while x < 30.0:
+        x += rnd.uniform(0.8, 2.4)
+        if abs(x - dx) < 1.5 or rnd.random() < 0.3:
+            continue
+        for r_ in range(rnd.randint(4, 8)):
+            px = x + rnd.uniform(-0.35, 0.35); py = -19.2 + rnd.uniform(-0.5, 0.3); h = rnd.uniform(0.5, 0.95)
+            B.add(sweep([(px, py, -0.4), (px + rnd.uniform(-0.05, 0.05), py, -0.4 + h)], [0.018, 0.004], 4, 1.0), "reed_v9")
+            if rnd.random() < 0.35:
+                B.add(ellipsoid((px, py, -0.4 + h * 0.8), (0.022, 0.022, 0.07), 6, 4), "cattail_v9")
+    return B.build(C)
+
 def split_rail_fence(C, y=-12.55, x0=-14.0, x1=14.0):
     """Props-sheet fence: chunky plank rails, square posts with bolts, stone footings."""
     MATS.setdefault("stone_v9", (_lin3((0.62, 0.62, 0.60)), 0.8, 0.0, 0.0)); MATS.setdefault("bolt_v9", (_lin3((0.35, 0.36, 0.38)), 0.4, 0.6, 0.0))
@@ -348,7 +396,7 @@ def build_env_v9_export(Dio):
         bpy.data.objects.remove(o, do_unlink=True)
     for o in [o for o in bpy.data.objects if o.name.startswith(("field_fence", "v9_shore_rocks", "v9_clouds"))]:
         bpy.data.objects.remove(o, do_unlink=True)
-    carpet_tufts(Dio, n=500); split_rail_fence(Dio); flower_border(Dio); rock_stacks(Dio); lakeside_cabin(Dio); far_mountains(Dio)
+    carpet_tufts(Dio, n=500); split_rail_fence(Dio); flower_border(Dio); cozy_benches(Dio); lakeside_details(Dio); rock_stacks(Dio); lakeside_cabin(Dio); far_mountains(Dio)
     Bc = Builder("v9_clouds"); rnd = random.Random(4)
     for (x, y, z, s) in ((-46, -165, 19, 5.0), (-12, -180, 23, 6.0), (22, -170, 20, 5.5), (56, -185, 24, 6.5), (-80, -180, 22, 5.5), (6, -155, 17, 3.6), (84, -175, 20, 5.0)):
         for k in range(10):

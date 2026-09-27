@@ -202,7 +202,8 @@ def build_arena(export=True):
     fg = {o.name for o in bpy.data.collections["Foreground"].objects}
     def group_of(n):
         if n.startswith("v9_lake"): return "midground"          # no hazed soft copy (it glared white on device)
-        if n.startswith(("v9_flower_border", "v9_flowers_")): return "near_field"
+        if n.startswith(("v9_flower_border", "v9_flowers_", "v9_benches")): return "near_field"
+        if n.startswith(("v9_lakeside", "v9_glow_")): return "midground"
         if n.startswith(("v9_pine_forest", "v9_rock_stacks", "v9_cabin")): return "midground"      # v9.1c: keep the shoreline out of the hazed soft copy
         if n.startswith(("v9_clouds", "v9_boat", "v9_mountains")): return "far_background"
         if n.startswith(("v9_tree", "v9_shore_tree", "v9_shore_bushes")): return "midground"
@@ -262,7 +263,7 @@ def build_arena(export=True):
     rep_markers.update({n: {"position_game": [round(-l[0], 3), round(l[2], 3), round(l[1], 3)]} for n, l in refs.items()})
     bpy.context.view_layer.update()
     if "palette_materials" in globals():         # one shared palette material for every flat-colour surface
-        palette_materials(meshes, "arena_v9" if globals().get("ARENA_V9") else "arena", os.path.join(PROD, "Arena", "Textures"))
+        palette_materials([o for o in meshes if not o.name.startswith("v9_glow_")], "arena_v9" if globals().get("ARENA_V9") else "arena", os.path.join(PROD, "Arena", "Textures"))   # glow keeps its emissive material
     for o in meshes + marks:                     # unique ASCII names (no .001 nodes)
         if "." in o.name:
             o.name = o.name.replace(".", "_")

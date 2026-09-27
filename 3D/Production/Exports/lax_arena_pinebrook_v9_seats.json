@@ -1,0 +1,101 @@
+{
+  "schema": "lax_arena_seats",
+  "version": 1,
+  "asset": "lax_arena_pinebrook_v9",
+  "coordinates": "game space (metres, Y-up, gameplay forward -Z)",
+  "note": "v9 cozy benches inside the fence, flanking the goal; visible from camera_gameplay, cine_save_close and cine_goal_impact. The legacy bleacher_* seats in lax_arena_pinebrook_markers.json (z -14.4) sit behind the v9 fence and flower border and are not visible - use these instead.",
+  "fan_root_offset_below_seat_m": {
+    "lax_fan_a": 0.086,
+    "lax_fan_b": 0.082,
+    "lax_fan_c": 0.07
+  },
+  "placement": "fan root = seat position - (0, fan_root_offset_below_seat_m[fan], 0); yaw 180 faces the field",
+  "seats": {
+    "bench_left_seat_01": {
+      "position_game": [
+        -3.65,
+        0.445,
+        -10.0
+      ],
+      "yaw_deg_about_game_Y": 180.0
+    },
+    "bench_left_seat_02": {
+      "position_game": [
+        -3.1,
+        0.445,
+        -10.0
+      ],
+      "yaw_deg_about_game_Y": 180.0
+    },
+    "bench_left_seat_03": {
+      "position_game": [
+        -2.55,
+        0.445,
+        -10.0
+      ],
+      "yaw_deg_about_game_Y": 180.0
+    },
+    "bench_right_seat_01": {
+      "position_game": [
+        2.55,
+        0.445,
+        -10.0
+      ],
+      "yaw_deg_about_game_Y": 180.0
+    },
+    "bench_right_seat_02": {
+      "position_game": [
+        3.1,
+        0.445,
+        -10.0
+      ],
+      "yaw_deg_about_game_Y": 180.0
+    },
+    "bench_right_seat_03": {
+      "position_game": [
+        3.65,
+        0.445,
+        -10.0
+      ],
+      "yaw_deg_about_game_Y": 180.0
+    }
+  },
+  "tiers": {
+    "standard": {
+      "seats": [
+        "bench_left_seat_01",
+        "bench_left_seat_02",
+        "bench_left_seat_03",
+        "bench_right_seat_01",
+        "bench_right_seat_02"
+      ],
+      "fans": [
+        "lax_fan_a",
+        "lax_fan_b",
+        "lax_fan_c",
+        "lax_fan_b",
+        "lax_fan_a"
+      ],
+      "lod": "_lod2",
+      "phase_frames_crowd_idle": [
+        24,
+        36,
+        12,
+        40,
+        30
+      ],
+      "reference": "Previews/RealityKit/v97/v97_gameplay_fans.png"
+    },
+    "low_memory": {
+      "seats": [
+        "bench_left_seat_03",
+        "bench_right_seat_01"
+      ],
+      "fans": [
+        "lax_fan_a",
+        "lax_fan_c"
+      ],
+      "lod": "_lod2"
+    }
+  }
+}

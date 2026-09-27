@@ -187,3 +187,25 @@ fence is about 12 m away. Pass 1's corner drifts sat outside the frame and its f
 - `cine_goal_impact` crops Kit at the left edge; it needs a small re-aim next pass.
 - The cabin-window glow is still a bright albedo, not a true emissive (the palette material has no emissive channel).
 - Fans are not placed in these captures: the v9 arena has no bleacher seats in `camera_gameplay` view, so the seat markers need review.
+
+
+## Part 2d (this push): fans in view, impact camera, cabin glow, lakeside
+| File | Change |
+|---|---|
+| `lax_arena_pinebrook_v9*` | **New `v9_benches`:** two warm toy benches with backrests behind the goal, flanking it at game z −10, x ±2.55–3.65, facing the field. **New `M_glow_window_v9`:** a true emissive material (emissiveColor 1.0, 0.66, 0.30) on the cabin windows, kept out of the palette (arena materials: palette, glow, sky, turf ×2). **New `v9_lakeside`:** a small dock and reed clusters. `_lod1` 287k / `_lod2` 191k tris |
+| **NEW** `lax_arena_pinebrook_v9_seats.json` | Six bench seats (`bench_left_seat_01..03`, `bench_right_seat_01..03`), seat-top y 0.445, yaw 180; the same `fan_root_offset_below_seat_m` contract; tier picks (standard: 5 fans on LOD2 with idle phases; low: 2) |
+| `lax_cinematic_cameras.json` (v2) | `cine_goal_impact` re-aimed to position (2.6, 0.9, −3.3), target (−0.45, 0.85, −5.4), vFOV 48, so Kit is fully in frame |
+
+**Why:** the legacy `bleacher_*` seats (game z −14.4) sit behind the v9 fence and flower border and outside the portrait frustum, so fans
+there are never seen. The markers file is unchanged; use the new seats file for v9.
+
+**RealityKit validation (`Previews/RealityKit/v97/`):**
+- `v97_gameplay_fans.png`: five LOD2 fans visible on the benches from `camera_gameplay`, clear of the goal mouth and the shot lane.
+- `v97_save_fans.png`: fans in the save shot.
+- `v97_cine_goal_impact.png`: the re-aimed impact camera.
+- `v97_cabin_glow.png`, `v97_dock.png`: detail checks.
+
+**Known limitations:**
+- The cabin glow is subtle in full daylight at that distance; it will matter for the future dusk and night fields.
+- The dock and reeds are mostly hidden by the shore bushes from gameplay angles (cheap, about 3k tris; kept for the wide and cinematic
+  shots).

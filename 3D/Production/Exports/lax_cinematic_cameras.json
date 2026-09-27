@@ -1,6 +1,6 @@
 {
   "schema": "lax_cinematic_cameras",
-  "version": 1,
+  "version": 2,
   "units": "metres, game space (Y-up, goal toward -Z); same space as camera_gameplay",
   "viewport": "portrait 390x845 reference; keep subjects inside the central 80% width and below the top HUD band (top 18%)",
   "placements": "shooter root (-0.72, 0, 1.72) facing -Z; goalie root (0, 0, -4.95) facing +Z; goal root (0, 0, -5.7)",
@@ -55,16 +55,16 @@
     },
     "cine_goal_impact": {
       "position": [
-        2.45,
-        0.85,
-        -3.55
+        2.6,
+        0.9,
+        -3.3
       ],
       "target": [
-        -0.1,
-        0.8,
-        -5.6
+        -0.45,
+        0.85,
+        -5.4
       ],
-      "vertical_fov_deg": 46,
+      "vertical_fov_deg": 48,
       "duration_s": 0.7,
       "blend_in_s": 0.0,
       "blend_out_s": 0.12,
@@ -73,8 +73,8 @@
         "distance_m": 0.08
       },
       "peak_s": 0.2,
-      "note": "low 3/4 from outside the right post: Kit, mouth and net",
-      "reference": "Previews/RealityKit/v97/v97_cinematic_cameras.png",
+      "note": "low 3/4 from outside the right post: Kit fully in frame, mouth and net depth (re-aimed v9.7 2d)",
+      "reference": "Previews/RealityKit/v97/v97_cine_goal_impact.png",
       "pose_frames": {
         "shooter_timeline_frame": 122,
         "goalie_timeline_frame": 256
