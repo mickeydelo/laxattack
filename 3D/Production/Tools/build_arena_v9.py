@@ -325,3 +325,7 @@ def build_env_v9_export(Dio):
     for k in [k_ for k_ in range(18) if abs(-14 + 28 * k_ / 17.0) > 4.5]:
         leafy_bush(Bs, (-14 + 28 * k / 17.0 + random.Random(k).uniform(-0.5, 0.5), -19.0 + random.Random(k + 50).uniform(-0.6, 0.4), -0.2), 0.55, 700 + k)
     Bs.build(Dio)
+    if globals().get("AMBIENT_SPLIT"):        # v9.7: animated trees/boats/clouds live in lax_arena_ambient_v9.usdz
+        for o in [o for o in bpy.data.objects if o.name.startswith(("v9_tree_", "v9_shore_tree_", "v9_clouds", "v9_boat"))]:
+            bpy.data.objects.remove(o, do_unlink=True)
+

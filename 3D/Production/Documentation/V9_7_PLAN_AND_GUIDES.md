@@ -69,3 +69,23 @@ bushes, flowers, cabin, clouds) through palette swaps plus a few hero props.
 Ambient choreography (fans chatting and clapping, breeze on trees and flowers, cabin glow, slow clouds), result-performance polish,
 cinematic camera JSON with RealityKit captures, the Pinebrook cozy-look pass with before/after captures, a short RealityKit capture
 sequence, and the performance budget.
+
+
+## Part 2a (this push): Pinebrook ambient choreography (runtime exports)
+| File | Change |
+|---|---|
+| **NEW** `lax_arena_ambient_v9.usdz` (+ `_clips.json`) | One root timeline, `ambient_v9_loop` (0–340, 11.33 s, seamless). 10 near trees + 6 shore trees sway 0.6–1.3° with per-tree phase, amplitude and whole-cycle frequencies (never in sync); the sailboat drifts ±0.9 m, bobs and rolls; clouds drift ±1.6 m. 18 objects, 138k tris, 1 palette material, 4.8 MB |
+| `lax_arena_pinebrook_v9*` | The static trees, shore trees, clouds and boat **moved** into the ambient layer (no duplicates). `_lod1` is 284k tris; arena + ambient total about 421k, the same as before |
+
+**Runtime:**
+- Load `lax_arena_ambient_v9.usdz` at the origin alongside the v9 arena, and play `root.availableAnimations[0]` looped (the same pattern
+  as the v8 ambient).
+- Keep `lax_arena_life.usdz` (birds, butterflies, duck, glints).
+- **Do not load** the old `lax_arena_ambient.usdz` with v9.
+- **The ambient layer is now required:** without it the arena has no near trees, shore trees, clouds or sailboat.
+
+**Validation:** `Previews/RealityKit/v97/v97_ambient_loop_f000_f170.png` shows the production stack from `camera_gameplay` at loop
+frames 0 and 170.
+
+**Exporter note for future ambient assets:** animate **pivot empties**, never mesh objects. The USD post-process clears mesh xform ops,
+which is why meshes must sit at identity under an animated pivot. Capture world matrices before deleting any parents.
