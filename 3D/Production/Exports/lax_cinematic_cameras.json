@@ -1,6 +1,6 @@
 {
   "schema": "lax_cinematic_cameras",
-  "version": 2,
+  "version": 3,
   "units": "metres, game space (Y-up, goal toward -Z); same space as camera_gameplay",
   "viewport": "portrait 390x845 reference; keep subjects inside the central 80% width and below the top HUD band (top 18%)",
   "placements": "shooter root (-0.72, 0, 1.72) facing -Z; goalie root (0, 0, -4.95) facing +Z; goal root (0, 0, -5.7)",
@@ -251,6 +251,34 @@
         "foreground_framing_soft",
         "foreground_framing"
       ]
+    },
+    "camera_gameplay_cozy_PROPOSAL": {
+      "position": [
+        -0.3,
+        3.0,
+        10.0
+      ],
+      "target": [
+        -0.1,
+        0.8,
+        -4.5
+      ],
+      "vertical_fov_deg": 34,
+      "duration_s": 0.0,
+      "blend_in_s": 0.0,
+      "blend_out_s": 0.0,
+      "move": {
+        "type": "none"
+      },
+      "status": "PROPOSAL - not a replacement for camera_gameplay; evaluate on device before adopting",
+      "note": "Matches the gameplay concept framing: Rae full body (#10 readable) in the lower third, goal ~45% of frame width with Kit prominent, fans flanking, lake/pines/sky in the top third. The goal mouth is unobstructed. Derived from the concept proportions: camera ~8.3 m behind the shooter and ~14.5 m from the goal, a narrow lens and a shallow tilt.",
+      "adoption_notes": [
+        "the aim/flick-to-target mapping and any screen-space goal hit zones must be recalibrated",
+        "HUD: the top 18% is sky/trees, the bottom 20% foreground grass/flowers (safe for the shot-type bar)",
+        "the result/cinematic cameras are unaffected",
+        "compare against camera_gameplay on device; also try vFOV 36 if the goal feels too big"
+      ],
+      "reference": "Previews/RealityKit/v97/v97_camera_proposal_cozyD.png"
     }
   }
 }

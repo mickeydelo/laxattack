@@ -209,3 +209,23 @@ there are never seen. The markers file is unchanged; use the new seats file for 
 - The cabin glow is subtle in full daylight at that distance; it will matter for the future dusk and night fields.
 - The dock and reeds are mostly hidden by the shore bushes from gameplay angles (cheap, about 3k tris; kept for the wide and cinematic
   shots).
+
+
+## Part 2e (this push): concept-comparison pass + camera proposal (no asset changes)
+Side by side, the concept gameplay mockup vs the RealityKit `camera_gameplay` frame. Gaps ranked by impact:
+1. **Camera framing (biggest gap):**
+   - The concept camera is further back, lower and tighter: the goal spans ~45% of the width, Kit is large, and Rae is full-body in the
+     lower third.
+   - Ours is high (4.3 m) and wide (50°), looking steeply down, which leaves a band of empty grass and a small goal.
+   - **Proposal `camera_gameplay_cozy_PROPOSAL`** (in `lax_cinematic_cameras.json` v3): position (−0.3, 3.0, 10.0), target (−0.1, 0.8, −4.5),
+     vFOV 34. See `v97_camera_proposal_cozyD.png`; A–C are the rejected explorations (C puts Rae over the left post).
+   - **Adopting it needs aim-mapping and hit-zone recalibration on the Swift side;** `camera_gameplay` is unchanged.
+2. **Foreground framing:** the concept has soft, out-of-focus bushes along the bottom edge. With the cozy camera, the flower and tuft
+   foreground already frames the bottom. True blur needs runtime depth of field, which is still unavailable, so larger low bush masses
+   at the bottom corners are the asset-side next step.
+3. **Field lines:** the concept's are cream and about 1.5× thicker. Next: switch the line material to cream #FFF9F4 and widen the lines.
+4. **Warmth on the characters:** mostly runtime (sun colour 1.0 / 0.84 / 0.62 is already warm). Optionally try image-based light exponent
+   0.25 for a softer fill if faces read hard.
+5. **Lakeside detail:** from the cozy camera the lake band and sailboat read well. The dock and reeds are hidden by shore bushes (kept,
+   cheap).
+6. **Sky:** the capture tool hides the sky group; on device confirm the sky backdrop fills the top band with the cozy camera.
