@@ -200,10 +200,26 @@ def carpet_tufts(C, seed=17, n=1400):
             B.add(sweep([(x, y, 0), tip], [s * 0.16, 0.003], 4, 0.5), "tuft_tip_v9" if j == 0 else "tuft_v9")
     return B.build(C)
 
+def flower_border(C, seed=31):
+    """Concept fence line: dense flowering clumps along the fence base + drifts in the lower frame corners (outside the aiming lane)."""
+    MATS.setdefault("flower_coral_v9", (_lin3((1.0, 0.45, 0.35)), 0.6, 0.0, 0.0)); MATS.setdefault("flower_lilac_v9", (_lin3((0.78, 0.62, 0.95)), 0.6, 0.0, 0.0))
+    rnd = random.Random(seed); B = Builder("v9_flower_border")
+    spots = [(x, -12.15 + rnd.uniform(-0.25, 0.25), rnd.uniform(0.7, 1.15)) for x in [(-13.8 + 0.62 * i + rnd.uniform(-0.2, 0.2)) for i in range(45)]]
+    for sx in (-1, 1):                                   # lower-corner drifts (camera near field), clear of the shot lane
+        for k in range(9):
+            spots.append((sx * rnd.uniform(3.2, 5.0), rnd.uniform(4.6, 6.8), rnd.uniform(0.8, 1.2)))
+    cols = ("flower_white_v9", "flower_yellow_v9", "flower_coral_v9", "flower_lilac_v9")
+    for (x, y, s) in spots:
+        B.add(ellipsoid((x, y, 0.07 * s), (0.2 * s, 0.17 * s, 0.13 * s), 10, 7), rnd.choice(("bush_v9", "leaf_mid_v9")))
+        for f in range(rnd.randint(4, 7)):
+            a_ = rnd.uniform(0, 6.28); r_ = rnd.uniform(0.03, 0.17) * s
+            B.add(ellipsoid((x + math.cos(a_) * r_, y + math.sin(a_) * r_ * 0.8, 0.17 * s + rnd.uniform(0, 0.05)), (0.035 * s, 0.035 * s, 0.018 * s), 7, 4), rnd.choice(cols))
+    return B.build(C)
+
 def split_rail_fence(C, y=-12.55, x0=-14.0, x1=14.0):
     """Props-sheet fence: chunky plank rails, square posts with bolts, stone footings."""
     MATS.setdefault("stone_v9", (_lin3((0.62, 0.62, 0.60)), 0.8, 0.0, 0.0)); MATS.setdefault("bolt_v9", (_lin3((0.35, 0.36, 0.38)), 0.4, 0.6, 0.0))
-    MATS.setdefault("plank_v9", (_lin3((0.62, 0.40, 0.22)), 0.75, 0.0, 0.0))
+    MATS.setdefault("plank_v9", (_lin3((0.72, 0.46, 0.24)), 0.75, 0.0, 0.0))   # warmer toy wood
     B = Builder("v9_fence"); x = x0
     while x <= x1 + 1e-3:
         B.add(superellipsoid((0.16, 0.16, 0.07), 0.35, 0.4, 12, 6, (x, y, 0.07)), "stone_v9")
@@ -312,7 +328,7 @@ def build_env_v9_export(Dio):
         bpy.data.objects.remove(o, do_unlink=True)
     for o in [o for o in bpy.data.objects if o.name.startswith(("field_fence", "v9_shore_rocks", "v9_clouds"))]:
         bpy.data.objects.remove(o, do_unlink=True)
-    carpet_tufts(Dio, n=500); split_rail_fence(Dio); rock_stacks(Dio); lakeside_cabin(Dio); far_mountains(Dio)
+    carpet_tufts(Dio, n=500); split_rail_fence(Dio); flower_border(Dio); rock_stacks(Dio); lakeside_cabin(Dio); far_mountains(Dio)
     Bc = Builder("v9_clouds"); rnd = random.Random(4)
     for (x, y, z, s) in ((-46, -165, 19, 5.0), (-12, -180, 23, 6.0), (22, -170, 20, 5.5), (56, -185, 24, 6.5), (-80, -180, 22, 5.5), (6, -155, 17, 3.6), (84, -175, 20, 5.0)):
         for k in range(10):

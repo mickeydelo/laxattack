@@ -73,7 +73,7 @@ def build_fan(spec, asset):
     tris = sum(tri_count(o) for o in meshes)
     path = os.path.join(EXP, asset + ".usdz")
     e = export_asset([arm] + meshes, asset, asset + "_rig", path, 30, FAN_CLIPS[-1].end, False, man, ())
-    lods = export_lods(e, asset, asset + "_rig", path, (0.45, 0.18), 30, FAN_CLIPS[-1].end, man, protect=bool(spec.get("v9")))   # crowd faces are tiny at range
+    lods = export_lods(e, asset, asset + "_rig", path, (0.5, 0.25) if spec.get("v9") else (0.45, 0.18), 30, FAN_CLIPS[-1].end, man, protect=False)   # v9 fans: uniform decimation + _lod_repair (no head protection)   # crowd faces are tiny at range
     with open(os.path.join(EXP, asset + "_clips.json"), "w") as fh:
         json.dump(man, fh, indent=2)
     return {"tris": tris, "y": e["baked_y_range"], "lods": {k: v["tris"] for k, v in lods.items()}}

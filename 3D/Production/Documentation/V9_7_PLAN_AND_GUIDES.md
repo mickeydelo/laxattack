@@ -89,3 +89,75 @@ frames 0 and 170.
 
 **Exporter note for future ambient assets:** animate **pivot empties**, never mesh objects. The USD post-process clears mesh xform ops,
 which is why meshes must sit at identity under an animated pivot. Capture world matrices before deleting any parents.
+
+
+## Part 2b (this push)
+### Changed runtime exports
+- `lax_fan_a*`, `lax_fan_b*`, `lax_fan_c*`: **genuinely lightweight LODs**. LOD1 is about 50% and LOD2 about 25% of the base, using
+  uniform decimation plus `_lod_repair` (no head protection, which is what caused the v9.6 shards). Validated in RealityKit up close and at
+  seat distance: `v97_fan_a_lods.png`, `v97_fan_bc_lods.png`.
+- `lax_arena_pinebrook_v9*`: first cozy step, a flower border along the fence base and warmer fence wood. **Known limitation:** at
+  `camera_gameplay` distance the border is still too subtle and the corner drifts fall outside the frame (`v97_pinebrook_before_after.png`).
+  Next iteration: larger, denser blooms and corner drifts placed in frame.
+- **New** `lax_cinematic_cameras.json`: release, goal-impact, celebration, save, miss, replay-wide and a portrait four-character cast
+  camera. Each has position, target, vFOV, duration, blend in/out, an explicit move (push / settle / arc) and peak time. The
+  `goal_replay_2s` sequence is release → impact → celebration. All seven are RealityKit-captured in `v97_cinematic_cameras.png`.
+  `lax_review_cameras.json` is unchanged.
+- `lax_result_timing.json` (v2, `23e31cc`) re-verified: 16 entries, 0 violations of the clip-local rules.
+
+### Performance budget (measured from the exports)
+| Asset | Base tris | LOD1 | LOD2 | Tex MB (base) | Tex MB (LOD1/2) |
+|---|---|---|---|---|---|
+| `lax_shooter` | 30,736 | 30,736 | 30,736 | 16.0 | 16.0 |
+| `lax_goalie` | 44,980 | 44,980 | 44,980 | 16.0 | 16.0 |
+| `lax_team_home_7` | 39,344 | 39,344 | 39,344 | 16.0 | 16.0 |
+| `lax_team_away_5` | 44,160 | 44,160 | 44,160 | 16.0 | 16.0 |
+| `lax_boy_field` | 44,824 | 44,824 | 44,824 | 16.0 | 16.0 |
+| `lax_girl_goalie` | 46,312 | 46,312 | 46,312 | 16.0 | 16.0 |
+| `lax_fan_a` | 21,664 | 10,831 | 5,414 | 16.0 | 16.0 |
+| `lax_fan_b` | 26,840 | 13,420 | 6,710 | 16.0 | 16.0 |
+| `lax_fan_c` | 29,788 | 14,893 | 7,446 | 16.0 | 16.0 |
+
+| Asset | Tris | Tex MB |
+|---|---|---|
+| `lax_arena_pinebrook_v9_lod1.usdz` | 294,975 | 37.3 |
+| `lax_arena_pinebrook_v9_lod2.usdz` | 194,435 | 37.3 |
+| `lax_arena_ambient_v9.usdz` | 138,112 | 10.7 |
+| `lax_arena_life.usdz` | 4,020 | 10.7 |
+| `lax_goal.usdz` | 7,688 | 16.0 |
+| `lax_fx_confetti.usdz` | 1,080 | 10.7 |
+
+**Recommended tiers:**
+- **Standard / high:** arena LOD1 + ambient + life + goal; heroes at base; teammates at LOD1; **5 fans at LOD2** (about 32k tris total).
+- **Low memory:** arena LOD2 + ambient + life; heroes at LOD1 (1K textures); teammates hidden or LOD2; **2 fans at LOD2**; confetti allowed.
+- **Crowd culling:** fans more than 14 m from `camera_gameplay` use LOD2; cull fans more than 22 m away or outside the frustum.
+
+### Ambient choreography recommendations (Swift)
+- **Fans:** a per-instance random phase (0–100% of the loop) and playback speed 0.9–1.1×.
+  - Idle pool: `crowd_idle` 50%, `crowd_watch_*` 30%, `crowd_anticipate` 15% (only while the shooter aims), `crowd_wave` 5%, at most once
+    per 30 s per fan.
+  - Reactions start staggered by 0 / 0.12 / 0.25 / 0.4 s so the crowd is never synchronised.
+- **Ambient layer:** loop `ambient_v9_loop` at 1.0×. It is authored to be desynchronised internally, so don't randomise its speed.
+- **Life layer:** unchanged; random phase at load.
+- **Ready cycle:** as in part 1 (Rae 70 / 20 / 10, Kit 55 / 20 / 15 / 10, no repeat within 10–12 s).
+
+### Gameplay readability
+From `camera_gameplay`:
+- Kit's `goalie_ready` stance leaves the five-hole and all four corners visible (see `v96_gameplay_camera.png`).
+- The ambient motion (trees at the frame edges, a boat on the far lake, clouds) never crosses the shooter → goal lane.
+- The life-layer butterflies stay over the hedges.
+
+### Device-validation checklist
+1. Load the arena LOD1 + `lax_arena_ambient_v9` + life + goal. The trees sway, the boat drifts, and nothing is duplicated or missing.
+2. Fans: LOD2 at seat distance shows no shards; staggered phases.
+3. `goal_replay_2s` plays release → impact → celebration from `lax_cinematic_cameras.json`; Rae's delighted face lands at the celebration
+   peak.
+4. The save and miss cameras show Kit's save and Rae's sheepish beat.
+5. The four-character cast camera shows everyone head to toe with foreground framing hidden.
+6. The frame rate holds with 5 fans + life + confetti + a result animation (standard tier).
+
+### Known limitations and next steps
+- The cozy-look pass needs a stronger second iteration (flower scale and density, corner drifts in frame, lake shallows, cabin glow as
+  a true emissive).
+- Flower and foreground foliage breeze is not animated yet (the merged meshes need splitting into pivots).
+- There are no new fan choreography clips yet; the recommendations above use the existing 12 crowd clips.
