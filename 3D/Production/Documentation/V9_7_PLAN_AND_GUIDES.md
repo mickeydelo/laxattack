@@ -229,3 +229,23 @@ Side by side, the concept gameplay mockup vs the RealityKit `camera_gameplay` fr
 5. **Lakeside detail:** from the cozy camera the lake band and sailboat read well. The dock and reeds are hidden by shore bushes (kept,
    cheap).
 6. **Sky:** the capture tool hides the sky group; on device confirm the sky backdrop fills the top band with the cozy camera.
+
+
+## Part 2f (this push): women's lacrosse field markings
+`lax_arena_pinebrook_v9*` (all LODs), group `gameplay` (object `field_markings`, unchanged name). Replaces the stylised v8 lines
+(2.2 m crease and a 6.4 m arc) with the **women's goal-area layout**, scaled to the game field (goal centre at game z −5.7):
+
+| Marking | Spec |
+|---|---|
+| Crease (goal circle) | radius **2.75 m** (18 ft diameter); goal line across the 2 m mouth |
+| Goal line extended | from the crease edge to each sideline: the 12 m fan's straight edge |
+| **8 m arc** | radius 8 m, ±50° about the field axis; **5 hash marks** at 0°, ±18°, ±36°; **two radial lines** from the arc ends to the crease (the pie slice) |
+| **12 m fan** | radius 12 m, clipped by the stylised sidelines (x ±6.3), meeting them at game z ≈ +4.5 |
+| Sidelines | x ±6.3 (unchanged) |
+
+- **Lines:** cream (#FDF5E6-ish) and about 1.5× thicker (tube radius 0.06 m, strips 8–10 cm), per the concept-gap list.
+- **Turf:** the worn ring in the field turf texture now follows the 2.75 m crease.
+- **Gameplay fit:** Rae's default spot (−0.72, 0, 1.72) is 7.45 m from the goal centre, on the 8 m arc (the free-position spot). Kit
+  (z −4.95) is inside the crease.
+- **Captures:** `v97_markings_top.png` (top-down layout check), `v97_markings_gameplay.png`, `v97_markings_cozy.png`.
+- **Runtime:** if any gameplay logic referenced the old 2.2 m crease radius (e.g. a crease-violation check), update it to **2.75 m**.

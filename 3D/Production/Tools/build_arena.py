@@ -32,7 +32,7 @@ def make_field_textures(tdir, n=2048, seed=7):
     streak = (streak - streak.mean()) / (streak.std() + 1e-6)
     clump = smooth_noise(220)
     mow = np.where((np.floor((Y - FY0) / 1.6) % 2) == 0, 1.0, 0.86).astype(np.float32)
-    d_crease = np.abs(np.hypot(X, Y + 5.7) - 2.2)
+    d_crease = np.abs(np.hypot(X, Y + 5.7) - (2.75 if globals().get('ARENA_V9') else 2.2))   # worn ring follows the v9 crease
     worn = np.clip(1 - d_crease / 0.35, 0, 1) * 0.55
     worn = np.maximum(worn, np.clip(1 - np.hypot(X / 1.1, (Y + 5.35) / 0.7), 0, 1) * 0.95)       # goal mouth
     worn = np.maximum(worn, np.clip(1 - np.hypot(X - 0.72, Y - 1.72) / 0.7, 0, 1) * 0.6)          # shooting spot

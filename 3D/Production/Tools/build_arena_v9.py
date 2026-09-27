@@ -413,3 +413,35 @@ def build_env_v9_export(Dio):
         for o in [o for o in bpy.data.objects if o.name.startswith(("v9_tree_", "v9_shore_tree_", "v9_clouds", "v9_boat", "v9_flowers_"))]:
             bpy.data.objects.remove(o, do_unlink=True)
 
+
+
+# ---- v9.7: women's lacrosse goal-area markings (crease, 8 m arc with hashes + pie lines, 12 m fan, goal line extended), cream + thicker
+V9_CREASE_R = 2.75
+MATS["line_cream_v9"] = (_lin3((0.99, 0.96, 0.90)), 0.8, 0.0, 0.0)
+def field_markings_v9(collection, crease_r=V9_CREASE_R, fan_r=12.0, arc_r=8.0, arc_half=50.0, side_x=6.3):
+    B = Builder("field_markings"); z = 0.005; W = 0.06; M = "line_cream_v9"
+    def strip(p0, p1, w=0.09):
+        p0, p1 = V(p0), V(p1); d = (p1 - p0); L = d.length; ang = math.atan2(d.y, d.x)
+        g = superellipsoid((L / 2 + w * 0.5, w / 2, 0.01), 0.2, 0.2, 12, 4, (0, 0, 0))
+        return xform(g, Matrix.Translation(((p0 + p1) / 2).to_tuple()[:2] + (z,)) @ Matrix.Rotation(ang, 4, "Z"))
+    def P(r, a):
+        return (math.cos(math.radians(a)) * r, GOAL_Y + math.sin(math.radians(a)) * r, z)
+    ring = [P(crease_r, 360.0 * i / 96) for i in range(97)]                                   # the crease
+    B.add(sweep(ring, [W] * len(ring), 6, 0.25, cap0=False, cap1=False), M)
+    B.add(strip((-GOAL_W / 2, GOAL_Y), (GOAL_W / 2, GOAL_Y), 0.10), M)                         # goal line
+    for sx in (-1, 1):                                                                          # goal line extended = fan's straight edge
+        B.add(strip((sx * crease_r, GOAL_Y), (sx * side_x, GOAL_Y), 0.08), M)
+    arc = [P(arc_r, a) for a in [90 - arc_half + i for i in range(0, int(2 * arc_half) + 1, 2)]]  # 8 m arc
+    B.add(sweep(arc, [W] * len(arc), 6, 0.25), M)
+    for a in (90 - arc_half, 90 + arc_half):                                                    # pie lines to the crease
+        B.add(strip(P(crease_r, a), P(arc_r, a), 0.09), M)
+    for a in (-36, -18, 0, 18, 36):                                                             # hash marks across the 8 m arc
+        B.add(strip(P(arc_r - 0.28, 90 + a), P(arc_r + 0.28, 90 + a), 0.08), M)
+    a0 = math.degrees(math.acos(min(1.0, side_x / fan_r)))                                      # 12 m fan, clipped by the sidelines
+    fan = [P(fan_r, a) for a in [a0 + (180 - 2 * a0) * i / 60 for i in range(61)]]
+    B.add(sweep(fan, [W] * len(fan), 6, 0.25), M)
+    for sx in (-1, 1):
+        B.add(strip((6.3 * sx, -12.5), (6.3 * sx, 5.5), 0.09), M)                              # sidelines
+    return B.build(collection)
+if globals().get("ARENA_V9"):
+    field_markings = field_markings_v9
