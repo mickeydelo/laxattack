@@ -272,10 +272,15 @@ def build_character_v9(s, collection, arm, look):
     try:
         H = Head(s)
         F = Builder(s["name"] + "_face"); v9_face(s, H, F); parts["face"] = F.build(collection, arm)
-        hair_fn = {"bun": v9_hair_player, "helmet_bun": v9_hair_goalie, "puffs": v9_hair_puffs, "helmet_curls": v9_hair_helmet_curls}[s.get("v9_hair", "bun" if look == "player" else "helmet_bun")]
+        hk_ = s.get("v9_hair", "bun" if look == "player" else "helmet_bun")
+        hair_fn = {"bun": v9_hair_player, "helmet_bun": v9_hair_goalie, "puffs": v9_hair_puffs, "helmet_curls": v9_hair_helmet_curls}.get(hk_) or globals()["v9_hair_" + hk_]
         Hb = Builder(s["name"] + "_hair"); hair_fn(s, H, Hb); parts["hair"] = Hb.build(collection, arm)
-        helmet = s.get("v9_helmet", look != "player")
-        G = Builder(s["name"] + "_headgear"); (v9_helmet if helmet else v9_goggles)(s, H, G); parts["headgear"] = G.build(collection, arm)
+        hg = s.get("v9_headgear")
+        if hg is None:
+            hg = "helmet" if s.get("v9_helmet", look != "player") else "goggles"
+        hg_fn = {"helmet": v9_helmet, "goggles": v9_goggles, "none": None}.get(hg) or globals().get("v9_" + hg)
+        if hg_fn is not None:
+            G = Builder(s["name"] + "_headgear"); hg_fn(s, H, G); parts["headgear"] = G.build(collection, arm)
     finally:
         clear_proportions()
     set_proportions(s)

@@ -55,7 +55,7 @@ def build_fan(spec, asset):
     reset_scene("LaxAttack_" + asset)
     C = coll(asset)
     arm = build_skeleton(spec, C, asset + "_rig")
-    parts = build_character(spec, C, arm)
+    parts = build_character_v9(spec, C, arm, "player") if spec.get("v9") else build_character(spec, C, arm)
     calibrate_poles(arm, [SEAT, S(**UP), S(G=(-0.11, -0.28, 0.82))], "field")
     bake_clips(arm, _fan_clips(asset), "field")
     os.makedirs(CROWD_DIR, exist_ok=True)
@@ -64,7 +64,7 @@ def build_fan(spec, asset):
     man = manifest(asset, FAN_CLIPS, perspective="none", extra={
         "usage": "seated spectator; place the root on the bleacher seat top; offset clip start times per instance for asynchronous motion",
         "tiers": {"hero": asset + ".usdz", "midground": asset + "_lod1.usdz", "distant": asset + "_lod2.usdz"}})
-    for o in meshes:                        # hero tier inside the brief's 8-15k spectator target
+    for o in (meshes if not spec.get("v9") else []):   # v9 fans: no destructive decimation (see v9.6 root cause)
         m = o.modifiers.new("hero_lod", "DECIMATE"); m.ratio = 0.55
         bpy.context.view_layer.objects.active = o
         while o.modifiers.find("hero_lod") > 0:
@@ -73,7 +73,7 @@ def build_fan(spec, asset):
     tris = sum(tri_count(o) for o in meshes)
     path = os.path.join(EXP, asset + ".usdz")
     e = export_asset([arm] + meshes, asset, asset + "_rig", path, 30, FAN_CLIPS[-1].end, False, man, ())
-    lods = export_lods(e, asset, asset + "_rig", path, (0.45, 0.18), 30, FAN_CLIPS[-1].end, man, protect=False)   # crowd faces are tiny at range
+    lods = export_lods(e, asset, asset + "_rig", path, (0.45, 0.18), 30, FAN_CLIPS[-1].end, man, protect=bool(spec.get("v9")))   # crowd faces are tiny at range
     with open(os.path.join(EXP, asset + "_clips.json"), "w") as fh:
         json.dump(man, fh, indent=2)
     return {"tris": tris, "y": e["baked_y_range"], "lods": {k: v["tris"] for k, v in lods.items()}}
