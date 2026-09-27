@@ -1,141 +1,171 @@
 {
   "schema": "lax_result_timing",
-  "version": 1,
+  "version": 2,
   "fps": 30,
+  "convention": "peak_local_frame / peak_local_s are strictly clip-local (0 = clip start). peak_timeline_frame is also given for cross-checking.",
   "goal": {
     "camera": "camera_result_goal",
     "rae": {
       "clip": "celebrate",
-      "timeline_start": 150,
-      "peak_local_frame": -141,
-      "peak_local_s": -4.7,
+      "clip_start_timeline": 150,
+      "clip_end_timeline": 186,
+      "peak_timeline_frame": 159,
+      "peak_local_frame": 9,
+      "peak_local_s": 0.3,
       "hold_s": 0.35
     },
     "rae_alternates": [
       {
         "clip": "celebrate_fist_pump",
-        "timeline_start": 1080,
-        "peak_local_frame": -1070,
-        "peak_local_s": -35.667,
+        "clip_start_timeline": 1080,
+        "clip_end_timeline": 1110,
+        "peak_timeline_frame": 1090,
+        "peak_local_frame": 10,
+        "peak_local_s": 0.333,
         "hold_s": 0.35
       },
       {
         "clip": "celebrate_jump_tuck",
-        "timeline_start": 1170,
-        "peak_local_frame": -1164,
-        "peak_local_s": -38.8,
+        "clip_start_timeline": 1170,
+        "clip_end_timeline": 1200,
+        "peak_timeline_frame": 1176,
+        "peak_local_frame": 6,
+        "peak_local_s": 0.2,
         "hold_s": 0.35
       },
       {
         "clip": "celebrate_point",
-        "timeline_start": 1260,
-        "peak_local_frame": -1254,
-        "peak_local_s": -41.8,
+        "clip_start_timeline": 1260,
+        "clip_end_timeline": 1284,
+        "peak_timeline_frame": 1266,
+        "peak_local_frame": 6,
+        "peak_local_s": 0.2,
         "hold_s": 0.35
       }
     ],
     "kit": {
       "clip": "goalie_goal_against",
-      "timeline_start": 240,
-      "peak_local_frame": -224,
-      "peak_local_s": -7.467,
+      "clip_start_timeline": 240,
+      "clip_end_timeline": 285,
+      "peak_timeline_frame": 256,
+      "peak_local_frame": 16,
+      "peak_local_s": 0.533,
       "hold_s": 0.35
     },
     "kit_then": "goalie_stick_spin -> goalie_ready",
-    "net": "net_impact_* clip matching the scoring zone (impact at local 4)",
-    "confetti": "confetti_burst from frame 0 at the moment of the net impact; hide ~2 s after its end",
+    "net": "net_impact_* for the scoring zone",
+    "confetti": "confetti_burst at net impact",
     "birds": "birds_startle at impact + 0.1 s",
-    "fans": "crowd_goal_cheer with per-fan phase offsets 0 / 0.15 / 0.3 s"
+    "fans": "crowd_goal_cheer staggered 0 / 0.15 / 0.3 s"
   },
   "miss": {
     "camera": "camera_result_miss",
     "rae": {
       "clip": "disappointed",
-      "timeline_start": 520,
-      "peak_local_frame": -510,
-      "peak_local_s": -17.0,
+      "clip_start_timeline": 520,
+      "clip_end_timeline": 560,
+      "peak_timeline_frame": 530,
+      "peak_local_frame": 10,
+      "peak_local_s": 0.333,
       "hold_s": 0.35
     },
     "rae_alternates": [
       {
         "clip": "near_miss_reaction",
-        "timeline_start": 570,
-        "peak_local_frame": -550,
-        "peak_local_s": -18.333,
+        "clip_start_timeline": 570,
+        "clip_end_timeline": 600,
+        "peak_timeline_frame": 590,
+        "peak_local_frame": 20,
+        "peak_local_s": 0.667,
         "hold_s": 0.35
       },
       {
         "clip": "weak_miss",
-        "timeline_start": 1400,
-        "peak_local_frame": -1394,
-        "peak_local_s": -46.467,
+        "clip_start_timeline": 1400,
+        "clip_end_timeline": 1424,
+        "peak_timeline_frame": 1406,
+        "peak_local_frame": 6,
+        "peak_local_s": 0.2,
         "hold_s": 0.35
       },
       {
         "clip": "pipe_reaction",
-        "timeline_start": 610,
-        "peak_local_frame": -592,
-        "peak_local_s": -19.733,
+        "clip_start_timeline": 610,
+        "clip_end_timeline": 634,
+        "peak_timeline_frame": 628,
+        "peak_local_frame": 18,
+        "peak_local_s": 0.6,
         "hold_s": 0.35
       }
     ],
-    "kit": {
-      "clip": "goalie_helmet_nod",
-      "note": "restrained confidence"
-    },
+    "kit_note": "restrained confidence: goalie_helmet_nod if present, else goalie_ready",
     "fans": "crowd_near_miss / crowd_pipe_groan"
   },
   "save": {
     "camera": "camera_result_save",
     "kit": {
       "clip": "goalie_save_high_left",
-      "timeline_start": 295,
-      "peak_local_frame": 302,
-      "peak_local_s": 10.067,
+      "clip_start_timeline": 295,
+      "clip_end_timeline": 325,
+      "peak_timeline_frame": 302,
+      "peak_local_frame": 7,
+      "peak_local_s": 0.233,
       "hold_s": 0.25
     },
     "kit_alternates": [
       {
         "clip": "goalie_save_high_right",
-        "timeline_start": 335,
-        "peak_local_frame": 342,
-        "peak_local_s": 11.4,
+        "clip_start_timeline": 335,
+        "clip_end_timeline": 365,
+        "peak_timeline_frame": 342,
+        "peak_local_frame": 7,
+        "peak_local_s": 0.233,
         "hold_s": 0.25
       },
       {
         "clip": "goalie_save_low_left",
-        "timeline_start": 375,
-        "peak_local_frame": 382,
-        "peak_local_s": 12.733,
+        "clip_start_timeline": 375,
+        "clip_end_timeline": 405,
+        "peak_timeline_frame": 382,
+        "peak_local_frame": 7,
+        "peak_local_s": 0.233,
         "hold_s": 0.25
       },
       {
         "clip": "goalie_save_low_right",
-        "timeline_start": 415,
-        "peak_local_frame": 422,
-        "peak_local_s": 14.067,
+        "clip_start_timeline": 415,
+        "clip_end_timeline": 445,
+        "peak_timeline_frame": 422,
+        "peak_local_frame": 7,
+        "peak_local_s": 0.233,
         "hold_s": 0.25
       },
       {
         "clip": "goalie_big_clutch_save",
-        "timeline_start": 1338,
-        "peak_local_frame": 1345,
-        "peak_local_s": 44.833,
+        "clip_start_timeline": 1338,
+        "clip_end_timeline": 1398,
+        "peak_timeline_frame": 1345,
+        "peak_local_frame": 7,
+        "peak_local_s": 0.233,
         "hold_s": 0.25
       }
     ],
     "kit_then": {
       "clip": "goalie_stick_raise",
-      "timeline_start": 1206,
-      "peak_local_frame": -1198,
-      "peak_local_s": -39.933,
+      "clip_start_timeline": 1206,
+      "clip_end_timeline": 1236,
+      "peak_timeline_frame": 1214,
+      "peak_local_frame": 8,
+      "peak_local_s": 0.267,
       "hold_s": 0.35
     },
     "rae": {
       "clip": "save_reaction",
-      "timeline_start": 645,
-      "peak_local_frame": -639,
-      "peak_local_s": -21.3,
+      "clip_start_timeline": 645,
+      "clip_end_timeline": 675,
+      "peak_timeline_frame": 651,
+      "peak_local_frame": 6,
+      "peak_local_s": 0.2,
       "hold_s": 0.35
     },
     "fans": "crowd_save_cheer"
