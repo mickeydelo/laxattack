@@ -1,6 +1,6 @@
 # v9.7 ambient choreography: trees / shore trees sway, boats drift+bob, clouds drift. One seamless root timeline.
 AMB_N = 340                      # 11.33 s @ 30 fps (matches the v8 ambient loop length)
-AMB_KEYS = ("v9_tree_", "v9_shore_tree_", "v9_clouds", "v9_boat")
+AMB_KEYS = ("v9_tree_", "v9_shore_tree_", "v9_clouds", "v9_boat", "v9_flowers_")
 
 def _cyc(f, cycles, phase):
     return math.sin(2 * math.pi * (cycles * f / AMB_N) + phase)
@@ -42,6 +42,12 @@ def build_ambient_v9(export=True):
             for f in range(0, AMB_N + 1, 4):
                 piv.location = (base_loc.x + 0.9 * _cyc(f, 1, ph), base_loc.y + 0.25 * _cyc(f, 1, ph + 1.3), base_loc.z + 0.035 * _cyc(f, 3, ph + 0.4))
                 piv.rotation_euler = (base_rot.x + math.radians(2.2) * _cyc(f, 2, ph + 0.9), base_rot.y + math.radians(1.4) * _cyc(f, 3, ph), base_rot.z + math.radians(3.0) * _cyc(f, 1, ph + 2.0))
+                piv.keyframe_insert("location", frame=f); piv.keyframe_insert("rotation_euler", frame=f)
+        elif o.name.startswith("v9_flowers_"):          # breeze through the flower border / corner drifts
+            amp = math.radians(rnd.uniform(1.0, 1.8)); cx = rnd.choice((2, 3)); px = rnd.uniform(0, 6.28)
+            for f in range(0, AMB_N + 1, 4):
+                piv.location = base_loc
+                piv.rotation_euler = (base_rot.x + amp * _cyc(f, cx, px), base_rot.y + amp * 0.5 * _cyc(f, cx + 1, px + 1.1), base_rot.z)
                 piv.keyframe_insert("location", frame=f); piv.keyframe_insert("rotation_euler", frame=f)
         elif o.name.startswith("v9_clouds"):
             for f in range(0, AMB_N + 1, 4):

@@ -161,3 +161,29 @@ From `camera_gameplay`:
   a true emissive).
 - Flower and foreground foliage breeze is not animated yet (the merged meshes need splitting into pivots).
 - There are no new fan choreography clips yet; the recommendations above use the existing 12 crowd clips.
+
+
+## Part 2c (this push): cozy-look pass 2 + breeze (runtime exports)
+Grounded in `camera_gameplay` geometry: the frame's bottom edge meets the ground at z ≈ 2.8 and is only about ±1.3 m wide there, and the
+fence is about 12 m away. Pass 1's corner drifts sat outside the frame and its fence flowers were too small.
+
+| File | Change |
+|---|---|
+| `lax_arena_ambient_v9.usdz` (+ clips) | Adds **16 swaying flower groups**: 14 fence-border segments of large clumps (cream / yellow / coral / lilac blooms with tall lupin spikes), plus right and left lower-corner drifts beside the shooter, clear of the shot lane. Breeze: 1.0–1.8° per group with its own phase and cycle count. **34 objects, 193k tris, 1 material, 7.0 MB.** Same timeline, `ambient_v9_loop` 0–340 |
+| `lax_arena_pinebrook_v9*` | Flower groups moved to the ambient layer; **new lighter turquoise lake shallows** along the near shore; warmer fence planks. `_lod1` 284k / `_lod2` 190k tris |
+
+- **Before/after from `camera_gameplay`:** `Previews/RealityKit/v97/v97_pinebrook_before_after.png`. The flowering fence line behind the
+  goal and the framed lower corners now read at gameplay distance.
+- **Short RealityKit sequence:** `v97_realitykit_sequence.png` runs Ready (loop frame 0) → Ready (frame 170, ambient motion) → release →
+  goal impact → celebration → miss → save.
+- **Cinematic captures re-rendered** with the new world: `v97_cinematic_cameras.png`.
+
+**Budget update:**
+- Standard tier: arena LOD1 284k + ambient 193k + life 4k + goal 8k ≈ **489k scenery tris**, plus characters.
+- If frame time is tight, the ambient layer can skip the fence-border flower groups (`v9_flowers_00`–`13`, about 50k tris); the corner
+  drifts are the most visible and cheapest to keep.
+
+**Known limitations:**
+- `cine_goal_impact` crops Kit at the left edge; it needs a small re-aim next pass.
+- The cabin-window glow is still a bright albedo, not a true emissive (the palette material has no emissive channel).
+- Fans are not placed in these captures: the v9 arena has no bleacher seats in `camera_gameplay` view, so the seat markers need review.

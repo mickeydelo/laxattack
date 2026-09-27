@@ -200,21 +200,41 @@ def carpet_tufts(C, seed=17, n=1400):
             B.add(sweep([(x, y, 0), tip], [s * 0.16, 0.003], 4, 0.5), "tuft_tip_v9" if j == 0 else "tuft_v9")
     return B.build(C)
 
+def _flower_clump(B, x, y, s, rnd, cols):
+    B.add(ellipsoid((x, y, 0.09 * s), (0.26 * s, 0.22 * s, 0.17 * s), 12, 8), rnd.choice(("bush_v9", "leaf_mid_v9", "leaf_light_v9")))
+    for f in range(rnd.randint(6, 10)):
+        a_ = rnd.uniform(0, 6.28); r_ = rnd.uniform(0.04, 0.22) * s
+        B.add(ellipsoid((x + math.cos(a_) * r_, y + math.sin(a_) * r_ * 0.8, 0.22 * s + rnd.uniform(0, 0.06) * s), (0.05 * s, 0.05 * s, 0.025 * s), 8, 4), rnd.choice(cols))
+    if rnd.random() < 0.45:                                   # lupin spike for vertical rhythm
+        h = rnd.uniform(0.45, 0.7) * s; c = rnd.choice(("flower_coral_v9", "flower_lilac_v9"))
+        B.add(sweep([(x, y, 0.1 * s), (x, y, h)], [0.012 * s, 0.008 * s], 5, 1.0), "leaf_mid_v9")
+        for k in range(6):
+            z = h * (0.55 + 0.075 * k); r = 0.045 * s * (1 - 0.1 * k)
+            B.add(ellipsoid((x, y, z), (r, r, r * 0.8), 7, 5), c)
+
 def flower_border(C, seed=31):
-    """Concept fence line: dense flowering clumps along the fence base + drifts in the lower frame corners (outside the aiming lane)."""
+    """v9.7 cozy pass 2: large flowering clumps + lupin spikes along the fence base (14 swaying segments) and drifts at the lower frame
+    corners beside the shooter (inside camera_gameplay's ground footprint, clear of the shot lane)."""
     MATS.setdefault("flower_coral_v9", (_lin3((1.0, 0.45, 0.35)), 0.6, 0.0, 0.0)); MATS.setdefault("flower_lilac_v9", (_lin3((0.78, 0.62, 0.95)), 0.6, 0.0, 0.0))
-    rnd = random.Random(seed); B = Builder("v9_flower_border")
-    spots = [(x, -12.15 + rnd.uniform(-0.25, 0.25), rnd.uniform(0.7, 1.15)) for x in [(-13.8 + 0.62 * i + rnd.uniform(-0.2, 0.2)) for i in range(45)]]
-    for sx in (-1, 1):                                   # lower-corner drifts (camera near field), clear of the shot lane
-        for k in range(9):
-            spots.append((sx * rnd.uniform(3.2, 5.0), rnd.uniform(4.6, 6.8), rnd.uniform(0.8, 1.2)))
-    cols = ("flower_white_v9", "flower_yellow_v9", "flower_coral_v9", "flower_lilac_v9")
-    for (x, y, s) in spots:
-        B.add(ellipsoid((x, y, 0.07 * s), (0.2 * s, 0.17 * s, 0.13 * s), 10, 7), rnd.choice(("bush_v9", "leaf_mid_v9")))
-        for f in range(rnd.randint(4, 7)):
-            a_ = rnd.uniform(0, 6.28); r_ = rnd.uniform(0.03, 0.17) * s
-            B.add(ellipsoid((x + math.cos(a_) * r_, y + math.sin(a_) * r_ * 0.8, 0.17 * s + rnd.uniform(0, 0.05)), (0.035 * s, 0.035 * s, 0.018 * s), 7, 4), rnd.choice(cols))
-    return B.build(C)
+    rnd = random.Random(seed); cols = ("flower_white_v9", "flower_yellow_v9", "flower_coral_v9", "flower_lilac_v9", "flower_white_v9")
+    out = []
+    xs = [-14.0 + 0.42 * i + rnd.uniform(-0.12, 0.12) for i in range(67)]
+    for seg in range(14):
+        B = Builder("v9_flowers_%02d" % seg)
+        for x in xs[seg * 67 // 14:(seg + 1) * 67 // 14]:
+            _flower_clump(B, x, -12.1 + rnd.uniform(-0.2, 0.2), rnd.uniform(1.8, 2.5), rnd, cols)
+        out.append(B.build(C))
+    for name, pts in (("v9_flowers_corner_R", [(-rnd.uniform(0.95, 1.35), rnd.uniform(2.0, 2.65)) for _ in range(6)]),
+                      ("v9_flowers_corner_L", [(rnd.uniform(1.25, 1.45), rnd.uniform(2.3, 2.7)) for _ in range(3)])):
+        B = Builder(name)
+        for (x, y) in pts:
+            _flower_clump(B, x, y, rnd.uniform(0.55, 0.8), rnd, cols)
+        out.append(B.build(C))
+    Bs = Builder("v9_lake_shallows")                          # lighter turquoise band along the near shore
+    MATS.setdefault("water_shallow_v9", (_lin3((0.22, 0.66, 0.86)), 0.35, 0.0, 0.0))
+    Bs.add(superellipsoid((62, 2.6, 0.004), 0.3, 0.3, 40, 3, (0, -21.4, -0.376)), "water_shallow_v9")
+    out.append(Bs.build(C))
+    return out
 
 def split_rail_fence(C, y=-12.55, x0=-14.0, x1=14.0):
     """Props-sheet fence: chunky plank rails, square posts with bolts, stone footings."""
@@ -342,6 +362,6 @@ def build_env_v9_export(Dio):
         leafy_bush(Bs, (-14 + 28 * k / 17.0 + random.Random(k).uniform(-0.5, 0.5), -19.0 + random.Random(k + 50).uniform(-0.6, 0.4), -0.2), 0.55, 700 + k)
     Bs.build(Dio)
     if globals().get("AMBIENT_SPLIT"):        # v9.7: animated trees/boats/clouds live in lax_arena_ambient_v9.usdz
-        for o in [o for o in bpy.data.objects if o.name.startswith(("v9_tree_", "v9_shore_tree_", "v9_clouds", "v9_boat"))]:
+        for o in [o for o in bpy.data.objects if o.name.startswith(("v9_tree_", "v9_shore_tree_", "v9_clouds", "v9_boat", "v9_flowers_"))]:
             bpy.data.objects.remove(o, do_unlink=True)
 
