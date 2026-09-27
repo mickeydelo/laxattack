@@ -249,3 +249,32 @@ Side by side, the concept gameplay mockup vs the RealityKit `camera_gameplay` fr
   (z −4.95) is inside the crease.
 - **Captures:** `v97_markings_top.png` (top-down layout check), `v97_markings_gameplay.png`, `v97_markings_cozy.png`.
 - **Runtime:** if any gameplay logic referenced the old 2.2 m crease radius (e.g. a crease-violation check), update it to **2.75 m**.
+
+
+## Part 2g (this push): women's lacrosse sticks + dangling string tails (baked + cloth-ready)
+**Characters re-exported** (`lax_shooter*`, `lax_goalie*`, `lax_team_home_7*`; rigs, joint order, clips, sockets and metadata unchanged):
+- **Rae and Mina, women's field head:** flared scoop, slim throat, side-profile offset with a scoop hook, a **shallow** diamond pocket
+  (depth 4.5 cm) with **two thick vertical runners**, and the shooting strings.
+- **Kit:** her goalie head gains the tails.
+- **Boys keep men's sticks:** Ollie and #22 (not re-exported).
+- **Dangling tails**, in the pocket colour: two long ones at the throat and two short ties per sidewall. **Baked physics:** each tail is
+  weighted from `stick` at the knot to `pocket_01` / `pocket_02` at the tip, so it swings and lags with the existing baked pocket motion.
+  **No new joints.**
+- **Fix:** the pocket backing now follows the true teardrop outline. Previously it poked past the rim at the scoop.
+- **Validation:** `Previews/RealityKit/v97/v97_womens_stick_rae_cradle.png` (cradle frames 60 / 66 / 72 / 78 plus release 114; the tails
+  visibly change angle) and `v97_womens_sticks_mina_kit.png`.
+
+**Cloth-ready tails for RealityKit cloth simulation (iOS 27), opt-in:**
+- **NEW** `lax_stick_tails_womens_attack.usdz` and `lax_stick_tails_womens_goalie.usdz`: six thin double-sided ribbon tails per stick,
+  generated from the same definitions as the baked tails and authored in **stick-socket space**. Stage is Y-up with raw coordinates, so no
+  rotation is needed.
+- **NEW** `lax_stick_tails_cloth.json`: prim names, **pin vertex indices** per tail (the knot pair, to be set kinematic), lengths, root
+  positions, per-character colours and suggested cloth settings.
+- **Runtime recipe:**
+  1. Parent the tails entity to the transform that follows the `stick` joint (the same follow system as the ball), with an identity local
+     transform.
+  2. Add a `ClothSimulationComponent` on a root and a `ClothBodyComponent` per tail (the ribbon is both simulation and visual mesh).
+  3. Mark the `pin_vertices` kinematic.
+  4. Suggested behaviour: inextensible strings, low bend, medium-high damping so they settle in ~0.4 s.
+- **To avoid doubled strings:** the character files still carry the baked tails as the working fallback. If cloth tails are adopted,
+  request the no-baked-tail character exports (build flag `STICK_TAILS_NONE`).

@@ -331,10 +331,10 @@ def build_character_v9(s, collection, arm, look):
             parts["collar"] = Bc.build(collection, arm)
     return parts
 
-PLAYER_V9 = dict(GIRL_FIELD, name="lax_shooter_v9", lid_park_deg=55.0, stick_frame="stick_cream_v9", stick_pocket="cord_tan_v9", stick_bag="cord_tan_dark_v9", stick_shaft="metal_silver_v9", stick_strings="cord_tan_v9", stick_grip="grip_dark_v9", eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
+PLAYER_V9 = dict(GIRL_FIELD, name="lax_shooter_v9", lid_park_deg=55.0, stick_style="womens", stick_frame="stick_cream_v9", stick_pocket="cord_tan_v9", stick_bag="cord_tan_dark_v9", stick_shaft="metal_silver_v9", stick_strings="cord_tan_v9", stick_grip="grip_dark_v9", eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_cream_v9", kit_trim="kit_red_v9",
                  number="10", number_mat="kit_red_v9", bottom="shorts_v9", bottom_mat="kit_red_v9", bottom_trim="kit_cream_v9",
                  sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_red_v9", glove=None, glove_cuff=None, limb_k=1.5, hand_k=1.4, shoe_k=1.5, torso_k=1.22, sole="kit_red_v9", front_number_size=0.17, front_number_x=-0.095, front_number_z=0.68)
-GOALIE_V9 = dict(BOY_GOALIE, name="lax_goalie_v9", lid_park_deg=55.0, stick_frame="stick_cream_v9", stick_pocket="cord_cream", stick_bag="cord_cream_dark", stick_shaft="metal_silver_v9", stick_strings="cord_cream", stick_grip="kit_navy_v9", eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_navy_v9", kit_trim="kit_cyan_v9",
+GOALIE_V9 = dict(BOY_GOALIE, name="lax_goalie_v9", lid_park_deg=55.0, stick_style="womens", stick_frame="stick_cream_v9", stick_pocket="cord_cream", stick_bag="cord_cream_dark", stick_shaft="metal_silver_v9", stick_strings="cord_cream", stick_grip="kit_navy_v9", eye_size=(0.0267, 0.0397), eye_az=25.0, eye_el=-11.0, head_r=(0.285, 0.258, 0.27), skin="skin_v9", hair="hair_v9", iris="eye_v9", kit="kit_navy_v9", kit_trim="kit_cyan_v9",
                  number="2", number_mat="sock_white_v9", bottom="shorts_v9", bottom_mat="kit_navy_v9", bottom_trim="kit_cyan_v9",
                  sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_navy_v9",
                  glove="kit_navy_v9", glove_cuff="sock_white_v9", body_scale=0.82, limb_k=1.5, shoe_k=1.5, torso_k=1.22, sole="kit_cyan_v9", chest_protector=False)
@@ -362,7 +362,7 @@ def pose_turnaround(arm, look):
 MINA_V9 = dict(PLAYER_V9, name="lax_team_home_7_v9", number="7", kit_trim="kit_purple_v9", number_mat="kit_purple_v9", bottom_mat="kit_purple_v9",
                bottom_trim="kit_cream_v9", shoe_accent="kit_purple_v9", sole="kit_purple_v9", skin="skin_v9_deep", hair="hair_v9_dark",
                v9_hair="puffs", goggle_accent="kit_purple_v9", v9=True, v9_look="player", stick_pocket="kit_purple_v9", stick_grip="kit_purple_v9", stick_bag="kit_lilac_v9")
-OLLIE_V9 = dict(GOALIE_V9, name="lax_team_away_5_v9", number="5", kit="kit_gold_v9", kit_trim="kit_teal_v9", number_mat="kit_teal_v9",
+OLLIE_V9 = dict(GOALIE_V9, name="lax_team_away_5_v9", stick_style="mens", number="5", kit="kit_gold_v9", kit_trim="kit_teal_v9", number_mat="kit_teal_v9",
                 bottom_mat="kit_teal_v9", bottom_trim="kit_gold_v9", glove="kit_teal_v9", glove_cuff="kit_gold_v9", shoe_accent="kit_teal_v9",
                 sole="kit_gold_v9", skin="skin_v9_deep", hair="hair_v9_dark", v9_hair="helmet_curls", v9_helmet=True, goalie_pads=False,
                 helmet_shell="helmet_teal_v9", helmet_stripe="kit_gold_v9", front_number_size=0.16, front_number_x=-0.05, front_number_z=0.66, v9=True, v9_look="player", stick_pocket="kit_teal_v9", stick_grip="grip_dark_v9")

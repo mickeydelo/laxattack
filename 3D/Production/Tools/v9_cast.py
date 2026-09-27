@@ -44,7 +44,7 @@ BOY_FIELD_V9 = dict(BOY_FIELD, name="lax_boy_field_v9", **_V9FACE, v9_look="play
                     sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_red_v9", sole="kit_red_v9",
                     front_number_size=0.16, front_number_x=-0.07, front_number_z=0.66, stick_frame="stick_cream_v9", stick_pocket="cord_tan_v9",
                     stick_bag="cord_tan_dark_v9", stick_shaft="metal_silver_v9", stick_strings="cord_tan_v9", stick_grip="grip_dark_v9")
-GIRL_GOALIE_V9 = dict(GIRL_GOALIE, name="lax_girl_goalie_v9", **_V9FACE, v9_look="goalie", skin="skin_v9_deep", hair="hair_v9_dark", v9_hair="helmet_bun",
+GIRL_GOALIE_V9 = dict(GIRL_GOALIE, name="lax_girl_goalie_v9", **_V9FACE, v9_look="goalie", stick_style="womens", skin="skin_v9_deep", hair="hair_v9_dark", v9_hair="helmet_bun",
                       v9_headgear="helmet", helmet_shell="helmet_navy_v9", helmet_stripe="kit_gold_v9", goalie_pads=True, chest_protector=False, number="30",
                       kit="kit_navy_v9", kit_trim="kit_gold_v9", number_mat="sock_white_v9", bottom="shorts_v9", bottom_mat="kit_navy_v9", bottom_trim="kit_gold_v9",
                       glove="kit_navy_v9", glove_cuff="kit_gold_v9", sock="sock_white_v9", sock_stripe="sock_white_v9", shoe="cleat_white_v9", shoe_accent="kit_navy_v9",

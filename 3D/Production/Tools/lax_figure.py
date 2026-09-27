@@ -565,21 +565,27 @@ def _build_character(s, collection, arm):
     return parts
 
 # ------------------------------------------------------------------ sticks (built in stick-local space, then placed on stick bone)
-def stick_geo(kind="attack"):
+def stick_geo(kind="attack", style="mens"):
     """Returns dict of geo lists in stick space: +Y along shaft toward head, +Z pocket open face, origin = top-hand grip."""
     if kind == "attack":   # sized for the recommended 0.08 m visual ball radius
         W, y0, y1, depth, shaft0, shaft1 = 0.128, 0.28, 0.64, 0.068, -0.50, 0.30
     else:
         W, y0, y1, depth, shaft0, shaft1 = 0.185, 0.32, 0.86, 0.10, -0.62, 0.34
+    womens = style == "womens"
+    if womens and kind == "attack":                    # women's head: flared scoop, slim throat, shallow pocket (cartoon scale)
+        W, depth = 0.138, 0.045
     L = y1 - y0
+    def offz(u):                                       # side-profile offset + scoop hook (women's)
+        return (0.05 * max(0.0, (u - 0.76) / 0.24) ** 2 - 0.018 * math.sin(math.pi * min(1.0, u * 1.1))) if (womens and kind == "attack") else 0.035 * max(0.0, (u - 0.80) / 0.20) ** 2
+    def prof(u):
+        return (0.24 + 0.76 * u ** 0.75 * (1.0 + 0.10 * math.sin(math.pi * u))) if (womens and kind == "attack") else (0.30 + 0.70 * u ** 0.55)
     def outline(t):  # t in [0,1): teardrop, t=0 at scoop top center, going around
         a = 2 * math.pi * t
         c, s = math.cos(a), math.sin(a)
         u = (1 + c) / 2  # 1 at top, 0 at throat
-        x = W * s * (0.30 + 0.70 * u ** 0.55)
+        x = W * s * prof(u)
         y = y0 + L * u
-        z = 0.035 * max(0.0, (u - 0.80) / 0.20) ** 2   # scoop curls toward the open face
-        return V((x, y, z))
+        return V((x, y, offz(u)))
     g = {}
     n = 40
     loop = [outline(i / n) for i in range(n)] + [outline(0)]
@@ -592,10 +598,10 @@ def stick_geo(kind="attack"):
     def bag(u, v):  # u across [-1,1], v along [0,1]
         o = outline(0.5 - 0.5 * (1 - v) * 0 + 0.0)
         y = y0 + L * v
-        half = W * (0.30 + 0.70 * v ** 0.55) * 0.93
+        half = W * prof(v) * math.sqrt(max(0.0, 1.0 - (2 * v - 1) ** 2)) * 0.93   # follow the true teardrop outline (no backing past the rim)
         x = half * u
         deep = depth * (1 - u * u) * math.sin(math.pi * min(1.0, v * 1.05)) ** 1.2 * (1.0 - 0.35 * v)
-        return V((x, y, -deep))
+        return V((x, y, offz(v) - deep))
     cords = []
     for k in range(-5, 6):  # two diagonal families
         for sgn in (1, -1):
@@ -622,6 +628,21 @@ def stick_geo(kind="attack"):
     for v in (0.80, 0.86):
         pts = [tuple(bag(u / 6.0, v) + V((0, 0, 0.006))) for u in range(-6, 7)]
         g["strings"].append(sweep(pts, [0.006] * len(pts), 6, 1.0))
+    g["tails"] = []                                   # dangling string ends: (geo, root, length, bone)
+    if womens:
+        for sx in (-1, 1):                             # two long tails from the throat knot
+            r0 = bag(0.22 * sx, 0.03)
+            pts = [tuple(r0), tuple(r0 + V((0.006 * sx, -0.05, -0.018))), tuple(r0 + V((0.012 * sx, -0.11, -0.03))), tuple(r0 + V((0.016 * sx, -0.165, -0.036)))]
+            g["tails"].append((sweep(pts, [0.0042, 0.004, 0.0035, 0.0025], 6, 0.5), tuple(r0), 0.17, "pocket_01", pts))
+        for sx in (-1, 1):                             # short sidewall-tie tails
+            for vv, ln in ((0.46, 0.07), (0.70, 0.055)):
+                r0 = outline(0.25 if sx > 0 else 0.75)   # placeholder, replaced below by the true sidewall point
+                half = W * prof(vv); r0 = V((sx * half, y0 + L * vv, offz(vv)))
+                pts = [tuple(r0), tuple(r0 + V((0.012 * sx, -0.022, -0.008))), tuple(r0 + V((0.02 * sx, -ln * 0.75, -0.016))), tuple(r0 + V((0.022 * sx, -ln, -0.02)))]
+                g["tails"].append((sweep(pts, [0.0035, 0.0032, 0.0028, 0.002], 6, 0.5), tuple(r0), ln, "pocket_02", pts))
+        for ux in (-0.36, 0.36):                       # two thick vertical runners (thongs)
+            pts = [tuple(bag(ux, v) + V((0, 0, 0.004))) for v in [0.04 + 0.9 * i / 12 for i in range(13)]]
+            g["pocket"].append(sweep(pts, [0.0085] * len(pts), 8, 1.0))
     vb = 0.42; bottom = bag(0.0, vb)
     g["meta"] = dict(y0=y0, y1=y1, W=W, depth=depth, ball_r=BALL_R,
                      pocket_center=(0.0, bottom.y, bottom.z + BALL_R + 0.006),   # = resting ball center
@@ -629,9 +650,12 @@ def stick_geo(kind="attack"):
                      grip=(0.0, 0.0, 0.0), effect=(0.0, y1 + 0.02, 0.0))
     return g
 
+def style_tails_enabled(g):
+    return not globals().get("STICK_TAILS_NONE", False)       # v9.7: set True to export characters without baked tails (cloth-sim tails at runtime)
+
 def build_stick(kind, collection, arm=None, bone="stick", name=None, frame_mat="plastic_white", pocket_mat="cord_navy",
-                shaft_mat="plastic_dark", grip_mat="rubber_dark", strings_mat="kit_white", bag_mat="pocket_bag"):
-    g = stick_geo(kind)
+                shaft_mat="plastic_dark", grip_mat="rubber_dark", strings_mat="kit_white", bag_mat="pocket_bag", style="mens"):
+    g = stick_geo(kind, style)
     B = Builder(name or ("stick_" + kind))
     M = arm.data.bones[bone].matrix_local.copy() if arm is not None else Matrix.Identity(4)
     Minv = M.inverted()
@@ -650,6 +674,12 @@ def build_stick(kind, collection, arm=None, bone="stick", name=None, frame_mat="
         B.add(xform(geo, M), pocket_mat, weights=pocket_w if arm is not None else None)
     for geo in g.get("bag", []):
         B.add(xform(geo, M), bag_mat, weights=pocket_w if arm is not None else None, smooth=False)
+    for geo, root, ln, pb, *_ in (g.get("tails", []) if style_tails_enabled(g) else []):
+        rw = V(root)
+        def tail_w(p_world, rw=rw, ln=ln, pb=pb):
+            t = min(1.0, max(0.0, ((Minv @ p_world) - rw).length / ln))
+            return {"stick": 1.0 - 0.9 * t, pb: 0.9 * t}
+        B.add(xform(geo, M), pocket_mat, weights=tail_w if arm is not None else None)
     ob = B.build(collection, arm)
     return ob, g["meta"]
 

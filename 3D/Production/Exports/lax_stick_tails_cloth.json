@@ -1,0 +1,216 @@
+{
+  "schema": "lax_stick_tails_cloth",
+  "version": 1,
+  "space": "stick-socket space (same axes as the character's stick_socket / stick joint: +Y along the shaft toward the head, +Z = pocket open face, origin = top-hand grip, metres). Attach as a child of the entity/transform that follows the stick joint (the same system used for the ball), identity local transform.",
+  "runtime": {
+    "ClothSimulationComponent": "one per character (or one shared root)",
+    "ClothBodyComponent": "one per tail prim; simulation mesh = the ribbon itself",
+    "pinning": "set each tail's pin_vertices to kinematic so the knot follows the stick; all other vertices dynamic",
+    "suggested_material": {
+      "mass_per_vertex_g": 0.3,
+      "stretch": "high/inextensible",
+      "bend": "low",
+      "damping": "medium-high (strings settle within ~0.4 s)",
+      "gravity_scale": 1.0
+    },
+    "fallback": "the character USDZs still contain baked tails (skinned lag via pocket joints). If cloth tails are adopted, request the no-baked-tail character exports (STICK_TAILS_NONE) to avoid doubled strings."
+  },
+  "colours_by_character": {
+    "lax_shooter (Rae)": "cord_tan_v9 #BC9161",
+    "lax_team_home_7 (Mina)": "kit_purple_v9 #A87DE0",
+    "lax_goalie (Kit)": "cord_cream #F5EBD9",
+    "lax_girl_goalie (#30)": "cord_cream #F5EBD9"
+  },
+  "assets": {
+    "lax_stick_tails_womens_attack.usdz": {
+      "stick_kind": "attack",
+      "tails": [
+        {
+          "prim": "attack_tail_00",
+          "kind": "throat",
+          "length_m": 0.17,
+          "vertices": 18,
+          "pin_vertices": [
+            0,
+            1
+          ],
+          "root_stick_space": [
+            -0.0028,
+            0.2908,
+            -0.0045
+          ]
+        },
+        {
+          "prim": "attack_tail_01",
+          "kind": "throat",
+          "length_m": 0.17,
+          "vertices": 18,
+          "pin_vertices": [
+            0,
+            1
+          ],
+          "root_stick_space": [
+            0.0028,
+            0.2908,
+            -0.0045
+          ]
+        },
+        {
+          "prim": "attack_tail_02",
+          "kind": "sidewall",
+          "length_m": 0.07,
+          "vertices": 18,
+          "pin_vertices": [
+            0,
+            1
+          ],
+          "root_stick_space": [
+            -0.0975,
+            0.4456,
+            -0.018
+          ]
+        },
+        {
+          "prim": "attack_tail_03",
+          "kind": "sidewall",
+          "length_m": 0.055,
+          "vertices": 18,
+          "pin_vertices": [
+            0,
+            1
+          ],
+          "root_stick_space": [
+            -0.1199,
+            0.532,
+            -0.0119
+          ]
+        },
+        {
+          "prim": "attack_tail_04",
+          "kind": "sidewall",
+          "length_m": 0.07,
+          "vertices": 18,
+          "pin_vertices": [
+            0,
+            1
+          ],
+          "root_stick_space": [
+            0.0975,
+            0.4456,
+            -0.018
+          ]
+        },
+        {
+          "prim": "attack_tail_05",
+          "kind": "sidewall",
+          "length_m": 0.055,
+          "vertices": 18,
+          "pin_vertices": [
+            0,
+            1
+          ],
+          "root_stick_space": [
+            0.1199,
+            0.532,
+            -0.0119
+          ]
+        }
+      ]
+    },
+    "lax_stick_tails_womens_goalie.usdz": {
+      "stick_kind": "goalie",
+      "tails": [
+        {
+          "prim": "goalie_tail_00",
+          "kind": "throat",
+          "length_m": 0.17,
+          "vertices": 18,
+          "pin_vertices": [
+            0,
+            1
+          ],
+          "root_stick_space": [
+            -0.0052,
+            0.3362,
+            -0.0059
+          ]
+        },
+        {
+          "prim": "goalie_tail_01",
+          "kind": "throat",
+          "length_m": 0.17,
+          "vertices": 18,
+          "pin_vertices": [
+            0,
+            1
+          ],
+          "root_stick_space": [
+            0.0052,
+            0.3362,
+            -0.0059
+          ]
+        },
+        {
+          "prim": "goalie_tail_02",
+          "kind": "sidewall",
+          "length_m": 0.07,
+          "vertices": 18,
+          "pin_vertices": [
+            0,
+            1
+          ],
+          "root_stick_space": [
+            -0.14,
+            0.5684,
+            0.0
+          ]
+        },
+        {
+          "prim": "goalie_tail_03",
+          "kind": "sidewall",
+          "length_m": 0.055,
+          "vertices": 18,
+          "pin_vertices": [
+            0,
+            1
+          ],
+          "root_stick_space": [
+            -0.1619,
+            0.698,
+            0.0
+          ]
+        },
+        {
+          "prim": "goalie_tail_04",
+          "kind": "sidewall",
+          "length_m": 0.07,
+          "vertices": 18,
+          "pin_vertices": [
+            0,
+            1
+          ],
+          "root_stick_space": [
+            0.14,
+            0.5684,
+            0.0
+          ]
+        },
+        {
+          "prim": "goalie_tail_05",
+          "kind": "sidewall",
+          "length_m": 0.055,
+          "vertices": 18,
+          "pin_vertices": [
+            0,
+            1
+          ],
+          "root_stick_space": [
+            0.1619,
+            0.698,
+            0.0
+          ]
+        }
+      ]
+    }
+  }
+}
