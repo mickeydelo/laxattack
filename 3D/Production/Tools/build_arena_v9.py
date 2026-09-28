@@ -71,6 +71,24 @@ def lakeside_cabin(C, loc=(-14.5, -76.0, -0.45), s=1.6):
     g.data.materials.clear(); g.data.materials.append(gm); g.location = loc; g.rotation_euler = (0, 0, math.radians(8))
     return o
 
+def far_shore_land(C):
+    """Far-shore land mass: starts inside the lake edge (overlaps the water) and rises under the forest rows so tree bases, rocks, cabin and
+    mountains are all planted. No sky seam between land and water."""
+    MATS.setdefault("grass_far_v9", (_lin3((0.30, 0.47, 0.24)), 0.9, 0.0, 0.0))
+    xs = [-230 + 4 * i for i in range(116)]; ys = [-74.0 - 2.0 * j for j in range(84)]
+    verts, faces = [], []
+    for y in ys:
+        rf = min(3.5, max(0.0, (-77.0 - y) / 5.4))
+        for x in xs:
+            z = -0.39 + (0.0 if y > -76.5 else 0.6 * rf + 0.8 * max(0.0, math.sin(x * 0.07 + rf)) * min(1.0, rf) + 0.45 * min(1.0, rf) + max(0.0, (-100.0 - y)) * 0.03)
+            verts.append((x, y, z))
+    W = len(xs)
+    for j in range(len(ys) - 1):
+        for i in range(W - 1):
+            a0 = j * W + i; faces.append((a0, a0 + W, a0 + W + 1, a0 + 1))
+    B = Builder("v9_far_shore_land"); B.add((verts, faces), "grass_far_v9")
+    return B.build(C)
+
 def far_mountains(C, seed=12):
     MATS.setdefault("mountain_v9", (_lin3((0.36, 0.50, 0.46)), 0.9, 0.0, 0.0)); MATS.setdefault("snow_v9", (_lin3((0.96, 0.97, 1.0)), 0.8, 0.0, 0.0))
     rnd = random.Random(seed); B = Builder("v9_mountains"); x = -140.0
@@ -396,7 +414,7 @@ def build_env_v9_export(Dio):
         bpy.data.objects.remove(o, do_unlink=True)
     for o in [o for o in bpy.data.objects if o.name.startswith(("field_fence", "v9_shore_rocks", "v9_clouds"))]:
         bpy.data.objects.remove(o, do_unlink=True)
-    carpet_tufts(Dio, n=500); split_rail_fence(Dio); flower_border(Dio); cozy_benches(Dio); lakeside_details(Dio); rock_stacks(Dio); lakeside_cabin(Dio); far_mountains(Dio)
+    carpet_tufts(Dio, n=500); split_rail_fence(Dio); flower_border(Dio); cozy_benches(Dio); lakeside_details(Dio); rock_stacks(Dio); lakeside_cabin(Dio); far_shore_land(Dio); far_mountains(Dio)
     Bc = Builder("v9_clouds"); rnd = random.Random(4)
     for (x, y, z, s) in ((-46, -165, 19, 5.0), (-12, -180, 23, 6.0), (22, -170, 20, 5.5), (56, -185, 24, 6.5), (-80, -180, 22, 5.5), (6, -155, 17, 3.6), (84, -175, 20, 5.0)):
         for k in range(10):

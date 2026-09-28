@@ -10,7 +10,7 @@
       "end": 340,
       "loop": true,
       "transition_seconds": 0.12,
-      "notes": "seamless 11.33 s: tree sway (per-tree phase/amplitude, 0.6-1.3 deg), boats drift/bob/roll, clouds drift; no synchronised motion"
+      "notes": "seamless 11.33 s; planted: tree crowns sway about the trunk top, flowers bend about their base line, only the boat bobs; groups ambient_trees/_shore_trees/_boat/_clouds/_fence_flowers/_foreground_flowers/_bushes"
     }
   ],
   "usage": "Load with lax_arena_pinebrook_v9*. Play root.availableAnimations[0] (global scene animation) looped. Replaces the static v9 trees, shore trees, clouds and boats that were removed from the arena.",
@@ -34,20 +34,46 @@
     "v9_flowers_corner_L",
     "v9_flowers_corner_R",
     "v9_shore_tree_00",
+    "v9_shore_tree_00_crown",
     "v9_shore_tree_01",
+    "v9_shore_tree_01_crown",
     "v9_shore_tree_02",
+    "v9_shore_tree_02_crown",
     "v9_shore_tree_03",
+    "v9_shore_tree_03_crown",
     "v9_shore_tree_04",
+    "v9_shore_tree_04_crown",
     "v9_shore_tree_05",
+    "v9_shore_tree_05_crown",
     "v9_tree_00",
+    "v9_tree_00_crown",
     "v9_tree_01",
+    "v9_tree_01_crown",
     "v9_tree_02",
+    "v9_tree_02_crown",
     "v9_tree_03",
+    "v9_tree_03_crown",
     "v9_tree_04",
+    "v9_tree_04_crown",
     "v9_tree_05",
+    "v9_tree_05_crown",
     "v9_tree_06",
+    "v9_tree_06_crown",
     "v9_tree_07",
+    "v9_tree_07_crown",
     "v9_tree_08",
-    "v9_tree_09"
-  ]
+    "v9_tree_08_crown",
+    "v9_tree_09",
+    "v9_tree_09_crown"
+  ],
+  "groups": [
+    "ambient_trees",
+    "ambient_shore_trees",
+    "ambient_boat",
+    "ambient_clouds",
+    "ambient_fence_flowers",
+    "ambient_foreground_flowers",
+    "ambient_bushes"
+  ],
+  "group_toggle": "disable a group entity to drop its motion and geometry (e.g. ambient_fence_flowers / ambient_foreground_flowers on low tier)"
 }

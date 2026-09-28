@@ -95,3 +95,48 @@ outline defect until re-exported.
 | `lax_fan_c_clips.json` | 54fe95058c108a9d | — |
 
 Rigs, joint order, clips, frame ranges, events, sockets, facing and origins are unchanged. **All v9 characters now carry the face fix.**
+
+
+## Part C: environment P0 (planted vegetation, named groups, far shore)
+### `lax_arena_ambient_v9.usdz` (same file name, same timeline `ambient_v9_loop` 0–340)
+- **Named group entities** under the content root. Disable any one to drop its motion and geometry:
+
+  | Group | Contents |
+  |---|---|
+  | `ambient_trees` | 10 near trees |
+  | `ambient_shore_trees` | 6 shore trees |
+  | `ambient_boat` | Sailboat |
+  | `ambient_clouds` | Clouds |
+  | `ambient_fence_flowers` | 14 fence-border groups |
+  | `ambient_foreground_flowers` | Lower-corner drifts |
+  | `ambient_bushes` | Reserved for the P2 foreground bushes (currently empty) |
+
+- **Trees:** split into a static, planted trunk (with base foliage) and a crown that sways 0.5–1.1° about the trunk top.
+- **Flowers:** pivot on their own planted base line and bend only about it. Measured over the full loop, the lowest point of any flower
+  group moves ≤ 1.4 cm (no group-level lift).
+- **Motion rules:** only the boat bobs; the clouds drift horizontally only.
+- **Root cause of the old "floating" flowers:** their pivots were at the world origin, so the sway swung them about a point up to 12 m
+  away.
+
+### `lax_arena_pinebrook_v9*`: far shore
+- **New `v9_far_shore_land`** (`midground`): the land starts inside the lake edge (y −74, overlapping the water) and rises under the
+  forest rows, so trees, rock stacks, the cabin and the mountains sit on land. No sky seam between land and water.
+- **Validation:**
+  - `v98_far_shore_tele_f000_f113_f226.png`: telephoto from the cozy camera across the ambient loop.
+  - `v98_env_views_gameplay_cozy_replay.png`: `camera_gameplay`, cozy at loop frames 0 / 113 / 226, and `cine_replay_wide`.
+
+### Changed files (part C)
+| File | SHA-256 (first 16) | Tris |
+|---|---|---|
+| `lax_arena_ambient_v9.usdz` | b98d6592fdd3f5c1 | 192,640 |
+| `lax_arena_ambient_v9_clips.json` | 6667d76ef8b6cced | — |
+| `lax_arena_pinebrook_v9.usdz` | d4afda52ddc1b1e5 | 466,352 |
+| `lax_arena_pinebrook_v9_lod1.usdz` | ffaf46116cad65fa | 296,904 |
+| `lax_arena_pinebrook_v9_lod2.usdz` | 97ef49bffe0b9ea5 | 195,264 |
+| `lax_arena_pinebrook_v9_mobile.usdz` | 0a5ebe94b3715cae | 466,352 |
+
+Arena root, groups and markers are unchanged; seats, cameras and markers JSON are unchanged.
+
+### Next (part D)
+Redo of the women's markings (labelled diagram, exact coordinates, top-down / gameplay / cozy captures), the standalone sticks, the
+replay near-miss capture and the foreground corner bushes.
