@@ -98,6 +98,8 @@ class Head:
             tx = R @ tx; tu = R @ tu
         M = Matrix((tx, n, tu)).transposed()
         v, f = geo
+        if M.determinant() < 0:            # v9.8: the (tangent, normal, up) frame is left-handed -> keep outward winding (RealityKit culls back faces)
+            f = [tuple(reversed(face)) for face in f]
         return [tuple(p + n * off + M @ V(q)) for q in v], f
     def mesh(self, useg=44, vseg=30, scale=1.0):
         geo = ellipsoid((0, 0, 0), (1, 1, 1), useg, vseg)

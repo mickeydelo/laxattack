@@ -131,7 +131,7 @@ def apply_pose(arm, p, family="field", blink=None):
         pbs["fingers_" + s].rotation_euler = Euler((math.radians(p["fingers"]), 0, 0), "XYZ")
     fv = face_values(p)
     for side, sx in (("L", 1), ("R", -1)):
-        lid = 1.0 if blink else fv["lid"]
+        lid = max(fv["lid"], float(blink)) if blink else fv["lid"]      # v9.8: blink is an amount (1 frame closed, half on either side)
         pbs["lid_" + side].rotation_euler = lid_rot(arm, lid)
         pbs["brow_" + side].location = (0, 0, fv["brow"][0])
         pbs["brow_" + side].rotation_euler = (0, math.radians(fv["brow"][1] * -sx), 0)

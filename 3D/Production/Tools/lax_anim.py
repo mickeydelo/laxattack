@@ -68,7 +68,7 @@ def eye_darts(poses, c):
     """Small saccades (hold, quick 2-frame move, hold). Loops start and end on the authored gaze."""
     rnd = random.Random(_seed(c.name) + 7); n = len(poses); keys = [(0, (0.0, 0.0))]; f = 10 + rnd.randint(0, 12)
     while f < n - 8:
-        keys.append((f, (rnd.uniform(-4, 4), rnd.uniform(-2.5, 2.5)))); f += 18 + rnd.randint(0, 20)
+        keys.append((f, (rnd.uniform(-2.5, 2.5), rnd.uniform(-1.5, 1.5)))); f += 18 + rnd.randint(0, 20)      # v9.8: gentler saccades
     keys.append((max(n - 6, keys[-1][0] + 2), (0.0, 0.0)))
     out = []
     for k, p in enumerate(poses):
@@ -133,7 +133,7 @@ def bake_clips(arm, clips, family="field", extra_channels=()):
                 poses = stick_lag(poses, c.loop, c.release)
             prev_q = None
             for f, p in enumerate(poses):
-                apply_pose(arm, p, family, blink=any(abs(f - b) <= 1 for b in blinks))
+                apply_pose(arm, p, family, blink=max([1.0 if f == b else (0.55 if abs(f - b) == 1 else 0.0) for b in blinks] or [0.0]))
                 q = pbs["stick"].rotation_quaternion.copy()
                 if prev_q is not None and q.dot(prev_q) < 0:
                     q.negate(); pbs["stick"].rotation_quaternion = q

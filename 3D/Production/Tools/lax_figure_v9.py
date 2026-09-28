@@ -4,7 +4,7 @@
 def _lin(c):
     return tuple(x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4 for x in c)
 _SRGB = {   # concept colours (sRGB) -> linear shader values
-    "skin_v9": ((0.95, 0.72, 0.55), 0.36, 0.25), "hair_v9": ((0.36, 0.19, 0.10), 0.24, 0.45), "eye_v9": ((0.16, 0.09, 0.05), 0.08, 0.6),
+    "skin_v9": ((0.95, 0.72, 0.55), 0.36, 0.25), "hair_v9": ((0.36, 0.19, 0.10), 0.24, 0.45), "eye_v9": ((0.07, 0.045, 0.035), 0.08, 0.6),
     "eye_hi_v9": ((1.0, 1.0, 1.0), 0.2, 0.0), "brow_v9": ((0.30, 0.16, 0.09), 0.5, 0.0), "mouth_v9": ((0.55, 0.22, 0.18), 0.4, 0.0),
     "blush_v9": ((0.98, 0.66, 0.60), 0.5, 0.0), "goggle_white": ((0.96, 0.94, 0.89), 0.18, 0.4), "strap_dark": ((0.16, 0.16, 0.17), 0.5, 0.0),
     "tie_cream": ((0.97, 0.94, 0.87), 0.3, 0.2), "helmet_navy_v9": ((0.050980392156862744, 0.16862745098039217, 0.3215686274509804), 0.22, 0.5), "helmet_vent": ((0.04, 0.06, 0.12), 0.6, 0.0),
@@ -75,8 +75,8 @@ def v9_face(s, H, F):
     for side, sx in (("L", 1), ("R", -1)):
         az, el = 25.0 * sx, -11.0
         F.add(H.place(ellipsoid((0, 0, 0), (ew, 0.004, eh), 26, 16), az, el, 0.001), "eye_v9", "eye_" + side)     # proud of the skin, front 5 mm (v9.6b layer stack)
-        F.add(H.place(ellipsoid((0, 0, 0), (0.011, 0.0025, 0.014), 12, 8), az + 2.8, el + 4.0, 0.0065), "eye_hi_v9", "eye_" + side)
-        F.add(H.place(ellipsoid((0, 0, 0), (0.0055, 0.0025, 0.0055), 8, 5), az - 3.4, el - 6.0, 0.0065), "eye_hi_v9", "eye_" + side)
+        F.add(H.place(ellipsoid((0, 0, 0), (0.0085, 0.0025, 0.011), 12, 8), az + 2.8, el + 4.0, 0.0065), "eye_hi_v9", "eye_" + side)
+        F.add(H.place(ellipsoid((0, 0, 0), (0.0042, 0.0025, 0.0042), 8, 5), az - 3.4, el - 6.0, 0.0065), "eye_hi_v9", "eye_" + side)
         dA = math.degrees(ew / H.r.x) * 1.3 + 2; dE = math.degrees(eh / H.r.z) + 2
         lo = s.get("lid_park_deg") or (math.degrees(eh / H.r.z) * 2 + 4)      # parked under the hairline / helmet brim when open
         lc = el + lo; nr, ns = 6, 20                        # oval eyelid (parked above the eye; closes onto it)
@@ -358,6 +358,8 @@ def pose_turnaround(arm, look):
     set_loc_world(pbs["pelvis"], V((0, 0.0, -0.012)))
     bpy.context.view_layer.update()
 
+
+GOALIE_V9["eye_size"] = (0.0315, 0.0468)     # v9.8: ~18% larger eyes read through the helmet cage
 
 MINA_V9 = dict(PLAYER_V9, name="lax_team_home_7_v9", number="7", kit_trim="kit_purple_v9", number_mat="kit_purple_v9", bottom_mat="kit_purple_v9",
                bottom_trim="kit_cream_v9", shoe_accent="kit_purple_v9", sole="kit_purple_v9", skin="skin_v9_deep", hair="hair_v9_dark",
